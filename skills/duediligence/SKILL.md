@@ -90,37 +90,68 @@ _Repository_ below are for that target.
 When the `lunox` MCP tools are available and signed in (the Claude Code plugin
 bundles the server; `/mcp` signs in), they work on the person's workspace on
 the Lunox platform. Reads: `list_workspaces`, `list_bounties`, `get_bounty`,
-`get_proposal`, `get_run`, `get_usage`, `list_sandboxes`, `get_sandbox`. Writes, only when the person asks for
-that one: `post_bounty`, `import_github_issue`, `import_jira_issue` (a new
-bounty) and `size_bounty` (price it; this starts a paid model run).
-`get_decisions` reads what a priced spec decided where the ticket was silent
-(its `Decided:` items) and whether a person confirmed them; `confirm_link`
-gives the page where the person confirms them. Hand them that link: decision
-confirmations, approving a price and publishing happen in the platform's web
-app, and you never act for them. Once the decisions are confirmed and the
-person asks: `start_sandbox` and `prepare` (build a sandbox version; the
-platform writes hidden tests from the confirmed spec and calibrates them
-against a reference, as `prepare` does locally), then `get_handout` for the
-public files and the hidden suite's commitment hash. You never see the hidden
-tests in hosted mode: they stay on the platform. On a published version,
-`judge` submits an implementation's changed files and `get_verdict` reads the
-verdict (counts and failing scenario keys only); `retry` is a failed one's
-single retry. From a terminal, `duediligence push <slug>` posts a spec
-confirmed here as a bounty; with no terminal, `post_bounty` does the same with
-`ticket.md`'s heading as `title` and `spec.md`'s text as `description`. The
-platform builds every sandbox as a Node 22 + TypeScript project, so hosted
-mode fits TypeScript work; Python, Go and Rust stay local. A run that calls
-a model (`size_bounty`, `prepare`, `retry`) counts against the workspace's
-monthly model-token limit; `get_usage` shows it, and an error with code
-`quota_exceeded` says when it resets: tell the person, never retry before
-then. `duediligence ci --platform --version <id>
---workspace <id>` (or `action.yml` with `version` and `workspace`, job
-permission `id-token: write`) judges a pull request on the platform. Never ask
-for a token in the chat: the server signs in through `/mcp`, the CLI through
-`duediligence login` in the person's own terminal. A tool error with code
-`insufficient_scope` means the sign-in predates a scope: ask the person to
-sign in again through `/mcp`. Local mode, the steps below,
-is unchanged and the default, and needs no sign-in.
+`get_proposal`, `get_run`, `get_usage`, `list_sandboxes`, `get_sandbox`.
+Writes, only when the person asks for that one: `post_bounty`,
+`import_github_issue`, `import_jira_issue` (a new bounty), `size_bounty`
+(price it; a paid model run) and `respec` (change a priced spec: expand,
+answer its open questions or trim, against the revision `get_proposal` read).
+
+**Decisions and approval.** `get_decisions` reads what a priced spec decided
+where the ticket was silent (its `Decided:` items) and whether a person
+confirmed them; `confirm_link` gives the page where the person confirms them.
+Hand them that link: confirming, approving a price and publishing happen in
+the platform's web app, and you never act for them. Approval is refused until
+the decisions are confirmed (409 `decisions_unconfirmed`, with `confirmUrl`)
+and while the code is still being profiled (409 `profile_pending`; the price
+may move, `price_changed`: reload and approve the new one). A spec confirmed
+here and posted with its bounty needs no second confirmation: from a terminal,
+`duediligence push <slug>`; with no terminal, `post_bounty` with `title` from
+`ticket.md`'s heading and
+`spec: { document: <spec.md as written>, format: "duediligence", confirmed: true, engine: { name: "duediligence", version: <duediligence --version> } }`,
+`confirmed: true` only while `confirm <slug>` says the confirmation is current.
+A refusal `invalid_spec` lists each problem's path: fix spec.md, confirm again,
+post again. An answer `confirmation: "skipped_scope"` kept the spec but not
+the confirmation: the sign-in predates `decisions:confirm`.
+
+**Sandboxes and verdicts.** Once the price is approved and the person asks:
+`start_sandbox` and `prepare` (build a version; the platform writes hidden
+tests from the confirmed spec and calibrates them against a reference, as
+`prepare` does locally), then `get_handout` for the public files and the
+hidden suite's commitment hash. `get_project_files` writes the public project
+to disk: call it again with each page's `nextCursor` until it is null, write
+`encoding: "base64"` files decoded, and for a file marked `too_large` download
+the whole project as a .zip from the web app (or
+`GET …/sandboxes/versions/<id>/archive`). You never see the hidden tests in
+hosted mode. On a published version, `judge` submits an implementation's
+changed files and `get_verdict` reads the verdict (counts and failing scenario
+keys only); `retry` is a failed one's single retry. A submission `errored`
+(with `errorCode`: grading timed out, was interrupted or failed on the
+platform's side) is not the implementer's fault: `regrade` grades it again and
+spends no retry. `carryBack: "failed"` means it passed but cannot be merged
+back as it is. `get_submission_files` takes a passing submission's files back
+from a generated (starter) version; a version sliced from a repository merges
+back by pull request instead, which an owner opens in the web app, optionally
+to merge once CI passes (`when: "ci_passes"`). `create_contributor_invite`
+hands the current published version to one outside contributor: its claim link
+is shown once, so give it to the person straight away; the contributor works
+through the `lunox-contribute` skill. The platform builds every sandbox as a
+Node 22 + TypeScript project, so hosted mode fits TypeScript work; Python, Go
+and Rust stay local.
+
+**Limits and sign-in.** A run that calls a model (`size_bounty`, `respec`,
+`prepare`, `retry`) counts against the workspace's monthly model-token limit,
+and builds and grading against its evaluator time; `get_usage` shows both. An
+error `quota_exceeded` names the `kind` and when it resets, `rate_limited`
+when to try again: tell the person, never retry before then. A 409 with
+`retryable: true` kept what was sent: send the same files again after its
+`Retry-After`. `duediligence ci --platform --version <id> --workspace <id>` (or
+`action.yml` with `version` and `workspace`, job permission `id-token: write`)
+judges a pull request on the platform. Never ask for a token in the chat: the
+server signs in through `/mcp`, the CLI through `duediligence login` in the
+person's own terminal. Both now include `specs:write` and `decisions:confirm`;
+a tool error `insufficient_scope` means the sign-in predates a scope: ask the
+person to sign in again (`/mcp`, or `duediligence login`). Local mode, the
+steps below, is unchanged and the default, and needs no sign-in.
 
 ## 0. Fit (repository)
 

@@ -12,6 +12,9 @@
 //   diffDecisions(before, after)            { kept, edited, added, removed } between two lists of decision texts
 //   hiddenManifest(dirOrFiles, kept?)       the commitment manifest of a spec folder or a file map
 //   hiddenSha256(dirOrFiles, kept?)         its sha256: what prepared.json, handouts and seals record
+//   stagedHiddenManifest(files)             the platform's version 2 manifest: hidden tests at their staged paths, as given
+//   stagedHiddenSha256(files)               its sha256 (null with no test): a handout's hiddenSha256 at hiddenSha256Version 2
+//   handoutCommitment(handout, files)       a platform handout's hash against those tests, compared only at version 2
 //   calibrate({ skeleton, reference })      the hidden-test filter: { status, reason, hiddenWritten, kept, dropped }
 //   verdict(outcomes)                       passed | overfit | incomplete | regressed | refused, with counts and failing scenario keys
 //   promptPath(name)                        the absolute path of prompts/<name>.md; anything outside prompts/ refused
@@ -29,7 +32,7 @@ import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export { decisionItems, diffDecisions, scenarios } from "./decisions.mjs";
-export { hiddenManifest, hiddenSha256 } from "./hash.mjs";
+export { handoutCommitment, hiddenManifest, hiddenSha256, stagedHiddenManifest, stagedHiddenSha256 } from "./hash.mjs";
 export { calibration as calibrate, judgement as verdict } from "./rules.mjs";
 
 const PROMPTS = join(dirname(fileURLToPath(import.meta.url)), "..", "prompts");

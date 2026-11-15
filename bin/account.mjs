@@ -7,8 +7,10 @@
 //   POST /api/auth/device/code  {client_id}                     → device_code, user_code, verification_uri(_complete), expires_in, interval
 //   POST /api/auth/device/token {grant_type, device_code, client_id} → access_token (a session that may only mint this client's token)
 //   GET  /api/v1/me, GET /api/v1/me/orgs                          (with that session)
-//   POST /api/v1/orgs/:orgId/tokens/cli {client, label}          → { token, secret }: a 90-day lnx_ token; the session ends
-// The token is saved, never printed.
+//   POST /api/v1/orgs/:orgId/tokens/cli {client, label, scopes}  → { token, secret }: a 90-day lnx_ token; the session ends
+// The token is saved, never printed. `scopes` is CLI_SCOPES[client]; a
+// platform that does not know one of them (400 before `decisions:confirm`)
+// is asked again without, which grants its default set.
 
 import { spawn } from "node:child_process";
 import { hostname as osHostname } from "node:os";
@@ -18,6 +20,16 @@ import { parseArgs } from "node:util";
 import { credentialFor, credentialsPath, platformUrl, PlatformError, request, saveCredential } from "./platform-client.mjs";
 
 const GRANT = "urn:ietf:params:oauth:grant-type:device_code";
+/**
+ * The scopes each CLI asks for (sandbox-factory's CLI_CLIENTS, the most it
+ * may hold). duediligence's include `decisions:confirm`, so `push` records a
+ * spec confirmed here as confirmed; without it the platform keeps the spec
+ * and answers `confirmation: "skipped_scope"`.
+ */
+export const CLI_SCOPES = {
+  duediligence: ["workspace:read", "bounties:write", "specs:write", "decisions:confirm", "sandboxes:write", "submissions:write", "judge"],
+};
+const CONFIRM_SCOPE = "decisions:confirm";
 const ADMIN_ROLES = new Set(["owner", "admin"]);
 
 /** The process's own world; tests pass their own. */
@@ -182,11 +194,21 @@ export async function login(argv, { client, version }, deps) {
     const orgs = (await asSession({ path: "/api/v1/me/orgs" })).organizations ?? [];
     org = await chooseOrg(orgs, values.org, { client, deps });
     const label = String(deps.hostname() ?? "").trim().slice(0, 60);
-    minted = await asSession({
-      method: "POST",
-      path: `/api/v1/orgs/${encodeURIComponent(org.id)}/tokens/cli`,
-      body: label === "" ? { client } : { client, label },
-    });
+    const mint = (scopes) =>
+      asSession({
+        method: "POST",
+        path: `/api/v1/orgs/${encodeURIComponent(org.id)}/tokens/cli`,
+        body: { client, ...(label === "" ? {} : { label }), ...(scopes === undefined ? {} : { scopes }) },
+      });
+    const wanted = CLI_SCOPES[client];
+    try {
+      minted = await mint(wanted);
+    } catch (error) {
+      // An older platform refuses a scope it does not know yet; its default set is what login always had.
+      const unknownScope = error instanceof PlatformError && error.status === 400 && ["invalid_scope", "invalid_token_request"].includes(error.code);
+      if (wanted === undefined || !unknownScope) throw error;
+      minted = await mint(undefined);
+    }
   } catch (error) {
     // Minting ends the session; a sign-in that stopped short ends it here, best effort.
     await call({ token: session, session: true, method: "POST", path: "/api/auth/sign-out", body: {} }).catch(() => {});
@@ -207,6 +229,13 @@ export async function login(argv, { client, version }, deps) {
   const who = me ? `${me.name} <${me.email}>` : "you";
   const expiry = minted.token?.expiresAt ? `; it expires ${minted.token.expiresAt.slice(0, 10)}` : "";
   deps.out(`Signed in as ${who}, workspace ${org.name} (@${org.slug}) on ${base}.\nToken saved to ${path}${expiry}.\n`);
+  const granted = minted.token?.scopes;
+  if (CLI_SCOPES[client]?.includes(CONFIRM_SCOPE) && Array.isArray(granted) && !granted.includes(CONFIRM_SCOPE)) {
+    deps.out(
+      `This platform did not grant ${CONFIRM_SCOPE}: \`${client} push\` posts specs with their decisions unconfirmed, to confirm\n` +
+        "in the web app. Sign in again once the platform offers it.\n",
+    );
+  }
   return 0;
 }
 

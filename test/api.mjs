@@ -11,6 +11,7 @@
 //   node test/api.mjs
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { createRequire, syncBuiltinESMExports } from "node:module";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -103,7 +104,20 @@ try {
     assert.deepEqual(loaded, ["bin/api.mjs", "bin/decisions.mjs", "bin/hash.mjs", "bin/rules.mjs"]);
     assert.deepEqual(
       Object.keys(api).sort(),
-      ["calibrate", "decisionItems", "diffDecisions", "hiddenManifest", "hiddenSha256", "promptPath", "renderPrompt", "scenarios", "verdict"],
+      [
+        "calibrate",
+        "decisionItems",
+        "diffDecisions",
+        "handoutCommitment",
+        "hiddenManifest",
+        "hiddenSha256",
+        "promptPath",
+        "renderPrompt",
+        "scenarios",
+        "stagedHiddenManifest",
+        "stagedHiddenSha256",
+        "verdict",
+      ],
     );
     // "." stays the CLI (resolved, not imported: importing it runs it).
     assert.equal(import.meta.resolve("duediligence"), new URL("../bin/cli.mjs", import.meta.url).href);
@@ -154,6 +168,42 @@ try {
       ].join("\n"),
     );
     assert.notEqual(api.hiddenSha256({ ...boundaryFiles, "tests/private/b.test.ts": "b!\n" }), pinned);
+  });
+
+  step("stagedHiddenSha256 (the platform's hiddenSha256Version 2) and handoutCommitment", () => {
+    const sha = (text) => createHash("sha256").update(text).digest("hex");
+    // In the platform's layout every staged path is tests/private/<rel>: duediligence's hash with the paths as kept ids.
+    const platformLayout = { "tests/private/b.test.ts": "b\n", "tests/private/Z.test.ts": "z\n", "tests/private/sub/c.test.ts": Buffer.from("c\n") };
+    const v2 = api.stagedHiddenSha256(platformLayout);
+    assert.equal(v2, api.hiddenSha256(platformLayout, Object.keys(platformLayout)));
+    assert.equal(api.stagedHiddenSha256(new Map(Object.entries(platformLayout))), v2);
+    assert.equal(api.stagedHiddenSha256(Object.entries(platformLayout).map(([path, bytes]) => ({ path, bytes }))), v2);
+    // An uploaded folder: its own paths, taken as given; recomputed here as the platform's worker does (hiddenCommitmentOf).
+    const folder = { "test/acceptance/b.test.ts": "b\n", "src/__acceptance__/a.test.ts": "a\n" };
+    const paths = Object.keys(folder).sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)));
+    const manifest = `${paths.map((path) => `${sha(folder[path])}  ${path}\n`).join("")}${sha(JSON.stringify([...paths].sort()))}  calibration.kept\n`;
+    assert.equal(api.stagedHiddenManifest(folder), manifest);
+    assert.equal(api.stagedHiddenSha256(folder), sha(manifest));
+    assert.equal(api.stagedHiddenSha256({}), null);
+    assert.throws(() => api.stagedHiddenSha256({ "tests\\private\\a.ts": "a" }), /not a staged path/);
+
+    const handout = { hiddenSha256: sha(manifest), hiddenSha256Version: 2 };
+    assert.deepEqual(api.handoutCommitment(handout, folder), {
+      comparable: true,
+      match: true,
+      expected: handout.hiddenSha256,
+      actual: handout.hiddenSha256,
+      reason: "the hidden tests are the ones the handout committed to",
+    });
+    const changed = api.handoutCommitment(handout, { ...folder, "src/__acceptance__/a.test.ts": "a!\n" });
+    assert.equal(changed.comparable, true);
+    assert.equal(changed.match, false);
+    // Version 1, or one newer than this duediligence: never compared, never a mismatch.
+    const v1 = api.handoutCommitment({ hiddenSha256: handout.hiddenSha256, hiddenSha256Version: 1 }, folder);
+    assert.equal(v1.comparable, false);
+    assert.equal(v1.match, null);
+    assert.match(v1.reason, /hiddenSha256Version 1: .*not compared/);
+    assert.match(api.handoutCommitment({ hiddenSha256: "x", hiddenSha256Version: 3 }, folder).reason, /Version 3 is newer/i);
   });
 
   const suite = (files) => ({ compiled: true, compileOutput: "", files });

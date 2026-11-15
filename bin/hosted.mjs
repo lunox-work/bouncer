@@ -3,7 +3,16 @@
 //
 //   push <slug>       a spec confirmed here becomes a bounty in the signed-in
 //                     workspace: POST /api/v1/orgs/:org/bounties with the
-//                     ticket's title and the confirmed spec.md as its text.
+//                     ticket's title and `spec: { document: spec.md as
+//                     written, format: "duediligence", confirmed, engine }`,
+//                     `confirmed` true only while confirmed.json's hash is
+//                     spec.md's; the platform then records the decisions as
+//                     confirmed by the token's person (a token without
+//                     `decisions:confirm` gets `confirmation:
+//                     "skipped_scope"`), so approval needs no second
+//                     confirmation. 422 `invalid_spec` lists each problem;
+//                     a platform older than posted specs (400
+//                     `invalid_bounty`) is sent `{ title, description }`.
 //                     Recorded in specs/<slug>/platform.json, so pushing
 //                     again names the bounty already made.
 //   ci --platform     a pull request judged by the platform against a
@@ -13,7 +22,9 @@
 //                     secret on either side; the platform checks the token
 //                     names the repository the version was sliced from),
 //                     then GET /api/judge/:id?workspace= until a verdict. The job's own
-//                     pass or fail is the check.
+//                     pass or fail is the check. A 409 `retryable` (the
+//                     platform's active-run limit) is sent again after its
+//                     Retry-After, a few times.
 //
 // Each takes its argv and the outside world as `deps` (account.mjs's, plus
 // `git` and `readFile`), so test/hosted.mjs drives them against a fake
@@ -27,7 +38,7 @@ import { parseArgs } from "node:util";
 import { defaultDeps as accountDeps } from "./account.mjs";
 import { confirmation } from "./confirm.mjs";
 import { specDir } from "./lib.mjs";
-import { credentialFor, credentialsPath, platformUrl, PlatformError, request } from "./platform-client.mjs";
+import { credentialFor, credentialsPath, platformUrl, PlatformError, request, sendRetrying } from "./platform-client.mjs";
 
 /** The platform's limits on one submission (sandbox-factory SUBMISSION_LIMITS). */
 const MAX_FILES = 200;
@@ -62,22 +73,36 @@ export function titleOf(text) {
   return line.trim().slice(0, TITLE_MAX);
 }
 
+/** The lines a 422 `invalid_spec` names: each problem's path and message. */
+function specProblems(error) {
+  const problems = Array.isArray(error.body?.problems) ? error.body.problems : [];
+  return problems.length === 0 ? [error.message] : problems.map((problem) => `${problem.path}: ${problem.message}`);
+}
+
 /** `push <slug>`: a locally confirmed spec as a bounty in the signed-in workspace. */
 export async function push(argv, { client, version }, deps) {
-  const usage = `usage: ${client} push <slug> [--platform <url>] [--again]`;
-  const { values, positionals } = options(argv, { platform: { type: "string" }, again: { type: "boolean" } }, usage, true);
+  const usage = `usage: ${client} push <slug> [--platform <url>] [--again] [--unconfirmed]`;
+  const { values, positionals } = options(
+    argv,
+    { platform: { type: "string" }, again: { type: "boolean" }, unconfirmed: { type: "boolean" } },
+    usage,
+    true,
+  );
   if (values.help || positionals.length !== 1) {
     deps.out(
       `${usage}\n\nPosts specs/<slug>/spec.md, as confirmed (${client} confirm <slug> --by <name>), as a bounty in the workspace\n` +
-        `${client} login signed in to. The bounty's title is ticket.md's (else spec.md's) heading. Pushing again names\n` +
-        `the bounty already made (specs/<slug>/platform.json); --again posts a new one, as after editing the spec.\n`,
+        `${client} login signed in to, its decisions recorded as confirmed by you, so approval needs no second confirmation.\n` +
+        `The bounty's title is ticket.md's (else spec.md's) heading. Pushing again names the bounty already made\n` +
+        `(specs/<slug>/platform.json); --again posts a new one, as after editing the spec. --unconfirmed posts a spec\n` +
+        `not confirmed here, its decisions to confirm in the web app.\n`,
     );
     return values.help ? 0 : 1;
   }
   const [slug] = positionals;
   const dir = specDir(slug);
   const confirmed = confirmation(slug);
-  if (!confirmed.ok) throw new PlatformError(`specs/${slug}: ${confirmed.reason}. Confirm it first: ${client} confirm ${slug} --by <name>.`);
+  if (!confirmed.ok && !(values.unconfirmed && confirmed.hash !== undefined))
+    throw new PlatformError(`specs/${slug}: ${confirmed.reason}. Confirm it first: ${client} confirm ${slug} --by <name>.`);
   const base = platformUrl(values.platform, deps.env);
   const saved = credentialFor(credentialsPath(deps.env), base, client);
   if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${client} login\`.`);
@@ -97,18 +122,40 @@ export async function push(argv, { client, version }, deps) {
   if (title === "") throw new PlatformError(`specs/${slug}: no title in ticket.md or spec.md.`);
   if (spec.length > DESCRIPTION_MAX)
     throw new PlatformError(`specs/${slug}/spec.md is ${spec.length} characters; a bounty takes ${DESCRIPTION_MAX}.`);
-  const made = await request({
-    base,
-    token: saved.token,
-    client,
-    version,
-    fetchImpl: deps.fetchImpl,
-    method: "POST",
-    path: `/api/v1/orgs/${encodeURIComponent(saved.organizationId)}/bounties`,
-    body: { title, description: spec },
-  });
+  const post = (body) =>
+    request({
+      base,
+      token: saved.token,
+      client,
+      version,
+      fetchImpl: deps.fetchImpl,
+      method: "POST",
+      path: `/api/v1/orgs/${encodeURIComponent(saved.organizationId)}/bounties`,
+      body,
+    });
+  const posted = { document: spec, format: "duediligence", confirmed: confirmed.ok, engine: { name: "duediligence", version } };
+  let made;
+  let asText = false;
+  try {
+    made = await post({ title, spec: posted });
+  } catch (error) {
+    if (!(error instanceof PlatformError)) throw error;
+    if (error.status === 422 && error.code === "invalid_spec") {
+      throw new PlatformError(
+        `${base} cannot store specs/${slug}/spec.md as written; nothing was posted:\n${specProblems(error)
+          .map((line) => `  ${line}`)
+          .join("\n")}`,
+        { status: error.status, code: error.code },
+      );
+    }
+    // A platform older than posted specs refuses the unknown `spec` field; it takes the text alone.
+    if (error.status !== 400 || error.code !== "invalid_bounty") throw error;
+    made = await post({ title, description: spec });
+    asText = true;
+  }
   const bountyId = made?.bounty?.id;
   if (typeof bountyId !== "string") throw new PlatformError(`${base} answered without a bounty.`);
+  const state = asText ? "text" : !confirmed.ok ? "unconfirmed" : made.confirmation === "skipped_scope" ? "skipped_scope" : "confirmed";
   writeFileSync(
     recordPath,
     `${JSON.stringify(
@@ -117,16 +164,27 @@ export async function push(argv, { client, version }, deps) {
         organizationId: saved.organizationId,
         bountyId,
         specSha256: confirmed.hash,
-        confirmedBy: confirmed.record.by,
+        confirmedBy: confirmed.record?.by ?? null,
+        confirmation: state,
         pushedAt: new Date(deps.now()).toISOString(),
       },
       null,
       2,
     )}\n`,
   );
+  const next = {
+    confirmed: `Its decisions stand confirmed (by ${confirmed.record?.by} here), so approving its price needs no separate confirm step.\n`,
+    skipped_scope:
+      `The spec is kept, but not its confirmation: this sign-in lacks the decisions:confirm scope. Run \`${client} login\`\n` +
+      "again for a token with it, and confirm the decisions in the web app (MCP confirm_link) for this bounty.\n",
+    unconfirmed: "Its decisions are not confirmed: a person confirms them in the web app (MCP confirm_link) before approval.\n",
+    text:
+      `This platform does not take posted specs yet: spec.md was sent as the bounty's text, and sizing drafts its own\n` +
+      "spec from it, whose decisions a person confirms in the web app.\n",
+  }[state];
   deps.out(
-    `Posted specs/${slug} as bounty ${bountyId} in @${saved.organizationHandle} on ${base}.\n` +
-      `Size it there, or with the MCP tool size_bounty; its decisions were confirmed here by ${confirmed.record.by}.\n`,
+    `Posted specs/${slug} as bounty ${bountyId} in @${saved.organizationHandle} on ${base}.\n${next}` +
+      "Size it there, or with the MCP tool size_bounty.\n",
   );
   return 0;
 }
@@ -205,11 +263,14 @@ export async function ciPlatform(argv, { client, version }, deps) {
   }
   const call = async (options) =>
     request({ base, token: await oidcToken(base, deps), client, version, fetchImpl: deps.fetchImpl, ...options });
-  let { submission } = await call({
-    method: "POST",
-    path: "/api/judge",
-    body: { workspace: values.workspace, versionId: values.version, files },
-  });
+  let { submission } = await sendRetrying(
+    () => call({ method: "POST", path: "/api/judge", body: { workspace: values.workspace, versionId: values.version, files } }),
+    {
+      sleep: deps.sleep,
+      onWait: (seconds, attempt) =>
+        deps.err(`The platform is at its active-run limit; the submission is kept. Sending it again in ${seconds} s (attempt ${attempt + 1}).\n`),
+    },
+  );
   deps.out(`Submitted ${files.length} file${files.length === 1 ? "" : "s"} as ${submission.id}; waiting for the verdict...\n`);
   const started = deps.now();
   while (submission.status === "queued" || submission.status === "running") {
@@ -219,21 +280,26 @@ export async function ciPlatform(argv, { client, version }, deps) {
       path: `/api/judge/${encodeURIComponent(submission.id)}?workspace=${encodeURIComponent(values.workspace)}`,
     }));
   }
-  const verdict = submission.status === "errored" ? "errored" : (submission.verdict ?? submission.status);
+  const outcome = submission.status === "errored" ? "errored" : (submission.verdict ?? submission.status);
+  const verdict = outcome === "errored" && submission.errorCode ? `errored (${submission.errorCode})` : outcome;
   const counts =
     submission.public && submission.hidden
       ? `public ${submission.public.passed}/${submission.public.total}, hidden ${submission.hidden.passed}/${submission.hidden.total}`
       : "no tests ran";
   const lines = [
     `duediligence (platform): ${verdict}, ${counts}`,
-    ...(submission.failedScenarios.length > 0 ? [`failing scenarios: ${submission.failedScenarios.join(", ")}`] : []),
-    ...submission.refused.map((refusal) => `refused ${refusal.path}: ${refusal.reason}`),
+    ...((submission.failedScenarios ?? []).length > 0 ? [`failing scenarios: ${submission.failedScenarios.join(", ")}`] : []),
+    ...(submission.refused ?? []).map((refusal) => `refused ${refusal.path}: ${refusal.reason}`),
+    ...(submission.status === "errored"
+      ? ["grading could not run on the platform's side; a workspace owner can regrade it (MCP regrade) without spending its retry"]
+      : []),
+    ...(submission.carryBack === "failed" ? ["carry back failed: it passed here but cannot be merged back as it is"] : []),
   ];
   deps.out(`${lines.join("\n")}\n`);
   if (deps.env.GITHUB_STEP_SUMMARY)
     appendFileSync(deps.env.GITHUB_STEP_SUMMARY, `### ${lines[0]}\n\n${lines.slice(1).map((line) => `- ${line}`).join("\n")}\n`);
   if (values["exit-zero"]) return 0;
-  return EXIT[verdict] ?? 1;
+  return EXIT[outcome] ?? 1;
 }
 
 /** Runs one, printing a PlatformError as one line on stderr. */

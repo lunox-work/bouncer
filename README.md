@@ -351,8 +351,14 @@ carveout shares. Only a workspace's owners and admins can sign a CLI in to it;
 `--platform <url>` or `LUNOX_PLATFORM_URL` another deployment. `logout`
 deletes the token here only: the platform has no route for a token to revoke
 itself, so revoke it in the platform's web app to stop it before it expires.
-No other command talks to the platform. In Claude Code, the plugin's `lunox`
-MCP server (`.mcp.json`) signs in on its own, through `/mcp`.
+`duediligence push <slug>` then posts a spec confirmed here as a bounty, its
+decisions recorded as confirmed by you, so approving its price needs no second
+confirmation; an older token lacks that scope (`decisions:confirm`), and
+`push` says so: run `login` again. In Claude Code, the plugin's `lunox` MCP server
+(`.mcp.json`) signs in on its own, through `/mcp`. Invited to contribute to
+someone else's sandbox? The `lunox-contribute` skill works through the
+contributor server:
+`claude mcp add --transport http lunox-contribute https://platform.lunox.work/mcp/contribute`.
 
 ## Try it in five minutes
 
@@ -493,7 +499,7 @@ reads the runner's disk and sends it over the network is not stopped.
 <summary>Every file and folder, in the repository and in <code>~/.duediligence/</code></summary>
 
 ```
-skills/             the skill, duediligence/SKILL.md: the steps it runs
+skills/             the skills: duediligence/SKILL.md, the steps it runs; lunox-contribute/SKILL.md, an invited contributor's work on the platform
 .claude-plugin/     the Claude Code plugin and its one-plugin marketplace
 .mcp.json           the plugin's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip

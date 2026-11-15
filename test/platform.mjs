@@ -3,8 +3,9 @@
 // node:http, never the real one: the device flow's polling (pending,
 // slow_down, approval, denial, expiry) on a virtual clock, the workspace
 // choice, the credentials file (contents, mode 600, the other CLI's entry
-// kept), the token never printed, a 401 and a 426, and the CLI wiring in a
-// child process.
+// kept), the scopes asked for (decisions:confirm, and without it on an older
+// platform), the token never printed, a 401 and a 426, and the CLI wiring in
+// a child process.
 //
 //   node test/platform.mjs
 
@@ -33,7 +34,10 @@ const ORGS = {
 const USER = { id: "usr_1", email: "ada@example.com", name: "Ada", username: "ada" };
 
 /** A platform with just the routes the CLI calls. `polls` scripts the token endpoint's answers in order. */
-async function fakePlatform({ polls = ["ok"], orgs = [ORGS.acme], expiresIn = 900, interval = 5, minimum } = {}) {
+const OLD_DEFAULT_SCOPES = ["workspace:read", "bounties:write", "specs:write", "sandboxes:write", "submissions:write", "judge"];
+
+/** `older`: a platform from before decisions:confirm, refusing the scope as unknown and granting its old default set. */
+async function fakePlatform({ polls = ["ok"], orgs = [ORGS.acme], expiresIn = 900, interval = 5, minimum, older = false } = {}) {
   const state = { requests: [], polls: [...polls], orgs, sessions: new Set(), tokens: new Map(), signOuts: 0, minted: [] };
   const server = createServer(async (req, res) => {
     let raw = "";
@@ -98,6 +102,8 @@ async function fakePlatform({ polls = ["ok"], orgs = [ORGS.acme], expiresIn = 90
       if (found === undefined) return send(404, { error: "Not found" });
       if (!/owner|admin/.test(found.role)) return send(403, { error: "Only owners and admins can manage API tokens." });
       if (body?.client !== "duediligence") return send(403, { error: "This sign-in was approved for another client.", code: "client_mismatch" });
+      if (older && body.scopes?.includes("decisions:confirm"))
+        return send(400, { error: 'Invalid option: expected one of "workspace:read"|...', code: "invalid_token_request" });
       state.sessions.delete(bearer);
       state.tokens.set(SECRET, { organizationId: found.id, revoked: false });
       state.minted.push({ org: found.id, body });
@@ -106,7 +112,7 @@ async function fakePlatform({ polls = ["ok"], orgs = [ORGS.acme], expiresIn = 90
           id: "tok_1",
           name: `duediligence CLI on ${body.label}`,
           prefix: "lnx_s3cr",
-          scopes: ["workspace:read"],
+          scopes: body.scopes ?? OLD_DEFAULT_SCOPES,
           createdBy: { id: USER.id, name: USER.name },
           createdAt: "2026-11-12T01:00:00.000Z",
           expiresAt: "2027-02-10T01:00:00.000Z",
@@ -188,7 +194,12 @@ try {
       assert.equal(statSync(dirname(credentials)).mode & 0o777, 0o700);
     }
     const mint = platform.state.requests.find((r) => r.path.endsWith("/tokens/cli"));
-    assert.deepEqual(mint.body, { client: "duediligence", label: "build-box" });
+    assert.deepEqual(mint.body, {
+      client: "duediligence",
+      label: "build-box",
+      scopes: ["workspace:read", "bounties:write", "specs:write", "decisions:confirm", "sandboxes:write", "submissions:write", "judge"],
+    });
+    assert.ok(!w.output.includes("did not grant"), "every scope granted: no note");
     assert.equal(mint.headers.authorization, `Bearer ${SESSION}`);
     for (const r of platform.state.requests) {
       assert.equal(r.headers["user-agent"], "duediligence/9.9.9");
@@ -197,6 +208,20 @@ try {
     const code = platform.state.requests.find((r) => r.path === "/api/auth/device/code");
     assert.deepEqual(code.body, { client_id: "duediligence" });
     assert.equal(platform.state.signOuts, 0, "minting ends the session; no sign-out needed");
+    await platform.close();
+  });
+
+  await step("login: an older platform refuses decisions:confirm; asked again without scopes, and says what that means", async () => {
+    const platform = await fakePlatform({ older: true });
+    const credentials = fresh();
+    const w = world(platform.url, credentials);
+    assert.equal(await run("login", [], CLIENT, w), 0, w.errors);
+    const mints = platform.state.requests.filter((r) => r.path.endsWith("/tokens/cli"));
+    assert.equal(mints.length, 2);
+    assert.ok(mints[0].body.scopes.includes("decisions:confirm"));
+    assert.deepEqual(mints[1].body, { client: "duediligence", label: "build-box" });
+    assert.match(w.output, /did not grant decisions:confirm: `duediligence push` posts specs with their decisions unconfirmed/);
+    assert.equal(JSON.parse(readFileSync(credentials, "utf8"))[platform.url].duediligence.token, SECRET);
     await platform.close();
   });
 
