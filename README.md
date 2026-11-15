@@ -6,6 +6,8 @@ Independent, hidden test suites written from the spec for AI coding agents: the 
 
 - **duediligence**: Turn a ticket or spec for one module (TypeScript, Python, Go or Rust), or for a change to one package of an existing TypeScript or Python repository, into a public test suite for the implementing agent and a calibrated hidden suite that judges its work, with the spec's decisions confirmed by a person before any test is written. Use when someone wants agent-written code accepted by tests the agent never saw, wants to grade an agent's submission against a spec, or wants to stop trusting an agent's own green test run.
 
+- **lunox-contribute**: Work on a task you were invited to on the Lunox platform as an outside contributor: fetch the version's public project, implement it within its editable paths, preview and submit the changed files, and read the verdict from hidden tests you never see. Use when someone has a Lunox contribution or claim link, mentions lnxc_ tokens or the /mcp/contribute server, or asks to submit work to a Lunox sandbox they do not own.
+
 ## Install
 
 ```sh
@@ -15,7 +17,9 @@ claude plugin install duediligence@duediligence
 
 ## Requirements
 
-- **duediligence**: Node 20.19 or later. Runs the duediligence@0.5.1 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.duediligence/ once (network).
+- **duediligence**: Node 20.19 or later. Runs the duediligence@0.6.0 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.duediligence/ once (network).
+
+- **lunox-contribute**: Needs the Lunox contributor MCP server (https://platform.lunox.work/mcp/contribute) signed in as a contributor, or an lnxc_ contributor token for HTTP clients, and Node to run the project.
 
 ## Hosted mode
 
@@ -42,8 +46,10 @@ same URL as a remote HTTP server.
   `push` and `ci --platform` are the only commands that talk to the platform.
   The CLI sends the token, its name and version, and, once at sign-in, the
   machine's host name to label the token. `push <slug>` posts a confirmed spec
-  as a bounty: the ticket's title and the text of `spec.md`, recorded in
-  `specs/<slug>/platform.json` on the same machine. `ci --platform`, in a
+  as a bounty: the ticket's title, the text of `spec.md`, whether it is
+  confirmed here and the duediligence version, recorded in
+  `specs/<slug>/platform.json` on the same machine; the platform records the
+  decisions as confirmed by the signed-in person. `ci --platform`, in a
   GitHub Actions job that opts in, sends the pull request's changed files with
   the run's GitHub OIDC token (no saved token) to be judged against a
   published version's hidden suite, and reads back the verdict. No other
@@ -52,15 +58,23 @@ same URL as a remote HTTP server.
   platform.lunox.work only once the person signs in to it through `/mcp`.
   Its read tools (`list_*`, `get_*`) read the account and the workspace, with
   its bounties, repositories, sandboxes and runs. Its write tools run only
-  when the person asks for that action: a bounty posted (title and spec text)
-  or imported from a GitHub or Jira issue, a sandbox version built, and an
-  implementation's changed files submitted for a verdict. `size_bounty`,
-  `prepare` and `retry` start model runs on the platform that count against
-  the workspace's monthly token limit. Hidden tests are written and kept on
-  the platform and never sent to the session. Confirming decisions, approving
-  a price and publishing happen in the platform's web app, not through the
-  plugin. The platform's privacy policy is at
-  https://platform.lunox.work/privacy.
+  when the person asks for that action: a bounty posted (title and spec text,
+  with the person's confirmation when the spec was confirmed here) or
+  imported from a GitHub or Jira issue, a spec changed, a sandbox version
+  built, an implementation's changed files submitted for a verdict or graded
+  again, a contributor invited to a published version, and a passing
+  submission's files taken back. `size_bounty`, `respec`, `prepare` and
+  `retry` start model runs on the platform that count against the
+  workspace's monthly token limit. Hidden tests are written and kept on the
+  platform and never sent to the session. Confirming a priced spec's
+  decisions, approving a price, publishing and merging back happen in the
+  platform's web app, not through the plugin. The platform's privacy policy
+  is at https://platform.lunox.work/privacy.
+- **The `lunox-contribute` skill:** for a person invited to contribute, it
+  talks to platform.lunox.work only through the contributor MCP server they
+  add and sign in to themselves (`/mcp/contribute`), or their own `lnxc_`
+  token: it reads the version they were invited to and submits the files they
+  changed for a verdict.
 - **Personal data:** a ticket can name people; it is stored with the spec
   under `~/.duediligence/specs/` on the same machine.
 - **Retention:** duediligence itself runs no service. What the model backends
