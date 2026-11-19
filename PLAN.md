@@ -8,6 +8,33 @@ Sources: this repository at a69ab1d (0.7.0), RESULTS.md, and Roshan's Notion
 note "Look through duediligence readme" (V1 keywords and About box, V2
 teardown, V3 the bouncer persona).
 
+## Progress (2026-11-19, local commits on main, not pushed or published)
+
+Landed: the persona's lines (bin/voice.mjs: judge, prepare, CI title), the
+mark and every README image redrawn (assets/src/), `judge --card`, the README
+in his voice with docs/REFERENCE.md, the skill split (SKILL.md 149 lines,
+references/, `bouncer-hosted` as its own plugin), `bouncer door`, `bouncer id`,
+the after-the-fact flow (skills/bouncer/references/check.md), the CLI help
+tidy-up.
+
+Measured, and what it changed:
+
+- **Phase 0 failed its gate** (evidence/DOOR.md): any rule fired on 8.7% of
+  127 real sessions that claimed done, and a model-judged check upheld 1 of 50
+  firings. Per the kill rule the door is not the hero, and it ships as a report
+  only: no Stop hook, no voice on its findings, never blocks.
+- **Phase 2 (the ID check) is the hero**: on a 10-run sample, a failing
+  decision was in the list for 10 of 10 rejected runs (25 of 28 scenarios),
+  16 s median, $0.07 a run (over the $0.05 bar), model-judged
+  (evidence/ID.md). A blind full pass over the 75 rejected runs is next.
+
+Not done, each needing a decision or an outside action: push and publish
+(npm 0.8.0 needs the passkey; the plugin branch rebuilds on push); the About
+box topics and the social preview (hero.png); phase 3's gate (same verdicts on
+the 11 replayed commits, run through check.md); phase 5's fit funnel, which
+runs 50 third-party test suites on this machine; the evidence move to a
+separate repository; `prepare --hosted` and `judge --platform`.
+
 ## Where it stands
 
 **Capability: strong and narrow.** The method is measured further than any
