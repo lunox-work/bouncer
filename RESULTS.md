@@ -71,7 +71,15 @@ supports is pointing: a reader who knows what was meant, given the list,
 names a wrong pick in 57 of 75 rejected runs and never names a right one. The
 judge stands in for that reader, so this is an upper bound for a hurried
 person; person time is not measured yet. Cost is over the $0.05 a list the
-plan asked for. All TypeScript. ([ID.md](evidence/ID.md))
+plan asked for.
+
+Outside TypeScript, on one spec (duration-parse ported to Python, Go and
+Rust, 15 loose-ticket Haiku runs each, all 45 rejected), the same pass found
+a failing scenario in the list for 44 of 45 runs. A pick judged wrong failed
+its scenario 103 of 103 times, with no false alarm in 227, and a wrong pick
+was named in 35 of 45 runs: 15 of 15 in Python and in Rust, 5 of 15 in Go,
+where every run failed only one error-handling scenario. Median list 12
+items, 14 s, $0.056. ([ID.md](evidence/ID.md#outside-typescript-2026-11-20))
 
 ## Tests written from the spec carry it to the agent
 
