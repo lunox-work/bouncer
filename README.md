@@ -1,23 +1,23 @@
-# duediligence
+# bouncer
 
 Independent, hidden test suites written from the spec for AI coding agents: the agent works against a public suite, a calibrated hidden suite it never sees judges the result. Optional hosted mode: after sign-in, a bundled MCP server works with the person's workspace on the Lunox platform (platform.lunox.work).
 
 ## Skills
 
-- **duediligence**: Turn a ticket or spec for one module (TypeScript, Python, Go or Rust), or for a change to one package of an existing TypeScript or Python repository, into a public test suite for the implementing agent and a calibrated hidden suite that judges its work, with the spec's decisions confirmed by a person before any test is written. Use when someone wants agent-written code accepted by tests the agent never saw, wants to grade an agent's submission against a spec, or wants to stop trusting an agent's own green test run.
+- **bouncer**: Turn a ticket or spec for one module (TypeScript, Python, Go or Rust), or for a change to one package of an existing TypeScript or Python repository, into a public test suite for the implementing agent and a calibrated hidden suite that judges its work, with the spec's decisions confirmed by a person before any test is written. Use when someone wants agent-written code accepted by tests the agent never saw, wants to grade an agent's submission against a spec, or wants to stop trusting an agent's own green test run.
 
 - **lunox-contribute**: Work on a task you were invited to on the Lunox platform as an outside contributor: fetch the version's public project, implement it within its editable paths, preview and submit the changed files, and read the verdict from hidden tests you never see. Use when someone has a Lunox contribution or claim link, mentions lnxc_ tokens or the /mcp/contribute server, or asks to submit work to a Lunox sandbox they do not own.
 
 ## Install
 
 ```sh
-claude plugin marketplace add lunox-work/duediligence
-claude plugin install duediligence@duediligence
+claude plugin marketplace add lunox-work/bouncer
+claude plugin install bouncer@bouncer
 ```
 
 ## Requirements
 
-- **duediligence**: Node 20.19 or later. Runs the duediligence@0.6.0 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.duediligence/ once (network).
+- **bouncer**: Node 20.19 or later. Runs the @lunox-work/bouncer@0.7.0 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
 
 - **lunox-contribute**: Needs the Lunox contributor MCP server (https://platform.lunox.work/mcp/contribute) signed in as a contributor, or an lnxc_ contributor token for HTTP clients, and Node to run the project.
 
@@ -39,7 +39,7 @@ same URL as a remote HTTP server.
   npm, and from pip for Python; Go and Rust use the toolchains already
   installed. There is no telemetry.
 - **Lunox platform, only when asked:** without an account the CLI is
-  unchanged and local. `duediligence login` signs in to Lunox's hosted service
+  unchanged and local. `bouncer login` signs in to Lunox's hosted service
   at platform.lunox.work with a code approved in the browser, and stores a
   workspace API token in `~/.lunox/credentials` on the same machine (mode 600,
   shared with carveout); `logout` deletes it. `login`, `whoami`, `logout`,
@@ -47,7 +47,7 @@ same URL as a remote HTTP server.
   The CLI sends the token, its name and version, and, once at sign-in, the
   machine's host name to label the token. `push <slug>` posts a confirmed spec
   as a bounty: the ticket's title, the text of `spec.md`, whether it is
-  confirmed here and the duediligence version, recorded in
+  confirmed here and the bouncer version, recorded in
   `specs/<slug>/platform.json` on the same machine; the platform records the
   decisions as confirmed by the signed-in person. `ci --platform`, in a
   GitHub Actions job that opts in, sends the pull request's changed files with
@@ -76,18 +76,18 @@ same URL as a remote HTTP server.
   token: it reads the version they were invited to and submits the files they
   changed for a verdict.
 - **Personal data:** a ticket can name people; it is stored with the spec
-  under `~/.duediligence/specs/` on the same machine.
-- **Retention:** duediligence itself runs no service. What the model backends
+  under `~/.bouncer/specs/` on the same machine.
+- **Retention:** bouncer itself runs no service. What the model backends
   keep is governed by the person's own agreement with that provider, and what
   the platform keeps of what is sent to it by its privacy policy.
 
 ## Links
 
-- [Privacy](https://github.com/lunox-work/duediligence/blob/main/PRIVACY.md)
-- [Documentation](https://github.com/lunox-work/duediligence#readme)
-- [Support](https://github.com/lunox-work/duediligence/issues)
+- [Privacy](https://github.com/lunox-work/bouncer/blob/main/PRIVACY.md)
+- [Documentation](https://github.com/lunox-work/bouncer#readme)
+- [Support](https://github.com/lunox-work/bouncer/issues)
 
 ## Source
 
 This branch holds only the plugin's files. The CLI, its documentation and the
-skills' source are on the main branch of https://github.com/lunox-work/duediligence. License: MIT.
+skills' source are on the main branch of https://github.com/lunox-work/bouncer. License: MIT.
