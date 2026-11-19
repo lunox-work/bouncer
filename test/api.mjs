@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// The library entry, `duediligence/api` (bin/api.mjs), imported by package
+// The library entry, `@lunox-work/bouncer/api` (bin/api.mjs), imported by package
 // self-reference the way a platform imports it, with HOME and
-// DUEDILIGENCE_HOME unset, every child_process function trapped, the
+// BOUNCER_HOME unset, every child_process function trapped, the
 // network trapped, and every fs call recorded: importing it and calling
 // each export must spawn nothing, connect nowhere, write nothing and read
 // only the package and the folder this test made. Then each export on
@@ -29,7 +29,7 @@ const step = (name, fn) => {
 // Fixtures first, before anything is trapped: the bundled spec's text and a
 // black-box spec folder (nested files, .DS_Store at two depths, a boundary).
 const specText = readFileSync(join(SPEC, "spec.md"), "utf8");
-const scratch = realpathSync(mkdtempSync(join(tmpdir(), "duediligence-api-")));
+const scratch = realpathSync(mkdtempSync(join(tmpdir(), "bouncer-api-")));
 const boundaryFiles = {
   "tests/private/b.test.ts": "b\n",
   "tests/private/Z.test.ts": "Z",
@@ -51,17 +51,17 @@ specFiles["calibration.json"] = readFileSync(join(SPEC, "calibration.json"));
 
 // The traps.
 delete process.env.HOME;
-delete process.env.DUEDILIGENCE_HOME;
-delete process.env.DUEDILIGENCE_SPECS;
-delete process.env.DUEDILIGENCE_RESULTS;
-delete process.env.DUEDILIGENCE_WORK;
+delete process.env.BOUNCER_HOME;
+delete process.env.BOUNCER_SPECS;
+delete process.env.BOUNCER_RESULTS;
+delete process.env.BOUNCER_WORK;
 const trapped = [];
 const trap = (module, names, label) => {
   for (const name of names)
     if (typeof module[name] === "function")
       module[name] = () => {
         trapped.push(`${label}.${name}`);
-        throw new Error(`${label}.${name} called from duediligence/api`);
+        throw new Error(`${label}.${name} called from @lunox-work/bouncer/api`);
       };
 };
 trap(require("node:child_process"), ["spawn", "spawnSync", "exec", "execSync", "execFile", "execFileSync", "fork"], "child_process");
@@ -71,7 +71,7 @@ for (const name of ["http", "https", "http2"]) trap(require(`node:${name}`), ["r
 trap(require("node:dns"), ["lookup", "resolve"], "dns");
 globalThis.fetch = () => {
   trapped.push("fetch");
-  throw new Error("fetch called from duediligence/api");
+  throw new Error("fetch called from @lunox-work/bouncer/api");
 };
 const fs = require("node:fs");
 const removeScratch = fs.rmSync.bind(fs, scratch, { recursive: true, force: true });
@@ -85,7 +85,7 @@ for (const name of [...WRITES, ...READS]) {
   const wrapped = function (...argv) {
     const at = argv[0] instanceof URL || String(argv[0]).startsWith("file:") ? fileURLToPath(argv[0]) : String(argv[0]);
     touched.push({ name, path: at });
-    if (writing(name, argv)) throw new Error(`fs.${name} called from duediligence/api`);
+    if (writing(name, argv)) throw new Error(`fs.${name} called from @lunox-work/bouncer/api`);
     return original.apply(this, argv);
   };
   if (original.native) wrapped.native = original.native;
@@ -95,8 +95,8 @@ syncBuiltinESMExports();
 
 let api;
 try {
-  api = await import("duediligence/api");
-  step("import duediligence/api by self-reference: nothing spawned, written or read outside the package", () => {
+  api = await import("@lunox-work/bouncer/api");
+  step("import @lunox-work/bouncer/api by self-reference: nothing spawned, written or read outside the package", () => {
     assert.deepEqual(trapped, []);
     assert.deepEqual(touched.filter(({ path }) => !path.startsWith(ROOT + sep)), []);
     // The module loader reads through fs too: the whole import graph, without bin/lib.mjs.
@@ -120,7 +120,7 @@ try {
       ],
     );
     // "." stays the CLI (resolved, not imported: importing it runs it).
-    assert.equal(import.meta.resolve("duediligence"), new URL("../bin/cli.mjs", import.meta.url).href);
+    assert.equal(import.meta.resolve("@lunox-work/bouncer"), new URL("../bin/cli.mjs", import.meta.url).href);
   });
 
   step("decisionItems and scenarios on the bundled spec", () => {
@@ -172,7 +172,7 @@ try {
 
   step("stagedHiddenSha256 (the platform's hiddenSha256Version 2) and handoutCommitment", () => {
     const sha = (text) => createHash("sha256").update(text).digest("hex");
-    // In the platform's layout every staged path is tests/private/<rel>: duediligence's hash with the paths as kept ids.
+    // In the platform's layout every staged path is tests/private/<rel>: bouncer's hash with the paths as kept ids.
     const platformLayout = { "tests/private/b.test.ts": "b\n", "tests/private/Z.test.ts": "z\n", "tests/private/sub/c.test.ts": Buffer.from("c\n") };
     const v2 = api.stagedHiddenSha256(platformLayout);
     assert.equal(v2, api.hiddenSha256(platformLayout, Object.keys(platformLayout)));
@@ -198,7 +198,7 @@ try {
     const changed = api.handoutCommitment(handout, { ...folder, "src/__acceptance__/a.test.ts": "a!\n" });
     assert.equal(changed.comparable, true);
     assert.equal(changed.match, false);
-    // Version 1, or one newer than this duediligence: never compared, never a mismatch.
+    // Version 1, or one newer than this bouncer: never compared, never a mismatch.
     const v1 = api.handoutCommitment({ hiddenSha256: handout.hiddenSha256, hiddenSha256Version: 1 }, folder);
     assert.equal(v1.comparable, false);
     assert.equal(v1.match, null);

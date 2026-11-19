@@ -5,7 +5,7 @@
 // refuses on a mismatch, bin/promote.mjs prints it at reveal, and a seal
 // (bin/seal.mjs) carries it in seal.json. bin/commitment.mjs records and
 // checks it per spec; this module only computes it, from a folder or from
-// files in memory, and reads nothing else (no DUEDILIGENCE_HOME, no HOME).
+// files in memory, and reads nothing else (no BOUNCER_HOME, no HOME).
 //
 // What is hashed, from a folder laid out as specs/<slug>/ (or an unpacked
 // seal): a manifest of lines in `sha256sum` format, `<hex>  <path>\n`,
@@ -160,7 +160,7 @@ export const HIDDEN_SHA256_VERSIONS = [2];
  * A platform handout's commitment (`{ hiddenSha256, hiddenSha256Version }`)
  * against the hidden tests you hold at their staged paths:
  * `{ comparable, match, expected, actual, reason }`. Only a version 2 hash
- * is compared; any other (1, or one newer than this duediligence) answers
+ * is compared; any other (1, or one newer than this bouncer) answers
  * `comparable: false` with the reason, never a mismatch.
  */
 export function handoutCommitment(handout, files) {
@@ -175,7 +175,7 @@ export function handoutCommitment(handout, files) {
       reason:
         version === 1
           ? "hiddenSha256Version 1: hashed over every private file the build kept, not recomputable from the hidden tests; not compared"
-          : `hiddenSha256Version ${version} is newer than this duediligence computes (${HIDDEN_SHA256_VERSIONS.join(", ")}); not compared`,
+          : `hiddenSha256Version ${version} is newer than this bouncer computes (${HIDDEN_SHA256_VERSIONS.join(", ")}); not compared`,
     };
   }
   const actual = stagedHiddenSha256(files);

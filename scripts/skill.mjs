@@ -43,21 +43,27 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS = join(ROOT, "skills");
 const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
-const PIN = new RegExp(`\\b${PKG.name}@(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)`, "g");
+/** The skill, plugin and command name: the npm name without its scope. */
+const NAME = PKG.name.replace(/^@[^/]+\//, "");
+const PIN = new RegExp(`(?<![\\w@/.-])${PKG.name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}@(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)`, "g");
 const MANIFESTS = [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"];
-/** The plugin's one MCP server (plugin-root .mcp.json, as Claude Code plugins declare them). */
-const MCP_URL = `https://platform.lunox.work/mcp/${PKG.name}`;
+/**
+ * The plugin's one MCP server (plugin-root .mcp.json, as Claude Code plugins
+ * declare them). The platform serves it under the package's name before the
+ * rename (bin/identity.mjs `client`).
+ */
+const MCP_URL = "https://platform.lunox.work/mcp/duediligence";
 /**
  * The prompts this session reads itself (the spec-drafting rules), mirrored
  * into the skill's folder so the plugin carries every instruction it gives
  * Claude: prompts/<path>/spec-from-ticket.md is copied to
- * skills/duediligence/references/prompts/<path>/spec-from-ticket.md by
+ * skills/bouncer/references/prompts/<path>/spec-from-ticket.md by
  * `sync`, and `check` fails when a copy differs or is missing. The other
  * prompts brief the sessions the CLI starts, and stay in the package only.
  */
 const PROMPTS = join(ROOT, "prompts");
 const BUNDLED_PROMPT = "spec-from-ticket.md";
-const BUNDLED_INTO = join(SKILLS, PKG.name, "references", "prompts");
+const BUNDLED_INTO = join(SKILLS, NAME, "references", "prompts");
 
 /** [source, copy] for each prompt the skill carries. */
 function bundledPrompts() {
@@ -155,9 +161,9 @@ function check() {
   const plugin = readJson(MANIFESTS[0]);
   const market = readJson(MANIFESTS[1]);
   if (!plugin) problems.push(`${MANIFESTS[0]}: missing`);
-  else if (plugin.name !== PKG.name || plugin.version !== PKG.version) problems.push(`${MANIFESTS[0]}: name and version are not package.json's`);
-  const listed = market?.plugins?.find((p) => p.name === PKG.name);
-  if (!listed) problems.push(`${MANIFESTS[1]}: no plugin named ${PKG.name}`);
+  else if (plugin.name !== NAME || plugin.version !== PKG.version) problems.push(`${MANIFESTS[0]}: name and version are not package.json's`);
+  const listed = market?.plugins?.find((p) => p.name === NAME);
+  if (!listed) problems.push(`${MANIFESTS[1]}: no plugin named ${NAME}`);
   else if (listed.version !== undefined && listed.version !== PKG.version) problems.push(`${MANIFESTS[1]}: version is not package.json's`);
   problems.push(...checkMcp());
   problems.push(...checkBundledPrompts());
@@ -204,7 +210,7 @@ function sync() {
     const json = readJson(path);
     if (!json) continue;
     if (json.version !== undefined) json.version = PKG.version;
-    for (const plugin of json.plugins ?? []) if (plugin.name === PKG.name) plugin.version = PKG.version;
+    for (const plugin of json.plugins ?? []) if (plugin.name === NAME) plugin.version = PKG.version;
     writeFileSync(join(ROOT, path), `${JSON.stringify(json, null, 2)}\n`);
   }
 }

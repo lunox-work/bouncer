@@ -22,7 +22,7 @@ import { credentialFor, credentialsPath, platformUrl, PlatformError, request, sa
 const GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 /**
  * The scopes each CLI asks for (sandbox-factory's CLI_CLIENTS, the most it
- * may hold). duediligence's include `decisions:confirm`, so `push` records a
+ * may hold). bouncer's include `decisions:confirm`, so `push` records a
  * spec confirmed here as confirmed; without it the platform keeps the spec
  * and answers `confirmation: "skipped_scope"`.
  */
@@ -79,19 +79,19 @@ function options(argv, spec, usage) {
 }
 
 /** Runs one of the three, printing a PlatformError as one line on stderr. Answers the exit code. */
-export async function run(command, argv, { client, version }, deps = defaultDeps()) {
+export async function run(command, argv, { client, cli = client, pkg = client, version }, deps = defaultDeps()) {
   const commands = { login, whoami, logout };
   try {
-    return await commands[command](argv, { client, version }, deps);
+    return await commands[command](argv, { client, cli, pkg, version }, deps);
   } catch (error) {
     if (!(error instanceof PlatformError)) throw error;
-    deps.err(`${client} ${command}: ${error.message}\n`);
+    deps.err(`${cli} ${command}: ${error.message}\n`);
     return 1;
   }
 }
 
 /** Picks the workspace to mint in: --org, the only one an owner or admin holds, or a choice on a TTY. */
-async function chooseOrg(orgs, wanted, { client, deps }) {
+async function chooseOrg(orgs, wanted, { cli, deps }) {
   const eligible = orgs.filter((org) => isAdmin(org.role));
   const listing = (list) => list.map((org) => `  ${describe(org)}`).join("\n");
   if (wanted !== undefined) {
@@ -99,7 +99,7 @@ async function chooseOrg(orgs, wanted, { client, deps }) {
     const found = orgs.find((org) => org.id === wanted || org.slug.toLowerCase() === key);
     if (found === undefined) throw new PlatformError(`No workspace ${wanted} for this account. It has:\n${listing(orgs)}`);
     if (!isAdmin(found.role)) {
-      throw new PlatformError(`You are ${found.role} in ${found.slug}; only its owners and admins can give ${client} a token.`);
+      throw new PlatformError(`You are ${found.role} in ${found.slug}; only its owners and admins can give ${cli} a token.`);
     }
     return found;
   }
@@ -108,13 +108,13 @@ async function chooseOrg(orgs, wanted, { client, deps }) {
     throw new PlatformError(
       orgs.length === 0
         ? "This account has no workspace yet. Create one in the platform's web app, then run login again."
-        : `You are not an owner or admin of any workspace, and only they can give ${client} a token. This account has:\n${listing(orgs)}`,
+        : `You are not an owner or admin of any workspace, and only they can give ${cli} a token. This account has:\n${listing(orgs)}`,
     );
   }
   if (!deps.isTTY) {
     throw new PlatformError(`This account can sign in to ${eligible.length} workspaces; name one with --org <handle|id>:\n${listing(eligible)}`);
   }
-  deps.out(`\nWorkspaces you can sign ${client} in to:\n${eligible.map((org, i) => `  ${i + 1}. ${describe(org)}`).join("\n")}\n`);
+  deps.out(`\nWorkspaces you can sign ${cli} in to:\n${eligible.map((org, i) => `  ${i + 1}. ${describe(org)}`).join("\n")}\n`);
   for (let tries = 0; tries < 3; tries += 1) {
     const answer = (await deps.ask(`Workspace [1-${eligible.length}]: `)).trim();
     const index = Number(answer);
@@ -126,7 +126,7 @@ async function chooseOrg(orgs, wanted, { client, deps }) {
 }
 
 /** Polls the token endpoint at the server's interval, five seconds slower after each `slow_down`, until approval, denial or expiry. */
-async function pollForSession(base, code, { client, version, deps }) {
+async function pollForSession(base, code, { client, cli, pkg, version, deps }) {
   let interval = Math.max(1, Number(code.interval) || 5) * 1000;
   const deadline = deps.now() + Math.max(1, Number(code.expires_in) || 900) * 1000;
   for (;;) {
@@ -139,6 +139,8 @@ async function pollForSession(base, code, { client, version, deps }) {
         path: "/api/auth/device/token",
         body: { grant_type: GRANT, device_code: code.device_code, client_id: client },
         client,
+        cli,
+        pkg,
         version,
         fetchImpl: deps.fetchImpl,
       });
@@ -159,19 +161,19 @@ async function pollForSession(base, code, { client, version, deps }) {
   }
 }
 
-export async function login(argv, { client, version }, deps) {
-  const usage = `usage: ${client} login [--platform <url>] [--org <handle|id>] [--open]`;
+export async function login(argv, { client, cli = client, pkg = client, version }, deps) {
+  const usage = `usage: ${cli} login [--platform <url>] [--org <handle|id>] [--open]`;
   const values = options(argv, { platform: { type: "string" }, org: { type: "string" }, open: { type: "boolean" } }, usage);
   if (values.help) {
     deps.out(
-      `${usage}\n\nSigns ${client} in to the Lunox platform (default ${platformUrl(undefined, {})}; LUNOX_PLATFORM_URL) with a code\n` +
+      `${usage}\n\nSigns ${cli} in to the Lunox platform (default ${platformUrl(undefined, {})}; LUNOX_PLATFORM_URL) with a code\n` +
         `you approve in the browser, and saves a workspace token in ${credentialsPath(deps.env)} (LUNOX_CREDENTIALS).\n` +
         `--org picks the workspace; --open opens the approval page.\n`,
     );
     return 0;
   }
   const base = platformUrl(values.platform, deps.env);
-  const call = (options) => request({ base, client, version, fetchImpl: deps.fetchImpl, ...options });
+  const call = (options) => request({ base, client, cli, pkg, version, fetchImpl: deps.fetchImpl, ...options });
   const code = await call({ method: "POST", path: "/api/auth/device/code", body: { client_id: client } });
   if (typeof code.device_code !== "string" || typeof code.user_code !== "string") {
     throw new PlatformError(`${base} answered the sign-in request without a code.`);
@@ -179,12 +181,12 @@ export async function login(argv, { client, version }, deps) {
   const page = code.verification_uri_complete ?? code.verification_uri ?? `${base}/device`;
   const minutes = Math.round((Number(code.expires_in) || 900) / 60);
   deps.out(
-    `To sign ${client} in to ${base}, open this page and approve the code:\n\n  ${page}\n\n` +
+    `To sign ${cli} in to ${base}, open this page and approve the code:\n\n  ${page}\n\n` +
       `  Code: ${code.user_code} (expires in ${minutes} minute${minutes === 1 ? "" : "s"})\n\n`,
   );
   if (values.open) deps.openUrl(page);
   deps.out("Waiting for approval...\n");
-  const session = await pollForSession(base, code, { client, version, deps });
+  const session = await pollForSession(base, code, { client, cli, pkg, version, deps });
   const asSession = (options) => call({ token: session, session: true, ...options });
   let minted;
   let me;
@@ -192,7 +194,7 @@ export async function login(argv, { client, version }, deps) {
   try {
     me = (await asSession({ path: "/api/v1/me" })).user;
     const orgs = (await asSession({ path: "/api/v1/me/orgs" })).organizations ?? [];
-    org = await chooseOrg(orgs, values.org, { client, deps });
+    org = await chooseOrg(orgs, values.org, { cli, deps });
     const label = String(deps.hostname() ?? "").trim().slice(0, 60);
     const mint = (scopes) =>
       asSession({
@@ -232,24 +234,24 @@ export async function login(argv, { client, version }, deps) {
   const granted = minted.token?.scopes;
   if (CLI_SCOPES[client]?.includes(CONFIRM_SCOPE) && Array.isArray(granted) && !granted.includes(CONFIRM_SCOPE)) {
     deps.out(
-      `This platform did not grant ${CONFIRM_SCOPE}: \`${client} push\` posts specs with their decisions unconfirmed, to confirm\n` +
+      `This platform did not grant ${CONFIRM_SCOPE}: \`${cli} push\` posts specs with their decisions unconfirmed, to confirm\n` +
         "in the web app. Sign in again once the platform offers it.\n",
     );
   }
   return 0;
 }
 
-export async function whoami(argv, { client, version }, deps) {
-  const usage = `usage: ${client} whoami [--platform <url>]`;
+export async function whoami(argv, { client, cli = client, pkg = client, version }, deps) {
+  const usage = `usage: ${cli} whoami [--platform <url>]`;
   const values = options(argv, { platform: { type: "string" } }, usage);
   if (values.help) {
-    deps.out(`${usage}\n\nThe account, workspace and token expiry ${client} is signed in with.\n`);
+    deps.out(`${usage}\n\nThe account, workspace and token expiry ${cli} is signed in with.\n`);
     return 0;
   }
   const base = platformUrl(values.platform, deps.env);
   const saved = credentialFor(credentialsPath(deps.env), base, client);
-  if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${client} login\`.`);
-  const call = (path) => request({ base, token: saved.token, path, client, version, fetchImpl: deps.fetchImpl });
+  if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${cli} login\`.`);
+  const call = (path) => request({ base, token: saved.token, path, client, cli, pkg, version, fetchImpl: deps.fetchImpl });
   const { user } = await call("/api/v1/me");
   const { organization, role } = await call(`/api/v1/orgs/${encodeURIComponent(saved.organizationId)}`);
   const expires = saved.expiresAt ? `expires ${saved.expiresAt.slice(0, 10)}` : "does not expire";
@@ -258,18 +260,18 @@ export async function whoami(argv, { client, version }, deps) {
       `user       ${user.name} <${user.email}>${user.username ? ` (@${user.username})` : ""}`,
       `workspace  ${organization.name} (@${organization.slug}), ${role}`,
       `platform   ${base}`,
-      `token      ${client}, ${expires}`,
+      `token      ${cli}, ${expires}`,
       "",
     ].join("\n"),
   );
   return 0;
 }
 
-export async function logout(argv, { client }, deps) {
-  const usage = `usage: ${client} logout [--platform <url>]`;
+export async function logout(argv, { client, cli = client }, deps) {
+  const usage = `usage: ${cli} logout [--platform <url>]`;
   const values = options(argv, { platform: { type: "string" } }, usage);
   if (values.help) {
-    deps.out(`${usage}\n\nDeletes ${client}'s saved token for the platform.\n`);
+    deps.out(`${usage}\n\nDeletes ${cli}'s saved token for the platform.\n`);
     return 0;
   }
   const base = platformUrl(values.platform, deps.env);

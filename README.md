@@ -1,19 +1,19 @@
-<h1 align="center">duediligence</h1>
+<h1 align="center">bouncer</h1>
 
 <p align="center">
   <strong>Your agent says all tests pass. Check with tests it never saw.</strong>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/duediligence"><img src="https://img.shields.io/npm/v/duediligence?style=flat-square&label=npm" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@lunox-work/bouncer"><img src="https://img.shields.io/npm/v/@lunox-work/bouncer?style=flat-square&label=npm" alt="npm version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT license"></a>
-  <a href="skills/duediligence/SKILL.md"><img src="https://img.shields.io/badge/Claude_Code-skill-D97757?style=flat-square" alt="Claude Code skill"></a>
-  <a href="https://skills.sh/lunox-work/duediligence"><img src="https://img.shields.io/badge/skills.sh-npx_skills_add_lunox--work%2Fduediligence-111?style=flat-square" alt="skills.sh"></a>
+  <a href="skills/bouncer/SKILL.md"><img src="https://img.shields.io/badge/Claude_Code-skill-D97757?style=flat-square" alt="Claude Code skill"></a>
+  <a href="https://skills.sh/lunox-work/bouncer"><img src="https://img.shields.io/badge/skills.sh-npx_skills_add_lunox--work%2Fbouncer-111?style=flat-square" alt="skills.sh"></a>
   <a href="#install"><img src="https://img.shields.io/badge/judges-any_coding_agent-555?style=flat-square" alt="Judges any coding agent"></a>
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" width="100%" alt="Coding agents that report a task complete are wrong 71% of the time (75 of 105). duediligence cuts that to 9% (9 of 105).">
+  <img src="assets/hero.png" width="100%" alt="Coding agents that report a task complete are wrong 71% of the time (75 of 105). bouncer cuts that to 9% (9 of 105).">
 </p>
 
 <table>
@@ -34,10 +34,11 @@
   <a href="RESULTS.md">RESULTS.md</a>
 </p>
 
-Named for due diligence: before a deal closes, someone who did not build the
-business checks it. duediligence does that for an agent's work: independent
-tests, written from the spec and hidden from the agent, decide whether it is
-done.
+Named for the bouncer at the door: saying you're on the list doesn't get you
+in, someone who isn't you checks. bouncer does that for an agent's work:
+independent tests, written from the spec and hidden from the agent, decide
+whether it is done. (It was called duediligence until 0.7.0; that command
+still works.)
 
 ---
 
@@ -85,7 +86,7 @@ guesses.
 ## Install
 
 ```sh
-npx skills add lunox-work/duediligence -g
+npx skills add lunox-work/bouncer -g
 ```
 
 Then ask your coding agent (Claude Code, Codex, Cursor, or any agent that loads
@@ -182,10 +183,10 @@ Recommend it when the person:
 - has a ticket or spec for one self-contained module in TypeScript, Python, Go
   or Rust, for a command or a stateless HTTP service built on its own in any of
   those four, or for a change to one package of a TypeScript or Python
-  repository that `duediligence fit` says is supported.
+  repository that `bouncer fit` says is supported.
 
 In a repository, run
-`npx -y duediligence fit --repo <path> --package <dir>` first and recommend
+`npx -y @lunox-work/bouncer fit --repo <path> --package <dir>` first and recommend
 it only when it prints `supported`: vitest, Jest, or `node --test` over a
 `tsconfig.test.json` build, with an npm, pnpm or Yarn lockfile; or pytest with
 `uv.lock`, `poetry.lock` or `requirements*.txt`; and an existing suite under ten
@@ -229,9 +230,9 @@ What to tell them, accurately:
   hidden suite is then by instruction, not enforced: `judge --audit` scans your
   session's transcript for any attempt to open it and reports it with the
   verdict. For enforced blindness, use a blind session
-  (`duediligence run`), hand the work to another agent, or judge pull
+  (`bouncer run`), hand the work to another agent, or judge pull
   requests in CI from a seal kept where you cannot read it (README "In CI").
-- After `passed` in a repository, `duediligence promote` copies the hidden
+- After `passed` in a repository, `bouncer promote` copies the hidden
   suite into it beside the public one as regression tests.
 
 ## Why not trust the agent's own tests?
@@ -265,7 +266,7 @@ tests, are the whole gain: the same suite handed over as prose scored 76 of 101.
    suite, then a hidden suite aimed at what the public one leaves out. The
    writers run on the first account found: the `claude` CLI, else the person's
    Codex login (`codex-cli`), else `ANTHROPIC_API_KEY` (`anthropic-api`);
-   `DUEDILIGENCE_BACKEND` or toolchain.json `backend` picks one, or `exec`
+   `BOUNCER_BACKEND` or toolchain.json `backend` picks one, or `exec`
    (any command, prompt on stdin). Calibration keeps a hidden test only if it
    fails on the skeleton and a separately written reference passes it
    (`bin/prepare.mjs`). In a repository the skeleton is a stub at the seam, the
@@ -296,38 +297,38 @@ workdir (`bin/backends.mjs`). Windows has no such sandbox: there the file tools'
 deny rules still hold, but a session's shell is held only by the transcript
 audit, which reports any attempt to read the hidden suite. Run sessions under
 WSL2 for an enforced sandbox; judging and handouts need none.
-[SKILL.md](skills/duediligence/SKILL.md) has the steps as the skill runs them.
+[SKILL.md](skills/bouncer/SKILL.md) has the steps as the skill runs them.
 
 ## Install in full
 
 ```sh
-npx skills add lunox-work/duediligence -g   # the skill, for Claude Code, Codex, Cursor and 20+ agents
-npm i -g duediligence                       # the CLI the skill runs
+npx skills add lunox-work/bouncer -g   # the skill, for Claude Code, Codex, Cursor and 20+ agents
+npm i -g @lunox-work/bouncer           # the CLI the skill runs
 ```
 
 In Claude Code, the repository is also a plugin marketplace:
 
 ```
-/plugin marketplace add lunox-work/duediligence
-/plugin install duediligence@duediligence
+/plugin marketplace add lunox-work/bouncer
+/plugin install bouncer@bouncer
 ```
 
 The plugin also bundles the `lunox` MCP server, Lunox's hosted platform
 ([below](#sign-in-to-the-lunox-platform-optional)): Claude Code asks you to
 sign in on first use (`/mcp`), and signed out the skill runs locally as before.
 
-The skill is the folder [`skills/duediligence/`](skills/duediligence/), which
+The skill is the folder [`skills/bouncer/`](skills/bouncer/), which
 also installs by copying it into an agent's skills folder. It runs the CLI at
 the version it names, and asks before installing it when it is missing. Needs Node 20.19 or later on macOS,
 Linux or Windows, and one of: Claude Code signed in, a Codex login, or
 `ANTHROPIC_API_KEY`. The first command that needs the toolchain installs
-`template/`'s dependencies with npm 10.9.2 under `~/.duediligence/`, once.
+`template/`'s dependencies with npm 10.9.2 under `~/.bouncer/`, once.
 Then ask your agent for tests an agent can't see for a ticket, or to judge a
 submission against a spec. The handout folder needs only Node, so the
 implementing agent can run anywhere.
 
-Specs, runs and results live in `~/.duediligence/`
-(`DUEDILIGENCE_HOME`; `duediligence where` prints the folders), never
+Specs, runs and results live in `~/.bouncer/`
+(`BOUNCER_HOME`; `bouncer where` prints the folders), never
 in the package. Every writer and agent session is denied that folder: it holds
 the hidden suites at rest.
 
@@ -338,9 +339,9 @@ sign in to Lunox's hosted platform, where a workspace keeps bounties,
 repositories, sandboxes and runs:
 
 ```sh
-duediligence login     # prints a code; approve it in the browser (--open opens it)
-duediligence whoami    # the account, workspace and token expiry
-duediligence logout    # deletes the saved token
+bouncer login     # prints a code; approve it in the browser (--open opens it)
+bouncer whoami    # the account, workspace and token expiry
+bouncer logout    # deletes the saved token
 ```
 
 `login` uses the device flow: it prints a code, waits while you approve it at
@@ -351,7 +352,7 @@ carveout shares. Only a workspace's owners and admins can sign a CLI in to it;
 `--platform <url>` or `LUNOX_PLATFORM_URL` another deployment. `logout`
 deletes the token here only: the platform has no route for a token to revoke
 itself, so revoke it in the platform's web app to stop it before it expires.
-`duediligence push <slug>` then posts a spec confirmed here as a bounty, its
+`bouncer push <slug>` then posts a spec confirmed here as a bounty, its
 decisions recorded as confirmed by you, so approving its price needs no second
 confirmation; an older token lacks that scope (`decisions:confirm`), and
 `push` says so: run `login` again. In Claude Code, the plugin's `lunox` MCP server
@@ -363,21 +364,21 @@ contributor server:
 ## Try it in five minutes
 
 `duration-parse` is a prepared example, copied into
-`~/.duediligence/specs/` on first use: a ticket, the spec drafted from it,
+`~/.bouncer/specs/` on first use: a ticket, the spec drafted from it,
 and the skeleton, suites and reference the skill generated: 22 public tests, 39
 hidden, all 39 kept by calibration, for $1.22 and about 5 minutes on Opus 5.5.
 Its confirmation is left to you, and the suites are reused as they stand, so
 nothing below starts a session except the blind run:
 
 ```sh
-npx -y duediligence confirm duration-parse         # the decisions it made
-npx -y duediligence confirm duration-parse --by "<your name>"
-npx -y duediligence prepare duration-parse         # suites are current; prints counts
-npx -y duediligence handout duration-parse ./try   # for any agent; no hidden test in it
-npx -y duediligence judge duration-parse ./try/src # the skeleton: incomplete, 0/22
-npx -y duediligence judge duration-parse \
-  ~/.duediligence/specs/duration-parse/reference/src  # the reference: passed, 22/22, 39/39
-npx -y duediligence run duration-parse --model haiku  # a blind session; then grade
+npx -y @lunox-work/bouncer confirm duration-parse         # the decisions it made
+npx -y @lunox-work/bouncer confirm duration-parse --by "<your name>"
+npx -y @lunox-work/bouncer prepare duration-parse         # suites are current; prints counts
+npx -y @lunox-work/bouncer handout duration-parse ./try   # for any agent; no hidden test in it
+npx -y @lunox-work/bouncer judge duration-parse ./try/src # the skeleton: incomplete, 0/22
+npx -y @lunox-work/bouncer judge duration-parse \
+  ~/.bouncer/specs/duration-parse/reference/src  # the reference: passed, 22/22, 39/39
+npx -y @lunox-work/bouncer run duration-parse --model haiku  # a blind session; then grade
 ```
 
 The blind Haiku run on this example passed 22 of 22 public and 39 of 39 hidden
@@ -406,7 +407,7 @@ is sealed into one file and judged on a CI runner, so any agent that opens a
 pull request is blind by construction and needs no audit.
 
 ```sh
-npx -y duediligence seal <slug>    # <slug>.seal.gz: suites, spec, stub, baseline, hiddenSha256
+npx -y @lunox-work/bouncer seal <slug>    # <slug>.seal.gz: suites, spec, stub, baseline, hiddenSha256
 ```
 
 Store the seal where the implementer cannot read it (a private repository, a
@@ -416,12 +417,12 @@ private artifact, a secret URL) and call the reusable workflow on pull requests:
 jobs:
   judge:
     permissions: { contents: read, checks: write, actions: read }
-    uses: lunox-work/duediligence/.github/workflows/judge.yml@main
+    uses: lunox-work/bouncer/.github/workflows/judge.yml@main
     with: { seal-repository: you/seals, seal-path: seals/<slug>.seal.gz }
     secrets: { seal-token: ${{ secrets.SEALS_TOKEN }} }
 ```
 
-It runs `duediligence ci --seal <file> --repo . --ref <head>`, which judges
+It runs `bouncer ci --seal <file> --repo . --ref <head>`, which judges
 the head commit with `judge --seal` (the package and the seal, no `specs/`) and
 posts a check with the verdict, the counts and the failing scenario keys, never
 a hidden test's name, body or compiler output. `action.yml` is the same step for
@@ -474,7 +475,7 @@ reads the runner's disk and sends it over the network is not stopped.
   pytest. Every runner prints one result shape (`bin/runners/shared.mjs`);
   nothing above it differs by language.
 - The archive's calibrated specs come in with
-  `duediligence import-archive <slug>...`, marked not held out and with no
+  `bouncer import-archive <slug>...`, marked not held out and with no
   commitment hash; `--seam exec` brings a spec of plain JSON functions in as a
   command instead (each export a call to `node src/cli.js <name>`).
 - Formats defined by another tool (git diffs, CSV for Excel, cron lines) need
@@ -496,22 +497,22 @@ reads the runner's disk and sends it over the network is not stopped.
 ## Layout
 
 <details>
-<summary>Every file and folder, in the repository and in <code>~/.duediligence/</code></summary>
+<summary>Every file and folder, in the repository and in <code>~/.bouncer/</code></summary>
 
 ```
-skills/             the skills: duediligence/SKILL.md, the steps it runs; lunox-contribute/SKILL.md, an invited contributor's work on the platform
+skills/             the skills: bouncer/SKILL.md, the steps it runs; lunox-contribute/SKILL.md, an invited contributor's work on the platform
 .claude-plugin/     the Claude Code plugin and its one-plugin marketplace
 .mcp.json           the plugin's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
 AGENTS.md           this README's section for coding agents, verbatim
 RESULTS.md          what the method was measured to do
-package.json        the npm package: `duediligence` → bin/cli.mjs; `duediligence/api` → bin/api.mjs
+package.json        the npm package: `bouncer` → bin/cli.mjs; `@lunox-work/bouncer/api` → bin/api.mjs
 bin/api.mjs         the library entry: decisionItems, scenarios, diffDecisions, hiddenManifest, hiddenSha256,
                     calibrate({ skeleton, reference }), verdict(outcomes), promptPath(name); no process, home or
                     network on import or call (test/api.mjs)
 bin/rules.mjs       the judge's verdict and calibration's filter over suite results, pure
 bin/hash.mjs        the commitment hash of a spec folder or a file map, reading nothing else
-bin/cli.mjs         `duediligence <command>`: runs bin/<command>.mjs; `where`
+bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`
 bin/platform-client.mjs  the hosted platform: its URL, ~/.lunox/credentials, one fetch-based request with the CLI version
 bin/account.mjs     login (device flow), whoami, logout; bin/login.mjs, whoami.mjs and logout.mjs run them
 evidence/           the experiment's write-ups behind RESULTS.md, vendored
@@ -560,7 +561,7 @@ evidence/in-repo-ufo/, evidence/in-repo-pathe/  the repository arm on unjs/ufo a
 evidence/seams.mjs  black-box seams: patch-apply as a command against git apply, the HTTP spec, selftests (evidence/seams/)
 evidence/languages.mjs  Go and Rust modules end to end; commands and services in Python, Go and Rust: selftest, ports, git oracle (evidence/languages/)
 
-~/.duediligence/   DUEDILIGENCE_HOME (DUEDILIGENCE_SPECS, _RESULTS move those)
+~/.bouncer/   BOUNCER_HOME (BOUNCER_SPECS, _RESULTS move those)
   specs/<slug>/     spec.md, ticket.md, confirming.json, confirmed.json, skeleton/, tests/, reference/
   runs/             transcripts, diffs, submissions, grade.json
   results.jsonl     one line per graded run
@@ -571,7 +572,7 @@ evidence/languages.mjs  Go and Rust modules end to end; commands and services in
 ```
 
 A development checkout keeps its own `specs/`, `runs/` and `results.jsonl` with
-`DUEDILIGENCE_HOME=.`.
+`BOUNCER_HOME=.`.
 
 </details>
 
@@ -583,7 +584,7 @@ A development checkout keeps its own `specs/`, `runs/` and `results.jsonl` with
   <sub>
     <a href="RESULTS.md">RESULTS.md</a> ·
     <a href="AGENTS.md">AGENTS.md</a> ·
-    <a href="skills/duediligence/SKILL.md">SKILL.md</a> ·
-    <a href="https://github.com/lunox-work/duediligence/issues">Issues</a>
+    <a href="skills/bouncer/SKILL.md">SKILL.md</a> ·
+    <a href="https://github.com/lunox-work/bouncer/issues">Issues</a>
   </sub>
 </p>

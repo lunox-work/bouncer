@@ -12,7 +12,7 @@
 # `permissions: id-token: write`; the platform accepts its OIDC token only
 # from the repository the version was sliced from. The job's own pass or
 # fail is the check.
-name: duediligence judge
+name: bouncer judge
 description: Judge a pull request against a hidden test suite it never saw, and post the verdict as a check.
 author: feversoul
 branding:
@@ -50,7 +50,7 @@ inputs:
   check-name:
     description: Name of the check run.
     required: false
-    default: duediligence
+    default: bouncer
   github-token:
     description: Token that posts the check run (checks write). Empty skips posting.
     required: false
@@ -79,8 +79,8 @@ runs:
     - id: judge
       shell: bash
       env:
-        DUEDILIGENCE_SEAL_AUTH: ${{ inputs.seal-auth }}
-        DUEDILIGENCE_GITHUB_TOKEN: ${{ inputs.github-token }}
+        BOUNCER_SEAL_AUTH: ${{ inputs.seal-auth }}
+        BOUNCER_GITHUB_TOKEN: ${{ inputs.github-token }}
         SEAL: ${{ inputs.seal }}
         REPO: ${{ inputs.repo }}
         REF: ${{ inputs.ref || github.event.pull_request.head.sha || github.sha }}
@@ -97,9 +97,9 @@ runs:
             --workspace "$WORKSPACE" --repo "$REPO" "${flags[@]}"
           exit $?
         fi
-        if [ -z "$SEAL" ]; then echo "duediligence: give seal, or version and workspace for platform mode" >&2; exit 1; fi
+        if [ -z "$SEAL" ]; then echo "bouncer: give seal, or version and workspace for platform mode" >&2; exit 1; fi
         node "$GITHUB_ACTION_PATH/bin/cli.mjs" ci --seal "$SEAL" --repo "$REPO" --ref "$REF" \
-          --name "$CHECK_NAME" --out "$RUNNER_TEMP/duediligence-check.json" "${flags[@]}"
+          --name "$CHECK_NAME" --out "$RUNNER_TEMP/bouncer-check.json" "${flags[@]}"
     - if: always()
       shell: bash
       env:

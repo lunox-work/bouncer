@@ -1,15 +1,15 @@
 {
-  "name": "duediligence",
+  "name": "bouncer",
   "owner": {
     "name": "lunox-work",
     "url": "https://github.com/lunox-work"
   },
   "metadata": {
-    "description": "duediligence: hidden, calibrated test suites that judge AI coding agents' work."
+    "description": "bouncer: hidden, calibrated test suites that judge AI coding agents' work."
   },
   "plugins": [
     {
-      "name": "duediligence",
+      "name": "bouncer",
       "source": "./",
       "description": "Independent, hidden test suites written from the spec for AI coding agents. Optional hosted mode: after sign-in, a bundled MCP server works with the person's workspace on the Lunox platform (platform.lunox.work).",
       "version": "0.6.0",

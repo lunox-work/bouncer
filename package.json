@@ -1,8 +1,9 @@
 {
-  "name": "duediligence",
+  "name": "@lunox-work/bouncer",
   "version": "0.6.0",
-  "description": "Due diligence for AI coding agents: independent, hidden test suites written from the spec. The agent works against a public suite; a hidden suite it never sees judges the result.",
+  "description": "A bouncer for AI coding agents' work: independent, hidden test suites written from the spec. The agent works against a public suite; a hidden suite it never sees judges the result.",
   "keywords": [
+    "bouncer",
     "due-diligence",
     "independent-tests",
     "ai-agents",
@@ -23,19 +24,19 @@
     "agent-skills",
     "claude-code-plugin"
   ],
-  "homepage": "https://github.com/lunox-work/duediligence#readme",
+  "homepage": "https://github.com/lunox-work/bouncer#readme",
   "bugs": {
-    "url": "https://github.com/lunox-work/duediligence/issues"
+    "url": "https://github.com/lunox-work/bouncer/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lunox-work/duediligence.git"
+    "url": "git+https://github.com/lunox-work/bouncer.git"
   },
   "license": "MIT",
   "author": "Charlie Angriawan",
   "type": "module",
   "bin": {
-    "duediligence": "bin/cli.mjs"
+    "bouncer": "bin/cli.mjs"
   },
   "exports": {
     ".": "./bin/cli.mjs",

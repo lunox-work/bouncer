@@ -1,6 +1,6 @@
 # Privacy
 
-duediligence is a command-line tool and agent skill that runs on your machine. It
+bouncer is a command-line tool and agent skill that runs on your machine. It
 needs no account and sends no telemetry, and nothing it handles reaches its
 authors unless you use Lunox's hosted platform, which is optional (below).
 
@@ -13,7 +13,7 @@ authors unless you use Lunox's hosted platform, which is optional (below).
   npm, and from pip for Python; Go and Rust use the toolchains already
   installed. There is no telemetry.
 - **Lunox platform, only when asked:** without an account the CLI is
-  unchanged and local. `duediligence login` signs in to Lunox's hosted service
+  unchanged and local. `bouncer login` signs in to Lunox's hosted service
   at platform.lunox.work with a code approved in the browser, and stores a
   workspace API token in `~/.lunox/credentials` on the same machine (mode 600,
   shared with carveout); `logout` deletes it. `login`, `whoami`, `logout`,
@@ -21,7 +21,7 @@ authors unless you use Lunox's hosted platform, which is optional (below).
   The CLI sends the token, its name and version, and, once at sign-in, the
   machine's host name to label the token. `push <slug>` posts a confirmed spec
   as a bounty: the ticket's title, the text of `spec.md`, whether it is
-  confirmed here and the duediligence version, recorded in
+  confirmed here and the bouncer version, recorded in
   `specs/<slug>/platform.json` on the same machine; the platform records the
   decisions as confirmed by the signed-in person. `ci --platform`, in a
   GitHub Actions job that opts in, sends the pull request's changed files with
@@ -50,12 +50,12 @@ authors unless you use Lunox's hosted platform, which is optional (below).
   token: it reads the version they were invited to and submits the files they
   changed for a verdict.
 - **Personal data:** a ticket can name people; it is stored with the spec
-  under `~/.duediligence/specs/` on the same machine.
-- **Retention:** duediligence itself runs no service. What the model backends
+  under `~/.bouncer/specs/` on the same machine.
+- **Retention:** bouncer itself runs no service. What the model backends
   keep is governed by the person's own agreement with that provider, and what
   the platform keeps of what is sent to it by its privacy policy.
 
 Questions about this policy: open an issue at
-https://github.com/lunox-work/duediligence/issues.
+https://github.com/lunox-work/bouncer/issues.
 
 Last updated 2026-11-14.

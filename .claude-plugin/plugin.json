@@ -1,17 +1,17 @@
 {
-  "name": "duediligence",
-  "displayName": "duediligence",
+  "name": "bouncer",
+  "displayName": "bouncer",
   "version": "0.6.0",
   "description": "Independent, hidden test suites written from the spec for AI coding agents: the agent works against a public suite, a calibrated hidden suite it never sees judges the result. Optional hosted mode: after sign-in, a bundled MCP server works with the person's workspace on the Lunox platform (platform.lunox.work).",
   "author": {
     "name": "Charlie Angriawan",
     "url": "https://github.com/lunox-work"
   },
-  "homepage": "https://github.com/lunox-work/duediligence#readme",
-  "repository": "https://github.com/lunox-work/duediligence",
-  "documentationUrl": "https://github.com/lunox-work/duediligence#readme",
-  "supportUrl": "https://github.com/lunox-work/duediligence/issues",
-  "privacyPolicyUrl": "https://github.com/lunox-work/duediligence/blob/main/PRIVACY.md",
+  "homepage": "https://github.com/lunox-work/bouncer#readme",
+  "repository": "https://github.com/lunox-work/bouncer",
+  "documentationUrl": "https://github.com/lunox-work/bouncer#readme",
+  "supportUrl": "https://github.com/lunox-work/bouncer/issues",
+  "privacyPolicyUrl": "https://github.com/lunox-work/bouncer/blob/main/PRIVACY.md",
   "license": "MIT",
   "keywords": [
     "hidden-tests",

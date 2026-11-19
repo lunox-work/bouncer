@@ -17,8 +17,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = join(ROOT, "bin", "cli.mjs");
-const scratch = mkdtempSync(join(tmpdir(), "duediligence-smoke-"));
-const env = { ...process.env, DUEDILIGENCE_HOME: join(scratch, "home"), DUEDILIGENCE_WORK: join(scratch, "work") };
+const scratch = mkdtempSync(join(tmpdir(), "bouncer-smoke-"));
+const env = { ...process.env, BOUNCER_HOME: join(scratch, "home"), BOUNCER_WORK: join(scratch, "work") };
 const reference = join(ROOT, "specs", "duration-parse", "reference", "src");
 const stub = join(ROOT, "specs", "duration-parse", "skeleton", "src");
 

@@ -1,5 +1,5 @@
 ---
-name: duediligence
+name: bouncer
 description: >-
   Turn a ticket or spec for one module (TypeScript, Python, Go or Rust), or for
   a change to one package of an existing TypeScript or Python repository, into a
@@ -10,24 +10,24 @@ description: >-
   spec, or wants to stop trusting an agent's own green test run.
 license: MIT
 compatibility: >-
-  Node 20.19 or later. Runs the duediligence@0.6.0 CLI from npm, which starts
+  Node 20.19 or later. Runs the @lunox-work/bouncer@0.6.0 CLI from npm, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
-  under ~/.duediligence/ once (network).
+  under ~/.bouncer/ once (network).
 ---
 
-# duediligence
+# bouncer
 
 From one confirmed spec, generate a **public** suite the implementing agent
 works against and a **hidden** suite that judges the result.
 
-`duediligence <command>` below is the CLI, `duediligence@0.6.0`. When
-`duediligence --version` prints another version or nothing, ask the person
-before installing it: `npm i -g duediligence@0.6.0`, or put
-`npx duediligence@0.6.0` in place of `duediligence` in each command (in a clone
+`bouncer <command>` below is the CLI, `@lunox-work/bouncer@0.6.0`. When
+`bouncer --version` prints another version or nothing, ask the person
+before installing it: `npm i -g @lunox-work/bouncer@0.6.0`, or put
+`npx @lunox-work/bouncer@0.6.0` in place of `bouncer` in each command (in a clone
 of the repository, `node bin/cli.mjs`). Run it from any folder. `specs/` and
-`runs/` below are in the home, `~/.duediligence/` (`DUEDILIGENCE_HOME`);
+`runs/` below are in the home, `~/.bouncer/` (`BOUNCER_HOME`);
 `template*/` and the briefs for the sessions the CLI starts (`prompts/`) are
-in the CLI's package; `duediligence where` prints both (`home`, `package`).
+in the CLI's package; `bouncer where` prints both (`home`, `package`).
 The rules you draft a spec by come with this skill, in `references/prompts/`, a
 copy of the package's `spec-from-ticket.md` prompts at this version.
 
@@ -62,11 +62,11 @@ _Repository_ below are for that target.
   a change inside a repository visible only through a running service: `fit`,
   `repo` and the judge take `--seam http`, but no brief writes its suites.
 - **Preconditions.** Node 20.19 or later, on macOS, Linux or Windows. One
-  account for the sessions, taken in this order unless `DUEDILIGENCE_BACKEND`
+  account for the sessions, taken in this order unless `BOUNCER_BACKEND`
   names one: `claude` signed in (`CLAUDE_BIN`, PATH or the VS Code extension
   bundle), else their Codex login (`codex-cli`; Codex 0.164.0 installed into the
   home once), else `ANTHROPIC_API_KEY` (`anthropic-api`); or `exec` with
-  `DUEDILIGENCE_EXEC=<command>`. claude sessions are held by Claude Code's
+  `BOUNCER_EXEC=<command>`. claude sessions are held by Claude Code's
   sandbox and deny rules, the others by `sandbox-exec` or `bwrap`. On Windows
   there is no OS sandbox: say so before step 3, and that WSL2 gives one. The
   first command that needs the bundled toolchain installs it with npm 10.9.2
@@ -105,9 +105,9 @@ the decisions are confirmed (409 `decisions_unconfirmed`, with `confirmUrl`)
 and while the code is still being profiled (409 `profile_pending`; the price
 may move, `price_changed`: reload and approve the new one). A spec confirmed
 here and posted with its bounty needs no second confirmation: from a terminal,
-`duediligence push <slug>`; with no terminal, `post_bounty` with `title` from
+`bouncer push <slug>`; with no terminal, `post_bounty` with `title` from
 `ticket.md`'s heading and
-`spec: { document: <spec.md as written>, format: "duediligence", confirmed: true, engine: { name: "duediligence", version: <duediligence --version> } }`,
+`spec: { document: <spec.md as written>, format: "duediligence", confirmed: true, engine: { name: "duediligence", version: <bouncer --version> } }`,
 `confirmed: true` only while `confirm <slug>` says the confirmation is current.
 A refusal `invalid_spec` lists each problem's path: fix spec.md, confirm again,
 post again. An answer `confirmation: "skipped_scope"` kept the spec but not
@@ -144,18 +144,18 @@ and builds and grading against its evaluator time; `get_usage` shows both. An
 error `quota_exceeded` names the `kind` and when it resets, `rate_limited`
 when to try again: tell the person, never retry before then. A 409 with
 `retryable: true` kept what was sent: send the same files again after its
-`Retry-After`. `duediligence ci --platform --version <id> --workspace <id>` (or
+`Retry-After`. `bouncer ci --platform --version <id> --workspace <id>` (or
 `action.yml` with `version` and `workspace`, job permission `id-token: write`)
 judges a pull request on the platform. Never ask for a token in the chat: the
-server signs in through `/mcp`, the CLI through `duediligence login` in the
+server signs in through `/mcp`, the CLI through `bouncer login` in the
 person's own terminal. Both now include `specs:write` and `decisions:confirm`;
 a tool error `insufficient_scope` means the sign-in predates a scope: ask the
-person to sign in again (`/mcp`, or `duediligence login`). Local mode, the
+person to sign in again (`/mcp`, or `bouncer login`). Local mode, the
 steps below, is unchanged and the default, and needs no sign-in.
 
 ## 0. Fit (repository)
 
-`duediligence fit --repo <path> --package <dir>` reads the repository at a
+`bouncer fit --repo <path> --package <dir>` reads the repository at a
 commit, installs it in a copy and runs the package's existing suite once. It
 prints `supported` or `unsupported: <reason>`. Supported: an npm, pnpm or Yarn
 (not Plug'n'Play) lockfile, TypeScript, and vitest, Jest or `node --test` over a
@@ -170,7 +170,7 @@ be cut out of the repository.
 Pick a short kebab-case slug.
 
 _Repository:_ first point the spec at the package:
-`duediligence repo <slug> --repo <path> --package <dir> --seam <file>[,<file>] [--base <ref>] [--allowed <path>,...]`.
+`bouncer repo <slug> --repo <path> --package <dir> --seam <file>[,<file>] [--base <ref>] [--allowed <path>,...]`.
 The **seam** is the file or files the stub writes and both suites import;
 **allowed paths** are what the implementer may change (default: the seam's
 folders). It writes `specs/<slug>/toolchain.json`, prepares the base tree and
@@ -185,7 +185,7 @@ Then write `specs/<slug>/spec.md`:
 - **The person has a precise spec:** copy it in as written.
 - **They have a ticket or a loose description:** save it as
   `specs/<slug>/ticket.md` (from a GitHub issue:
-  `duediligence confirm <slug> --from <issue url | owner/repo#n>`, through `gh`;
+  `bouncer confirm <slug> --from <issue url | owner/repo#n>`, through `gh`;
   `--comments` adds its comments). From a Jira key: `--from <KEY>` uses
   `JIRA_BASE_URL`, `JIRA_EMAIL` and `JIRA_API_TOKEN` when set; otherwise fetch
   the issue with the Atlassian MCP (`getJiraIssue`), write its summary,
@@ -211,11 +211,11 @@ Then write `specs/<slug>/spec.md`:
 
 ## 2. Confirm, with the person
 
-This step is required. `duediligence prepare` refuses a spec that no one has
+This step is required. `bouncer prepare` refuses a spec that no one has
 confirmed as it stands. On a repository the seam and the allowed paths are
 listed with the decisions, and changing either voids the confirmation.
 
-1. `duediligence confirm <slug>` lists the `Decided:` items, each with the
+1. `bouncer confirm <slug>` lists the `Decided:` items, each with the
    ticket sentence it answers (quoted from `Ticket:`, else the closest sentence,
    else silent), the alternative (`Instead:`) and the scenarios that depend on
    it. Run it right before the first question: the first listing starts the
@@ -224,16 +224,16 @@ listed with the decisions, and changing either voids the confirmation.
    decided, the conventional alternative. Ask with AskUserQuestion, one decision
    per question, up to four at a time. Edit `spec.md` with their answers. A spec
    they wrote themselves still gets one yes/no on the whole. For review in a
-   pull request instead: `duediligence confirm <slug> --export decisions.md`.
+   pull request instead: `bouncer confirm <slug> --export decisions.md`.
 3. Only after the person has said yes to the spec as it now stands:
-   `duediligence confirm <slug> --by "<their name>"`. It records in
+   `bouncer confirm <slug> --by "<their name>"`. It records in
    `confirmed.json` when the review started and ended, its minutes, and which
    decisions changed since the first listing. Never record a confirmation on
    your own judgment, and never for a spec that changed after they said yes.
 
 ## 3. Prepare the suites
 
-`duediligence prepare <slug>`. It generates the skeleton
+`bouncer prepare <slug>`. It generates the skeleton
 (`skeleton/src/index.ts`, `solution.py`, `task.go` or `lib.rs`; for `exec`,
 `src/cli.ts`, which exits 2, or `src/server.ts`, which answers 501, or with a
 `language` `src/cli.py`, `src/server.py`, `src/main.go` or `src/main.rs`), the
@@ -245,7 +245,7 @@ session must pass both suites. Exit codes:
 - `3`: not confirmed, or `spec.md` changed since. Back to step 2.
 - `4`: the public suite asserts things the spec leaves open. Show the person the
   list. For each, they decide it in `spec.md` (back to step 2; the suites are
-  rewritten) or leave it open (`duediligence prepare <slug> --accept-open`; the
+  rewritten) or leave it open (`bouncer prepare <slug> --accept-open`; the
   hidden suite then tests neither reading).
 - `1`: a step failed; its output says which. On a repository it also means the
   reference broke existing tests: the spec changes behaviour those tests pin, or
@@ -256,22 +256,22 @@ session must pass both suites. Exit codes:
 
 Pick with the person:
 
-- **A blind session:** `duediligence run <slug> [--model haiku]`. The submission
+- **A blind session:** `bouncer run <slug> [--model haiku]`. The submission
   lands in `runs/<slug>/<variant>/1/submission/src/`, where `<variant>` is the
   model's family: `opus` by default, `haiku` with `--model haiku`. On a
   repository the session gets a copy of base plus stub plus public suite, and
   `submission/` holds the files it changed at their repository paths; grade it
-  with `duediligence grade <slug>`.
-- **Their own agent, anywhere:** `duediligence handout <slug> <dir>` with
+  with `bouncer grade <slug>`.
+- **Their own agent, anywhere:** `bouncer handout <slug> <dir>` with
   `<dir>` outside this folder and the home. It holds the template, `spec.md`,
   the skeleton, the public suite and `BRIEF.md`; give the agent `BRIEF.md`.
 - _Repository, in their checkout:_
-  `duediligence handout <slug> --repo [<checkout>]` writes the stub and the
+  `bouncer handout <slug> --repo [<checkout>]` writes the stub and the
   public suite into the working tree, uncommitted, and prints the brief
   (`runs/<slug>/handout/BRIEF.md`). It refuses if those paths are dirty or
   exist. Give the brief to their agent, or follow it in this session under the
   rule above. `--remove` takes the handout out again while it is unchanged.
-- _Repository, in CI (blind by placement):_ `duediligence seal <slug>` writes
+- _Repository, in CI (blind by placement):_ `bouncer seal <slug>` writes
   one file holding the suites; the person stores it where the implementer cannot
   read (a private repository, artifact or secret URL) and calls
   `.github/workflows/judge.yml` (or `action.yml`) on pull requests. Each pull
@@ -286,7 +286,7 @@ existing suite passing and stay inside the allowed paths.
 
 ## 5. Judge
 
-`duediligence judge <slug> <submission>/src`. It prints `passed`, `overfit`
+`bouncer judge <slug> <submission>/src`. It prints `passed`, `overfit`
 (public passes, hidden fails) or `incomplete` (public fails), with the counts
 and the failing scenario keys, such as `unhappy-2`, and the hidden suite's
 sha256, the one the handout's brief showed. If the hidden suite changed since it
@@ -294,7 +294,7 @@ was committed it refuses (exit 1, `hidden suite changed since <at>`): tell the
 person, never judge around it.
 
 _Repository:_
-`duediligence judge <slug> --repo [<checkout>] [--ref <rev>] --audit` judges the
+`bouncer judge <slug> --repo [<checkout>] [--ref <rev>] --audit` judges the
 working tree, or the commit `--ref`, against base plus stub plus public suite,
 with the existing suite too. Two more verdicts:
 
@@ -316,13 +316,13 @@ regressed, 1 the rest.
   - `real`: the code misses what the spec says. One retry at most, giving the
     agent the failing scenario keys and nothing else: no test names, inputs or
     assertions. For a blind session:
-    `duediligence grade <slug> && duediligence retry <slug> <variant>`, then
+    `bouncer grade <slug> && bouncer retry <slug> <variant>`, then
     judge `runs/<slug>/<variant>-retry-keyed/1/submission/src`.
   - `spec-gap`: the hidden test asserts a reading the spec left open. Decide it
     in `spec.md` and go back to step 2. Information moves hidden → spec →
     public, never hidden → agent.
 - **`passed`:** say what it means: the code passes tests it never saw, written
   from the confirmed spec. It does not cover what the spec does not say.
-  _Repository:_ offer `duediligence promote <slug>`, which copies the hidden
+  _Repository:_ offer `bouncer promote <slug>`, which copies the hidden
   suite into the checkout beside the public one as the repository's own
   regression tests (uncommitted); after it, the spec judges nothing.

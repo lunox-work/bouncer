@@ -16,14 +16,15 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { IDENTITY } from "../bin/identity.mjs";
 
-const scratch = mkdtempSync(join(tmpdir(), "duediligence-hosted-"));
-process.env.DUEDILIGENCE_SPECS = join(scratch, "specs");
+const scratch = mkdtempSync(join(tmpdir(), "bouncer-hosted-"));
+process.env.BOUNCER_SPECS = join(scratch, "specs");
 const { run, titleOf } = await import("../bin/hosted.mjs");
 const { confirmation } = await import("../bin/confirm.mjs");
 const { retryAfterSeconds, writeCredentials } = await import("../bin/platform-client.mjs");
 
-const CLIENT = { client: "duediligence", version: "9.9.9" };
+const CLIENT = { ...IDENTITY, version: "9.9.9" };
 const SECRET = "lnx_s3cr3t-never-printed";
 const OIDC = "oidc.header.signature";
 
@@ -194,7 +195,7 @@ try {
     assert.equal(platform.state.bounties, 2);
     const usage = deps();
     assert.equal(await run("push", [], CLIENT, usage.deps), 1);
-    assert.match(usage.out.join(""), /usage: duediligence push <slug>/);
+    assert.match(usage.out.join(""), /usage: bouncer push <slug>/);
 
     // --unconfirmed posts it with confirmed: false, its decisions left to the web app.
     const loose = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
@@ -260,7 +261,7 @@ try {
     spec("scoped");
     const world = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
     assert.equal(await run("push", ["scoped"], CLIENT, world.deps), 0, world.err.join(""));
-    assert.match(world.out.join(""), /lacks the decisions:confirm scope\. Run `duediligence login`/);
+    assert.match(world.out.join(""), /lacks the decisions:confirm scope\. Run `bouncer login`/);
     assert.equal(JSON.parse(readFileSync(join(specs, "scoped", "platform.json"), "utf8")).confirmation, "skipped_scope");
     await platform.close();
   }
@@ -297,11 +298,11 @@ try {
     assert.equal(platform.state.requests.filter((each) => each.path === "/oidc").length, 3);
     assert.match(world.err.join(""), /skipped logo.png/);
     const printed = world.out.join("");
-    assert.match(printed, new RegExp(`duediligence \\(platform\\): ${verdict}`));
+    assert.match(printed, new RegExp(`bouncer \\(platform\\): ${verdict}`));
     if (verdict === "overfit") assert.match(printed, /failing scenarios: s2/);
     if (verdict === "refused") assert.match(printed, /refused src\/a.ts/);
     if (verdict === "errored") assert.match(printed, /errored \(grading_timed_out\), no tests ran\n.*regrade it \(MCP regrade\) without spending its retry/);
-    assert.match(readFileSync(summary, "utf8"), new RegExp(`### duediligence \\(platform\\): ${verdict}`));
+    assert.match(readFileSync(summary, "utf8"), new RegExp(`### bouncer \\(platform\\): ${verdict}`));
     await platform.close();
   }
 
@@ -360,11 +361,11 @@ try {
     ],
     [
       { status: 403, body: { code: "contributor_credential", error: "A contributor credential reaches only your own contributions." } },
-      /contributor credential \(lnxc_\): it reaches only your own contributions.*`duediligence login`/,
+      /contributor credential \(lnxc_\): it reaches only your own contributions.*`bouncer login`/,
     ],
     [
       { status: 403, body: { code: "insufficient_scope", error: "This credential lacks the judge scope." } },
-      /This credential lacks the judge scope\. The sign-in predates that scope: run `duediligence login` again/,
+      /This credential lacks the judge scope\. The sign-in predates that scope: run `bouncer login` again/,
     ],
   ]) {
     const platform = await fakePlatform({ judge: [refusal] });
@@ -382,7 +383,7 @@ try {
     assert.match(bare.err.join(""), /id-token: write/);
     const usage = deps();
     assert.equal(await run("ci", ["--platform="], CLIENT, usage.deps), 1);
-    assert.match(usage.out.join(""), /usage: duediligence ci --platform/);
+    assert.match(usage.out.join(""), /usage: bouncer ci --platform/);
     const quiet = deps({ files: {} });
     assert.equal(await run("ci", ["--platform=", "--version", "sbv_1", "--workspace", "org_acme"], CLIENT, quiet.deps), 0);
     assert.match(quiet.out.join(""), /nothing to judge/);

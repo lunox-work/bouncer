@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// The `duediligence` command: one entry point over the bin scripts,
+// The `bouncer` command: one entry point over the bin scripts,
 // which it runs unchanged, in the caller's folder, with their own exit
 // codes. Paths the scripts print as `node bin/<script>.mjs` are these
-// subcommands. Specs, runs and results live under DUEDILIGENCE_HOME
-// (default ~/.duediligence/, lib.mjs `HOME`); `where` prints them.
+// subcommands. Specs, runs and results live under BOUNCER_HOME
+// (default ~/.bouncer/, lib.mjs `HOME`); `where` prints them.
 //
-//   duediligence <command> [args...]
-//   duediligence where | help | --version
+//   bouncer <command> [args...]
+//   bouncer where | help | --version
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -50,13 +50,13 @@ if (!Object.hasOwn(COMMANDS, command ?? "")) {
   const width = Math.max(...Object.keys(COMMANDS).map((name) => name.length));
   console.error(
     [
-      "usage: duediligence <command> [args...]",
+      "usage: bouncer <command> [args...]",
       "",
       ...Object.entries(COMMANDS).map(([name, what]) => `  ${name.padEnd(width)}  ${what}`),
       `  ${"where".padEnd(width)}  the folders it reads and writes`,
       "",
       "Each command prints its own usage when called without arguments.",
-      "Data: DUEDILIGENCE_HOME (default ~/.duediligence/).",
+      "Data: BOUNCER_HOME (default ~/.bouncer/).",
       "Platform sign-in (optional; every other command is local): ~/.lunox/credentials (LUNOX_CREDENTIALS),",
       "against https://platform.lunox.work (LUNOX_PLATFORM_URL).",
     ].join("\n"),

@@ -1,6 +1,6 @@
 // The hosted platform (sandbox-factory, platform.lunox.work) as this CLI
 // talks to it: the base URL, the shared credentials file, one request
-// function on `fetch` (so duediligence keeps no runtime dependency), and
+// function on `fetch` (so bouncer keeps no runtime dependency), and
 // the resend a retryable 409 asks for. Nothing here runs unless a platform
 // command (`login`, `whoami`, `logout`, `push`, `ci --platform`) is called;
 // every other command stays local. Not named platform.mjs, which is
@@ -69,7 +69,7 @@ const QUOTA_KINDS = {
  * the month's quota, a rate limit, the wrong kind of credential, a missing
  * scope. Undefined for any other, which keeps the API's own words.
  */
-function refusalMessage({ code, body, retryAfter, client }) {
+function refusalMessage({ code, body, retryAfter, cli }) {
   if (code === "quota_exceeded") {
     const kind = QUOTA_KINDS[body?.kind] ?? QUOTA_KINDS.model_tokens;
     const figures = typeof body?.used === "number" && typeof body?.limit === "number" ? ` (${body.used} of ${body.limit})` : "";
@@ -83,10 +83,10 @@ function refusalMessage({ code, body, retryAfter, client }) {
   if (code === "workspace_credential")
     return "This route takes a contributor credential, not a workspace's: an lnxc_ token made on the web app's Contributions page (Authorization: Bearer lnxc_...), or a contributor sign-in at /mcp/contribute.";
   if (code === "contributor_credential")
-    return `This is a contributor credential (lnxc_): it reaches only your own contributions, never a workspace. Sign in with a workspace token: \`${client} login\`.`;
+    return `This is a contributor credential (lnxc_): it reaches only your own contributions, never a workspace. Sign in with a workspace token: \`${cli} login\`.`;
   if (code === "insufficient_scope") {
     const said = typeof body?.error === "string" ? `${body.error} ` : "";
-    return `${said}The sign-in predates that scope: run \`${client} login\` again (in Claude Code, sign the MCP server in again through /mcp).`;
+    return `${said}The sign-in predates that scope: run \`${cli} login\` again (in Claude Code, sign the MCP server in again through /mcp).`;
   }
   return undefined;
 }
@@ -182,9 +182,10 @@ function minimumOf(body) {
  * `workspace_credential` / `contributor_credential` → which kind of
  * credential the route takes, `insufficient_scope` → sign in again;
  * otherwise the API's own `{ error, code }`. `session` marks the
- * token as a device sign-in's session rather than a saved API token.
+ * token as a device sign-in's session rather than a saved API token. `cli` and
+ * `pkg` name the command and npm package in messages (default `client`).
  */
-export async function request({ base, token, session = false, method = "GET", path, body, client, version, fetchImpl = fetch }) {
+export async function request({ base, token, session = false, method = "GET", path, body, client, cli = client, pkg = client, version, fetchImpl = fetch }) {
   const headers = {
     Accept: "application/json",
     "User-Agent": `${client}/${version}`,
@@ -217,17 +218,17 @@ export async function request({ base, token, session = false, method = "GET", pa
   if (status === 426) {
     const minimum = minimumOf(parsed);
     throw new PlatformError(
-      `${base} needs a newer ${client}${minimum ? `: upgrade to at least ${minimum}` : ""} (this is ${version}). npm i -g ${client}@latest`,
+      `${base} needs a newer ${cli}${minimum ? `: upgrade to at least ${minimum}` : ""} (this is ${version}). npm i -g ${pkg}@latest`,
       { status, code },
     );
   }
   const retryAfter = retryAfterSeconds(response.headers?.get?.("retry-after"));
   const details = { status, code, retryable: parsed?.retryable === true, retryAfter, body: parsed };
-  const refusal = refusalMessage({ code, body: parsed, retryAfter, client });
+  const refusal = refusalMessage({ code, body: parsed, retryAfter, cli });
   if (refusal !== undefined) throw new PlatformError(refusal, details);
   if (status === 401 && token !== undefined) {
     const what = session ? "The browser sign-in" : "The saved sign-in";
-    throw new PlatformError(`${what} for ${base} is no longer valid (expired or revoked). Run \`${client} login\` again.`, {
+    throw new PlatformError(`${what} for ${base} is no longer valid (expired or revoked). Run \`${cli} login\` again.`, {
       status,
       code,
     });

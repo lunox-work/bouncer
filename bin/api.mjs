@@ -1,9 +1,9 @@
-// The library entry, `duediligence/api`: the rules and prompts without the
+// The library entry, `@lunox-work/bouncer/api`: the rules and prompts without the
 // session runner, for a platform that runs its own agent loop and evaluator.
 // Every export is a pure function of its arguments, apart from the hash and
 // promptPath reading the files they are pointed at (a spec folder, the
 // package's prompts/). Importing it spawns no process, reads no home folder
-// (DUEDILIGENCE_HOME, HOME) and touches no network: it imports nothing that
+// (BOUNCER_HOME, HOME) and touches no network: it imports nothing that
 // does (bin/lib.mjs, whose top level seeds a home, least of all).
 // test/api.mjs holds it to that.
 //

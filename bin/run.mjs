@@ -56,7 +56,7 @@ import {
 const git = (dir, ...argv) =>
   spawnSync(
     "git",
-    ["-c", "user.name=duediligence", "-c", "user.email=duediligence@localhost", ...argv],
+    ["-c", "user.name=bouncer", "-c", "user.email=bouncer@localhost", ...argv],
     { cwd: dir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
 

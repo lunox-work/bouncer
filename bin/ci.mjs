@@ -9,7 +9,7 @@
 //   node bin/ci.mjs --platform [<url>] --version <id> --workspace <id> [--base <rev>]
 //                   judged on the hosted platform instead (hosted.mjs)
 //
-// 1. A URL seal is fetched with DUEDILIGENCE_SEAL_AUTH as the
+// 1. A URL seal is fetched with BOUNCER_SEAL_AUTH as the
 //    Authorization header, if set, into a temporary file.
 // 2. bin/judge.mjs --seal <file> --repo <checkout> --ref <rev> --json <tmp>
 //    runs with an environment stripped of tokens, secrets and the Actions
@@ -23,7 +23,7 @@
 //    change that were refused or outside the allowed paths. passed →
 //    success, anything else → failure. --out writes the Checks API body;
 //    $GITHUB_STEP_SUMMARY, when set, gets the summary.
-// 4. With a token (DUEDILIGENCE_GITHUB_TOKEN or GITHUB_TOKEN) and
+// 4. With a token (BOUNCER_GITHUB_TOKEN or GITHUB_TOKEN) and
 //    GITHUB_REPOSITORY, and without --no-post, it POSTs the check run to
 //    $GITHUB_API_URL (default https://api.github.com); the job needs
 //    `checks: write`.
@@ -36,6 +36,7 @@ import { appendFileSync, existsSync, mkdtempSync, readFileSync, realpathSync, rm
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { IDENTITY } from "./identity.mjs";
 
 const BIN = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -48,7 +49,7 @@ if (argv.includes("--platform") || argv.some((arg) => arg.startsWith("--platform
   const given = argv.map((arg, index) =>
     arg === "--platform" && (argv[index + 1] === undefined || argv[index + 1].startsWith("--")) ? "--platform=" : arg,
   );
-  process.exit(await run("ci", given, { client: "duediligence", version }));
+  process.exit(await run("ci", given, { ...IDENTITY, version }));
 }
 const options = {};
 for (let i = 0; i < argv.length; i += 1) {
@@ -64,13 +65,13 @@ if (typeof options.seal !== "string") {
   process.exit(1);
 }
 
-const scratch = mkdtempSync(join(realpathSync(tmpdir()), "duediligence-ci-"));
+const scratch = mkdtempSync(join(realpathSync(tmpdir()), "bouncer-ci-"));
 process.on("exit", () => rmSync(scratch, { recursive: true, force: true }));
 
 // 1. The seal.
 let seal = options.seal;
 if (/^https:\/\//.test(seal)) {
-  const auth = process.env.DUEDILIGENCE_SEAL_AUTH;
+  const auth = process.env.BOUNCER_SEAL_AUTH;
   const response = await fetch(seal, { headers: auth ? { Authorization: auth } : {} });
   if (!response.ok) {
     console.error(`fetching the seal: HTTP ${response.status}`);
@@ -87,7 +88,7 @@ const git = (...args) => spawnSync("git", ["-C", checkout, ...args], { encoding:
 const ref = typeof options.ref === "string" ? options.ref : undefined;
 const headSha = repoMode ? git("rev-parse", `${ref ?? "HEAD"}^{commit}`).stdout?.trim() || null : null;
 const recordFile = join(scratch, "record.json");
-const SCRUB = /TOKEN|SECRET|PASSWORD|CREDENTIAL|^ACTIONS_|^INPUT_|^GITHUB_(STEP_SUMMARY|OUTPUT|ENV|PATH|STATE)$|^DUEDILIGENCE_(SPECS|SEAL_AUTH)$/i;
+const SCRUB = /TOKEN|SECRET|PASSWORD|CREDENTIAL|^ACTIONS_|^INPUT_|^GITHUB_(STEP_SUMMARY|OUTPUT|ENV|PATH|STATE)$|^BOUNCER_(SPECS|SEAL_AUTH)$/i;
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !SCRUB.test(key)));
 const judgeArgs = [
   join(BIN, "judge.mjs"),
@@ -106,7 +107,7 @@ const record = existsSync(recordFile) ? JSON.parse(readFileSync(recordFile, "utf
 if (typeof options.record === "string" && record !== null) writeFileSync(resolve(options.record), `${JSON.stringify(record, null, 2)}\n`);
 
 // 3. The check, from the record alone.
-const name = typeof options.name === "string" ? options.name : "duediligence";
+const name = typeof options.name === "string" ? options.name : "bouncer";
 const fraction = (count) => (count ? `${count.passed}/${count.total}` : "-");
 const list = (items, limit = 50) =>
   [...items.slice(0, limit).map((item) => `- \`${String(item).replace(/`/g, "'")}\``), ...(items.length > limit ? [`- … ${items.length - limit} more`] : [])].join("\n");
@@ -151,7 +152,7 @@ if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMM
 if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `conclusion=${payload.conclusion}\ntitle=${title.replace(/\n/g, " ")}\n`);
 
 // 4. The Checks API, only with a token.
-const token = process.env.DUEDILIGENCE_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
+const token = process.env.BOUNCER_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 let postFailed = false;
 if (options["no-post"] !== true && token && repository && headSha) {

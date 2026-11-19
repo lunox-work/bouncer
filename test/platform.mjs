@@ -19,12 +19,13 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { run } from "../bin/account.mjs";
+import { IDENTITY } from "../bin/identity.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CLIENT = { client: "duediligence", version: "9.9.9" };
+const CLIENT = { ...IDENTITY, version: "9.9.9" };
 const SECRET = "lnx_s3cr3t-never-printed-0123456789";
 const SESSION = "devsession0123456789abcdef";
-const scratch = mkdtempSync(join(tmpdir(), "duediligence-platform-"));
+const scratch = mkdtempSync(join(tmpdir(), "bouncer-platform-"));
 
 const ORGS = {
   acme: { id: "org_acme", name: "Acme", slug: "acme", kind: "team", role: "owner" },
@@ -220,7 +221,7 @@ try {
     assert.equal(mints.length, 2);
     assert.ok(mints[0].body.scopes.includes("decisions:confirm"));
     assert.deepEqual(mints[1].body, { client: "duediligence", label: "build-box" });
-    assert.match(w.output, /did not grant decisions:confirm: `duediligence push` posts specs with their decisions unconfirmed/);
+    assert.match(w.output, /did not grant decisions:confirm: `bouncer push` posts specs with their decisions unconfirmed/);
     assert.equal(JSON.parse(readFileSync(credentials, "utf8"))[platform.url].duediligence.token, SECRET);
     await platform.close();
   });
@@ -294,16 +295,16 @@ try {
     assert.equal(await run("whoami", [], CLIENT, w), 0, w.errors);
     assert.match(w.output, /user {7}Ada <ada@example\.com> \(@ada\)/);
     assert.match(w.output, /workspace {2}Acme \(@acme\), owner/);
-    assert.match(w.output, /token {6}duediligence, expires 2027-02-10/);
+    assert.match(w.output, /token {6}bouncer, expires 2027-02-10/);
     assert.equal(platform.state.requests.at(-1).headers.authorization, `Bearer ${SECRET}`);
     assert.ok(!w.output.includes(SECRET));
     platform.state.tokens.get(SECRET).revoked = true;
     const after = world(platform.url, credentials);
     assert.equal(await run("whoami", [], CLIENT, after), 1);
-    assert.match(after.errors, /no longer valid \(expired or revoked\)\. Run `duediligence login` again\./);
+    assert.match(after.errors, /no longer valid \(expired or revoked\)\. Run `bouncer login` again\./);
     const none = world(platform.url, fresh());
     assert.equal(await run("whoami", [], CLIENT, none), 1);
-    assert.match(none.errors, /Not signed in to .*Run `duediligence login`/);
+    assert.match(none.errors, /Not signed in to .*Run `bouncer login`/);
     await platform.close();
   });
 
@@ -361,7 +362,7 @@ try {
     const env = { LUNOX_PLATFORM_URL: platform.url, LUNOX_CREDENTIALS: credentials };
     const who = await cli(["whoami"], env);
     assert.equal(who.code, 1);
-    assert.match(who.stderr, /duediligence whoami: The saved sign-in .* Run `duediligence login` again\./);
+    assert.match(who.stderr, /bouncer whoami: The saved sign-in .* Run `bouncer login` again\./);
     const out = await cli(["logout"], env);
     assert.equal(out.code, 0, out.stderr);
     assert.ok(!existsSync(credentials), "the last entry gone, the file goes too");

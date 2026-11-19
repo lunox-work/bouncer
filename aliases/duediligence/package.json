@@ -1,0 +1,44 @@
+{
+  "name": "duediligence",
+  "version": "0.7.0",
+  "description": "Renamed to @lunox-work/bouncer: hidden, calibrated test suites for AI coding agents. This package runs bouncer.",
+  "keywords": [
+    "bouncer",
+    "duediligence",
+    "ai-agents",
+    "coding-agents",
+    "hidden-tests",
+    "test-generation",
+    "evaluation"
+  ],
+  "homepage": "https://github.com/lunox-work/bouncer#readme",
+  "bugs": {
+    "url": "https://github.com/lunox-work/bouncer/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunox-work/bouncer.git",
+    "directory": "aliases/duediligence"
+  },
+  "license": "MIT",
+  "author": "Charlie Angriawan",
+  "type": "module",
+  "bin": {
+    "duediligence": "bin/cli.mjs"
+  },
+  "exports": {
+    ".": "./bin/cli.mjs",
+    "./api": "./api.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/",
+    "api.mjs"
+  ],
+  "dependencies": {
+    "@lunox-work/bouncer": "^0.7.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.0.0"
+  }
+}

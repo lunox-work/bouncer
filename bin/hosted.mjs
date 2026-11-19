@@ -80,8 +80,8 @@ function specProblems(error) {
 }
 
 /** `push <slug>`: a locally confirmed spec as a bounty in the signed-in workspace. */
-export async function push(argv, { client, version }, deps) {
-  const usage = `usage: ${client} push <slug> [--platform <url>] [--again] [--unconfirmed]`;
+export async function push(argv, { client, cli = client, pkg = client, version }, deps) {
+  const usage = `usage: ${cli} push <slug> [--platform <url>] [--again] [--unconfirmed]`;
   const { values, positionals } = options(
     argv,
     { platform: { type: "string" }, again: { type: "boolean" }, unconfirmed: { type: "boolean" } },
@@ -90,8 +90,8 @@ export async function push(argv, { client, version }, deps) {
   );
   if (values.help || positionals.length !== 1) {
     deps.out(
-      `${usage}\n\nPosts specs/<slug>/spec.md, as confirmed (${client} confirm <slug> --by <name>), as a bounty in the workspace\n` +
-        `${client} login signed in to, its decisions recorded as confirmed by you, so approval needs no second confirmation.\n` +
+      `${usage}\n\nPosts specs/<slug>/spec.md, as confirmed (${cli} confirm <slug> --by <name>), as a bounty in the workspace\n` +
+        `${cli} login signed in to, its decisions recorded as confirmed by you, so approval needs no second confirmation.\n` +
         `The bounty's title is ticket.md's (else spec.md's) heading. Pushing again names the bounty already made\n` +
         `(specs/<slug>/platform.json); --again posts a new one, as after editing the spec. --unconfirmed posts a spec\n` +
         `not confirmed here, its decisions to confirm in the web app.\n`,
@@ -102,10 +102,10 @@ export async function push(argv, { client, version }, deps) {
   const dir = specDir(slug);
   const confirmed = confirmation(slug);
   if (!confirmed.ok && !(values.unconfirmed && confirmed.hash !== undefined))
-    throw new PlatformError(`specs/${slug}: ${confirmed.reason}. Confirm it first: ${client} confirm ${slug} --by <name>.`);
+    throw new PlatformError(`specs/${slug}: ${confirmed.reason}. Confirm it first: ${cli} confirm ${slug} --by <name>.`);
   const base = platformUrl(values.platform, deps.env);
   const saved = credentialFor(credentialsPath(deps.env), base, client);
-  if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${client} login\`.`);
+  if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${cli} login\`.`);
   const recordPath = join(dir, "platform.json");
   const recorded = existsSync(recordPath) ? JSON.parse(readFileSync(recordPath, "utf8")) : null;
   if (recorded !== null && !values.again && recorded.base === base && recorded.organizationId === saved.organizationId) {
@@ -127,6 +127,8 @@ export async function push(argv, { client, version }, deps) {
       base,
       token: saved.token,
       client,
+      cli,
+      pkg,
       version,
       fetchImpl: deps.fetchImpl,
       method: "POST",
@@ -175,7 +177,7 @@ export async function push(argv, { client, version }, deps) {
   const next = {
     confirmed: `Its decisions stand confirmed (by ${confirmed.record?.by} here), so approving its price needs no separate confirm step.\n`,
     skipped_scope:
-      `The spec is kept, but not its confirmation: this sign-in lacks the decisions:confirm scope. Run \`${client} login\`\n` +
+      `The spec is kept, but not its confirmation: this sign-in lacks the decisions:confirm scope. Run \`${cli} login\`\n` +
       "again for a token with it, and confirm the decisions in the web app (MCP confirm_link) for this bounty.\n",
     unconfirmed: "Its decisions are not confirmed: a person confirms them in the web app (MCP confirm_link) before approval.\n",
     text:
@@ -228,8 +230,8 @@ export function changedFiles(repo, base, deps) {
 const EXIT = { passed: 0, overfit: 2 };
 
 /** `ci --platform`: the change judged on the platform; answers the exit code. */
-export async function ciPlatform(argv, { client, version }, deps) {
-  const usage = `usage: ${client} ci --platform [<url>] --version <sandbox version id> --workspace <workspace id> [--repo <checkout>] [--base <rev>] [--exit-zero]`;
+export async function ciPlatform(argv, { client, cli = client, pkg = client, version }, deps) {
+  const usage = `usage: ${cli} ci --platform [<url>] --version <sandbox version id> --workspace <workspace id> [--repo <checkout>] [--base <rev>] [--exit-zero]`;
   const { values } = options(
     argv,
     {
@@ -262,7 +264,7 @@ export async function ciPlatform(argv, { client, version }, deps) {
     return 0;
   }
   const call = async (options) =>
-    request({ base, token: await oidcToken(base, deps), client, version, fetchImpl: deps.fetchImpl, ...options });
+    request({ base, token: await oidcToken(base, deps), client, cli, pkg, version, fetchImpl: deps.fetchImpl, ...options });
   let { submission } = await sendRetrying(
     () => call({ method: "POST", path: "/api/judge", body: { workspace: values.workspace, versionId: values.version, files } }),
     {
@@ -287,7 +289,7 @@ export async function ciPlatform(argv, { client, version }, deps) {
       ? `public ${submission.public.passed}/${submission.public.total}, hidden ${submission.hidden.passed}/${submission.hidden.total}`
       : "no tests ran";
   const lines = [
-    `duediligence (platform): ${verdict}, ${counts}`,
+    `bouncer (platform): ${verdict}, ${counts}`,
     ...((submission.failedScenarios ?? []).length > 0 ? [`failing scenarios: ${submission.failedScenarios.join(", ")}`] : []),
     ...(submission.refused ?? []).map((refusal) => `refused ${refusal.path}: ${refusal.reason}`),
     ...(submission.status === "errored"
@@ -308,7 +310,7 @@ export async function run(command, argv, meta, deps = defaultDeps()) {
     return await (command === "push" ? push : ciPlatform)(argv, meta, deps);
   } catch (error) {
     if (!(error instanceof PlatformError)) throw error;
-    deps.err(`${meta.client} ${command}: ${error.message}\n`);
+    deps.err(`${meta.cli ?? meta.client} ${command}: ${error.message}\n`);
     return 1;
   }
 }
