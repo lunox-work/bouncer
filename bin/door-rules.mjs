@@ -1,7 +1,8 @@
 // The door's rules (PLAN.md "1. The door"): pure functions, no imports, no
 // I/O, no model. They read one finished agent session and name the obvious
 // reasons not to accept it as done. evidence/door.mjs measures them on
-// local transcripts (evidence/DOOR.md); the Stop hook will reuse them.
+// local transcripts (evidence/DOOR.md), where they failed the gate for a
+// blocking door: bin/door.mjs reports them and never stops a session.
 //
 // A session is an ordered list of events:
 //

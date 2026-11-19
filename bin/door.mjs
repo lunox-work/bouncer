@@ -72,7 +72,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   const session = transcript !== null && existsSync(transcript) ? sessionOf(transcript) : null;
   const fired = session === null ? [] : doorRules(session);
   const claimsDone = fired.some((item) => item.rule === "claims-done");
-  const findings = fired.filter((item) => item.rule !== "claims-done").map((item) => ({ rule: item.rule, ask: ASK[item.rule] ?? item.reason, evidence: typeof item.evidence === "string" ? item.evidence.replace(/\s+/g, " ").slice(0, 160) : "" }));
+  const findings = fired.filter((item) => item.rule !== "claims-done").map((item) => ({ rule: item.rule, ask: ASK[item.rule] ?? item.reason, evidence: typeof item.evidence === "string" ? item.evidence.replace(/\s*\n\s*/g, "; ").replace(/\s+/g, " ").slice(0, 160) : "" }));
   const gate = options["no-gate"] === true ? null : gateOf(checkout);
 
   if (options.json !== undefined) {
@@ -81,6 +81,8 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   }
   if (session === null) console.log(`No agent session found for ${checkout}; pass --transcript <file>.`);
   else {
+    // The newest session may be one from a parent folder about other work: say which was read.
+    if (typeof options.transcript !== "string") console.error(`door: read ${transcript}`);
     const holds = gate?.refused ?? [];
     if (findings.length === 0 && holds.length === 0) {
       say("door-clean", { options });

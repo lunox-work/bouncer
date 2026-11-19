@@ -23,7 +23,7 @@ export const LINES = {
   unconfirmed: "No list tonight. Ask the owner.",
   "list-changed": "Someone touched my list. Nobody gets in.",
   // The door reports without his voice (its rules are often wrong, evidence/DOOR.md); only a clean door gets a line.
-  "door-clean": "Dress code's fine. The list is another matter: bouncer check.",
+  "door-clean": "Dress code's fine. The list is another matter: bouncer id.",
   id: "Let me see some ID.",
 };
 

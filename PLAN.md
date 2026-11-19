@@ -251,7 +251,7 @@ the session transcript, and gives one line and a reason.
   `BOUNCER_DOOR=0`. Check the hook contract against the current Claude Code
   docs before writing it.
 - A clean door prints the way in, not a pass: "Dress code's fine. The list is
-  another matter: `bouncer check`."
+  another matter: `bouncer id`." (`bouncer check` once phase 3 builds it.)
 - **Gate:** on phase 0's corpus, 2% or fewer false stops on clean sessions; 0
   model calls and 0 network (test, as test/api.mjs does for `./api`).
 
