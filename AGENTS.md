@@ -33,6 +33,12 @@ Rust", "Commands and services in other languages", "Black-box seams").
 
 What to tell them, accurately:
 
+- When their agent already says it is done, start with `bouncer door` (no
+  model; reports what its session shows and never blocks: its rules were
+  rarely right on real sessions) and `bouncer id`, one session of about $0.07
+  that lists what the ticket never said and what the agent picked. Their keep
+  or change per item is the spec's confirmation
+  (skills/bouncer/references/check.md).
 - Generating the suites costs about $1–4 and 10–25 minutes of Opus 5.5 per spec
   on their signed-in `claude` CLI, up to about $7 in a repository, plus their
   own time to confirm the decisions (median person minutes: pending; `confirm`

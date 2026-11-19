@@ -24,6 +24,22 @@ Use it when "all tests pass" comes from the same agent that wrote the tests, and
 you want acceptance decided by tests it could not have overfitted, gamed or
 guessed.
 
+## Before any spec: the door and the ID check
+
+- `bouncer door [--transcript <file>] [--repo <dir>]`: no model, seconds. Reads
+  the agent's session transcript and, in a TypeScript checkout with carveout
+  installed, `carveout gate`; lists no test run after the last edit, tests
+  skipped, weakened or deleted, the last test run red, only tests the agent
+  wrote, a TODO in code, harness or config edited. It reports and never
+  blocks: on 127 real sessions that claimed done no rule fired on 10%, and a
+  model-judged check upheld 1 of 50 firings ([DOOR.md](../evidence/DOOR.md)).
+- `bouncer id [<slug>] --ticket <file> [--diff <file> | --repo <dir> --base <ref>]`:
+  one Sonnet 5.5 session, about $0.07 and 20 s. What the ticket never said and
+  what the diff picked, each with the ticket sentence, where, and the usual
+  alternative. Questions, never ranked: the person's keep or change becomes a
+  `Decided:` line. The after-the-fact flow is
+  [skills/bouncer/references/check.md](../skills/bouncer/references/check.md).
+
 ## The numbers
 
 About 3,000 graded agent runs on 26 TypeScript specs, 40 LiveCodeBench problems,
@@ -312,7 +328,7 @@ reads the runner's disk and sends it over the network is not stopped.
 <summary>Every file and folder, in the repository and in <code>~/.bouncer/</code></summary>
 
 ```
-skills/             the skills: bouncer/SKILL.md, the steps it runs; lunox-contribute/SKILL.md, an invited contributor's work on the platform
+skills/             bouncer/ (SKILL.md and references/: the steps it runs, after the fact in check.md); bouncer-hosted/ (the lunox MCP tools); lunox-contribute/ (an invited contributor's work on the platform)
 .claude-plugin/     the Claude Code plugin and its one-plugin marketplace
 .mcp.json           the plugin's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
@@ -324,7 +340,11 @@ bin/api.mjs         the library entry: decisionItems, scenarios, diffDecisions, 
                     network on import or call (test/api.mjs)
 bin/rules.mjs       the judge's verdict and calibration's filter over suite results, pure
 bin/hash.mjs        the commitment hash of a spec folder or a file map, reading nothing else
-bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`
+bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`; `evidence <name>`
+bin/door.mjs        what a finished session shows, no model (bin/door-rules.mjs, carveout gate); reports, never blocks
+bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
+bin/voice.mjs       his line above a verdict, on a terminal only
+bin/card.mjs        the verdict as an SVG to post (judge --card)
 bin/platform-client.mjs  the hosted platform: its URL, ~/.lunox/credentials, one fetch-based request with the CLI version
 bin/account.mjs     login (device flow), whoami, logout; bin/login.mjs, whoami.mjs and logout.mjs run them
 evidence/           the experiment's write-ups behind RESULTS.md, vendored
@@ -339,7 +359,7 @@ bin/run.mjs         a blind agent session
 bin/grade.mjs       grades blind runs into results.jsonl
 bin/retry.mjs       one retry of a blind run, told its failing scenarios
 bin/handout.mjs     what an outside agent may see, in a folder of your choice
-bin/judge.mjs       any src/, or a checkout or commit → passed | overfit | incomplete | regressed | refused
+bin/judge.mjs       any src/, or a checkout or commit → passed | overfit | incomplete | regressed | refused; --card
 bin/promote.mjs     a passed repository spec's hidden suite into the repository as regression tests
 bin/commitment.mjs  the hidden suite's commitment hash, recorded, shown, checked
 bin/seal.mjs        one spec's suites in one file, for a judge without specs/ (`judge --seal`)
@@ -372,6 +392,9 @@ evidence/red-team/  the Haiku and Opus red-team runs' audits and logs (RESULTS.m
 evidence/in-repo-ufo/, evidence/in-repo-pathe/  the repository arm on unjs/ufo and unjs/pathe (in-repo.mjs --cases; in-repo-queue.sh)
 evidence/seams.mjs  black-box seams: patch-apply as a command against git apply, the HTTP spec, selftests (evidence/seams/)
 evidence/languages.mjs  Go and Rust modules end to end; commands and services in Python, Go and Rust: selftest, ports, git oracle (evidence/languages/)
+evidence/door.mjs   the door's rules on local sessions (door.json, DOOR.md)
+evidence/skill-triggers.json  prompts that should and should not load the skill
+assets/src/         the README images: index.html, mark.mjs, render.mjs; docs/REFERENCE.md, this file
 
 ~/.bouncer/   BOUNCER_HOME (BOUNCER_SPECS, _RESULTS move those)
   specs/<slug>/     spec.md, ticket.md, confirming.json, confirmed.json, skeleton/, tests/, reference/

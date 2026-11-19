@@ -37,6 +37,7 @@
 
 <p align="center">
   <a href="#install">Install</a> •
+  <a href="#let-me-see-some-id">ID check</a> •
   <a href="#before--after">Before/After</a> •
   <a href="#whos-at-the-rope">The queue</a> •
   <a href="#real-catches">Real catches</a> •
@@ -66,6 +67,7 @@ npx skills add lunox-work/bouncer -g
 ```
 
 Then ask your coding agent: **_"write tests my agent can't see for this ticket"_**.
+Already done? Ask: **_"is this really done?"_**
 
 Works in Claude Code, Codex, Cursor and 20+ agents that load skills, on
 whichever account you have: Claude Code, a Codex login or an Anthropic API key.
@@ -79,6 +81,27 @@ That's it. He's on the door.
 <p align="center">
   <img src="assets/verdict.png" width="880" alt="Not tonight. One fix later, you're in. Real bouncer judge output on the bundled duration-parse example: overfit, public 22/22, hidden 38/39, failing scenario unhappy-1; fixed, then passed, 39/39.">
 </p>
+
+## Let me see some ID
+
+Your agent already says it's done. Before any test is written, `bouncer id`
+reads the ticket and the diff and asks what the ticket never said:
+
+```text
+$ bouncer id --ticket ticket.md --repo .
+12 things your ticket never said. Your agent picked for you:
+
+7. What is the status for a zero bounty?
+   picked: Reports 'pro bono' for every state, and still records zero-amount releases. (src/index.ts:41)
+   ticket: silent
+   instead: Report 'fully released', or record no releases for a zero bounty.
+...
+Keep or change each one; the answers go into spec.md as Decided: lines.
+```
+
+One session, about 20 seconds and $0.07 (escrow-split run 1; item 7 is the
+guess that failed the hidden suite). Questions, never verdicts: you keep or
+change each pick, and your answers are the list he judges with.
 
 ## Before / After
 
@@ -272,6 +295,12 @@ Rust", "Commands and services in other languages", "Black-box seams").
 
 What to tell them, accurately:
 
+- When their agent already says it is done, start with `bouncer door` (no
+  model; reports what its session shows and never blocks: its rules were
+  rarely right on real sessions) and `bouncer id`, one session of about $0.07
+  that lists what the ticket never said and what the agent picked. Their keep
+  or change per item is the spec's confirmation
+  (skills/bouncer/references/check.md).
 - Generating the suites costs about $1–4 and 10–25 minutes of Opus 5.5 per spec
   on their signed-in `claude` CLI, up to about $7 in a repository, plus their
   own time to confirm the decisions (median person minutes: pending; `confirm`
