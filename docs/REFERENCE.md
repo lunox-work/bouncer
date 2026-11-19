@@ -123,9 +123,11 @@ In Claude Code, the repository is also a plugin marketplace:
 /plugin install bouncer@bouncer
 ```
 
-The plugin also bundles the `lunox` MCP server, Lunox's hosted platform
-([below](#sign-in-to-the-lunox-platform-optional)): Claude Code asks you to
-sign in on first use (`/mcp`), and signed out the skill runs locally as before.
+The local plugin has no MCP server and asks for no sign-in. Lunox's hosted
+platform ([below](#sign-in-to-the-lunox-platform-optional)) is a second
+plugin in the same marketplace, `/plugin install bouncer-hosted@bouncer`: it
+bundles the `lunox` MCP server, which Claude Code signs in to on first use
+(`/mcp`).
 
 The skill is the folder [`skills/bouncer/`](../skills/bouncer/), which
 also installs by copying it into an agent's skills folder. It runs the CLI at
@@ -165,7 +167,7 @@ itself, so revoke it in the platform's web app to stop it before it expires.
 `bouncer push <slug>` then posts a spec confirmed here as a bounty, its
 decisions recorded as confirmed by you, so approving its price needs no second
 confirmation; an older token lacks that scope (`decisions:confirm`), and
-`push` says so: run `login` again. In Claude Code, the plugin's `lunox` MCP server
+`push` says so: run `login` again. In Claude Code, the `bouncer-hosted` plugin's `lunox` MCP server
 (`.mcp.json`) signs in on its own, through `/mcp`. Invited to contribute to
 someone else's sandbox? The `lunox-contribute` skill works through the
 contributor server:

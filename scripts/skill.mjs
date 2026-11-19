@@ -8,17 +8,27 @@
 //                                           prompts into the skill
 //                                           (npm `version` hook)
 //   node scripts/skill.mjs pack [--offline] one zip per skill in dist-skills/
-//   node scripts/skill.mjs plugin-branch [--push]
-//                                           commit the plugin's files to the
+//   node scripts/skill.mjs plugin-branch [--push] [--rev <rev>]
+//                                           commit both plugins' files to the
 //                                           claude-plugin branch
 //
+// Two Claude Code plugins (PLUGINS): `bouncer`, the local skill with no MCP
+// server, so installing it asks for no sign-in; and `bouncer-hosted`, the
+// `lunox` MCP server (.mcp.json) with the hosted and contributor skills.
+// Every skill belongs to exactly one of them. marketplace.json lists both,
+// fetched from the claude-plugin branch: `bouncer` at its root, the other in
+// its folder.
+//
 // check: `name` matches its folder (lowercase, digits, single hyphens, at
-// most 64), `description` 1 to 1024 characters without < or >,
-// `compatibility` at most 500, the body at most 500 lines, no symlinks,
-// every relative link resolves inside the skill's folder, and every
-// `<package>@x.y.z` pin and both .claude-plugin/ manifests carry
-// package.json's version. `.mcp.json` declares exactly one MCP server,
-// `lunox`, of type http at MCP_URL: the hosted platform the plugin bundles.
+// most 64), `description` 1 to 1024 characters without < or >, written as
+// `description: >-` (a ": " in a plain multi-line value breaks the skills
+// CLI), `compatibility` at most 500, the body at most 500 lines, no symlinks,
+// every relative link in SKILL.md and references/*.md resolves inside the
+// skill's folder, every `<package>@x.y.z` pin and every plugin manifest
+// carries package.json's version, and marketplace.json lists exactly
+// PLUGINS. `.mcp.json` declares exactly one MCP server, `lunox`, of type http
+// at MCP_URL: the hosted platform `bouncer-hosted` bundles. It also refuses
+// the plugin directory's scanner traps (SCANNER_TRAPS) in every skill file.
 //
 // pack: a zip holding one top-level folder named after the skill, with
 // SKILL.md at its root. It refuses a pin that npm does not serve yet
@@ -27,12 +37,16 @@
 // plugin-branch: the Claude plugin directory scans every file in the plugin
 // folder, and on main that folder is the whole repository (CLI source,
 // lockfile, tests, experiments). The directory tracks the claude-plugin
-// branch instead, which holds only PLUGIN_FILES and plugin.json (less
-// LISTING_LINKS) as of HEAD, and a README.md
-// written from plugin.json, each skill's frontmatter and .claude-plugin/data.md
+// branch instead. Its root is the `bouncer` plugin (what the directory
+// reads: .claude-plugin/plugin.json, LICENSE, skills/, README.md), and
+// bouncer-hosted/ is the `bouncer-hosted` plugin laid out the same way plus
+// .mcp.json. Each plugin.json drops LISTING_LINKS; each README.md is written
+// from its plugin.json, its skills' frontmatter and .claude-plugin/data.md
 // (what is sent where, for the directory's data-handling review; the
-// directory requires a README), one commit per change on top of origin's branch. Builds the commit without touching the
-// working tree or index; --push sends it to origin. CI runs it on push to main.
+// directory requires a README). One commit per change on top of origin's
+// branch, from HEAD or --rev. Builds the commit without touching the working
+// tree, index or any ref; --push sends it to origin. CI runs it on push to
+// main.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -46,7 +60,44 @@ const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 /** The skill, plugin and command name: the npm name without its scope. */
 const NAME = PKG.name.replace(/^@[^/]+\//, "");
 const PIN = new RegExp(`(?<![\\w@/.-])${PKG.name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}@(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)`, "g");
-const MANIFESTS = [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"];
+const MARKETPLACE = ".claude-plugin/marketplace.json";
+const PLUGIN_BRANCH = "claude-plugin";
+/** The GitHub repository marketplace sources fetch the plugin branch from. */
+const REPO = "lunox-work/bouncer";
+/**
+ * The two plugins. `dir` is the plugin's folder on the plugin branch ("" for
+ * its root), `manifest` its plugin.json on main, `mcp` whether it carries
+ * .mcp.json.
+ */
+const PLUGINS = [
+  { name: NAME, dir: "", manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
+  {
+    name: `${NAME}-hosted`,
+    dir: `${NAME}-hosted`,
+    manifest: `.claude-plugin/${NAME}-hosted/plugin.json`,
+    skills: [`${NAME}-hosted`, "lunox-contribute"],
+    mcp: true,
+  },
+];
+const MANIFESTS = [...PLUGINS.map((plugin) => plugin.manifest), MARKETPLACE];
+/** The marketplace entry's `source` for a plugin: the plugin branch, at its root or in the plugin's folder. */
+function marketSource(plugin) {
+  return plugin.dir === ""
+    ? { source: "github", repo: REPO, ref: PLUGIN_BRANCH }
+    : { source: "git-subdir", url: REPO, path: plugin.dir, ref: PLUGIN_BRANCH };
+}
+/**
+ * Patterns the Claude plugin directory's scanner holds a plugin for (found
+ * 2026-11-12 by bisecting): a line that starts with the word "pass" reads as
+ * the `pass` password manager; `fetch` or `eval` beside "a module loaded from
+ * a URL" reads as download-and-run; skills name the repository as
+ * "lunox-work/bouncer on GitHub", never by a github.com URL.
+ */
+const SCANNER_TRAPS = [
+  { test: (text) => /^[\s>*|-]*(\d+\.\s+)?pass\b/im.test(text), why: 'a line starts with "pass" (reflow or reword)' },
+  { test: (text) => /`(fetch|eval)`/.test(text) && /module loaded from a URL/i.test(text), why: "`fetch`/`eval` with \"a module loaded from a URL\"" },
+  { test: (text) => /github\.com/i.test(text), why: 'a github.com URL (write "lunox-work/bouncer on GitHub")' },
+];
 /**
  * The plugin's one MCP server (plugin-root .mcp.json, as Claude Code plugins
  * declare them). The platform serves it under the package's name before the
@@ -138,6 +189,7 @@ function check() {
     }
     const { fields, body } = parsed;
     if (fields.name !== name) problems.push(`${at}: name "${fields.name}" is not its folder's name`);
+    if (!/^description: >-$/m.test(text.slice(0, text.indexOf("\n---", 3)))) problems.push(`${at}: write the description as \`description: >-\``);
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) || name.length > 64) problems.push(`${at}: folder name breaks the name rule`);
     const description = fields.description ?? "";
     if (description.length < 1 || description.length > 1024) problems.push(`${at}: description is ${description.length} characters (1 to 1024)`);
@@ -148,25 +200,58 @@ function check() {
     for (const path of walk(dir)) {
       if (lstatSync(path).isSymbolicLink()) problems.push(`${relative(ROOT, path)}: a symlink`);
     }
-    for (const [, target] of text.matchAll(/\]\(([^)#\s]+)(?:#[^)]*)?\)/g)) {
-      if (/^[a-z]+:/i.test(target)) continue;
-      const path = resolve(dir, target);
-      if (!path.startsWith(dir + "/")) problems.push(`${at}: link ${target} leaves the skill's folder`);
-      else if (!existsSync(path)) problems.push(`${at}: link ${target} does not exist`);
+    const references = join(dir, "references");
+    const linked = [join(dir, "SKILL.md"), ...(existsSync(references) ? readdirSync(references).filter((f) => f.endsWith(".md")).map((f) => join(references, f)) : [])];
+    for (const file of linked) {
+      const where = relative(ROOT, file);
+      for (const [, target] of readFileSync(file, "utf8").matchAll(/\]\(([^)#\s]+)(?:#[^)]*)?\)/g)) {
+        if (/^[a-z]+:/i.test(target)) continue;
+        const path = resolve(dirname(file), target);
+        if (!path.startsWith(dir + "/")) problems.push(`${where}: link ${target} leaves the skill's folder`);
+        else if (!existsSync(path)) problems.push(`${where}: link ${target} does not exist`);
+      }
+    }
+    for (const file of walk(dir).filter((path) => path.endsWith(".md"))) {
+      const content = readFileSync(file, "utf8");
+      for (const trap of SCANNER_TRAPS) if (trap.test(content)) problems.push(`${relative(ROOT, file)}: ${trap.why}`);
     }
     for (const [pin, version] of text.matchAll(PIN)) {
       if (version !== PKG.version) problems.push(`${at}: ${pin} is not package.json's ${PKG.version} (npm run skill:sync)`);
     }
   }
-  const plugin = readJson(MANIFESTS[0]);
-  const market = readJson(MANIFESTS[1]);
-  if (!plugin) problems.push(`${MANIFESTS[0]}: missing`);
-  else if (plugin.name !== NAME || plugin.version !== PKG.version) problems.push(`${MANIFESTS[0]}: name and version are not package.json's`);
-  const listed = market?.plugins?.find((p) => p.name === NAME);
-  if (!listed) problems.push(`${MANIFESTS[1]}: no plugin named ${NAME}`);
-  else if (listed.version !== undefined && listed.version !== PKG.version) problems.push(`${MANIFESTS[1]}: version is not package.json's`);
+  problems.push(...checkPlugins(names));
   problems.push(...checkMcp());
   problems.push(...checkBundledPrompts());
+  return problems;
+}
+
+/** Each plugin's manifest, its marketplace entry, and every skill in exactly one plugin. */
+function checkPlugins(names) {
+  const problems = [];
+  const market = readJson(MARKETPLACE);
+  if (!market) problems.push(`${MARKETPLACE}: missing`);
+  const owner = new Map();
+  for (const plugin of PLUGINS) {
+    const manifest = readJson(plugin.manifest);
+    if (!manifest) problems.push(`${plugin.manifest}: missing`);
+    else if (manifest.name !== plugin.name || manifest.version !== PKG.version) problems.push(`${plugin.manifest}: name is not ${plugin.name} or version is not package.json's`);
+    const listed = market?.plugins?.find((p) => p.name === plugin.name);
+    if (market && !listed) problems.push(`${MARKETPLACE}: no plugin named ${plugin.name}`);
+    else if (listed) {
+      if (listed.version !== undefined && listed.version !== PKG.version) problems.push(`${MARKETPLACE}: ${plugin.name}'s version is not package.json's`);
+      const want = marketSource(plugin);
+      if (JSON.stringify(listed.source) !== JSON.stringify(want)) problems.push(`${MARKETPLACE}: ${plugin.name}'s source must be ${JSON.stringify(want)}`);
+    }
+    for (const skill of plugin.skills) {
+      if (!names.includes(skill)) problems.push(`${plugin.name}: no skills/${skill}/SKILL.md`);
+      if (owner.has(skill)) problems.push(`skills/${skill}: in both ${owner.get(skill)} and ${plugin.name}`);
+      owner.set(skill, plugin.name);
+    }
+  }
+  for (const listed of market?.plugins ?? []) {
+    if (!PLUGINS.some((plugin) => plugin.name === listed.name)) problems.push(`${MARKETPLACE}: ${listed.name} is not one of ${PLUGINS.map((p) => p.name).join(", ")}`);
+  }
+  for (const name of names) if (!owner.has(name)) problems.push(`skills/${name}: in no plugin (scripts/skill.mjs PLUGINS)`);
   return problems;
 }
 
@@ -210,7 +295,7 @@ function sync() {
     const json = readJson(path);
     if (!json) continue;
     if (json.version !== undefined) json.version = PKG.version;
-    for (const plugin of json.plugins ?? []) if (plugin.name === NAME) plugin.version = PKG.version;
+    for (const plugin of json.plugins ?? []) if (PLUGINS.some((p) => p.name === plugin.name)) plugin.version = PKG.version;
     writeFileSync(join(ROOT, path), `${JSON.stringify(json, null, 2)}\n`);
   }
 }
@@ -234,13 +319,14 @@ function pack(offline) {
       stdio: "inherit",
     });
     if (result.error || result.status !== 0) return [`zip failed for ${name}${result.error ? `: ${result.error.message}` : ""}`];
-    console.log(relative(ROOT, zip));
+    const plugin = PLUGINS.find((p) => p.skills.includes(name));
+    console.log(`${relative(ROOT, zip)}${plugin ? ` (plugin ${plugin.name})` : ""}`);
   }
   return [];
 }
 
-const PLUGIN_BRANCH = "claude-plugin";
-const PLUGIN_FILES = [".claude-plugin/icon.png", ".mcp.json", "LICENSE", "skills"];
+/** Files every plugin carries from main, at the same path in its folder. `.mcp.json` only where `mcp`. */
+const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE"];
 // plugin.json fields only the directory's listing reads. Claude Code warns on
 // them as unknown keys, so the branch's plugin.json drops them and its README
 // carries them as links, which the directory also reads.
@@ -252,57 +338,82 @@ function git(args, env = {}) {
   return result.stdout.trim();
 }
 
-/** The plugin branch's README: what the plugin does, its skills, how to install and what each needs. */
-function pluginReadme() {
-  const plugin = JSON.parse(git(["show", "HEAD:.claude-plugin/plugin.json"]));
-  const market = JSON.parse(git(["show", "HEAD:.claude-plugin/marketplace.json"]));
-  const names = git(["ls-tree", "--name-only", "HEAD:skills"]).split("\n").filter(Boolean);
-  const lines = [`# ${plugin.name}`, "", plugin.description, "", "## Skills", ""];
+/** A file at `rev`, or null when it is not there. */
+function show(rev, path) {
+  const result = spawnSync("git", ["show", `${rev}:${path}`], { cwd: ROOT, encoding: "utf8" });
+  return result.status === 0 ? result.stdout : null;
+}
+
+/** A plugin's README on the branch: what it does, its skills, how to install it, what each needs, what is sent where. */
+function pluginReadme(plugin, rev) {
+  const manifest = JSON.parse(show(rev, plugin.manifest));
+  const market = JSON.parse(show(rev, MARKETPLACE));
+  const lines = [`# ${manifest.name}`, "", manifest.description, "", "## Skills", ""];
   const needs = [];
-  for (const name of names) {
-    const { fields } = frontmatter(git(["show", `HEAD:skills/${name}/SKILL.md`]));
+  for (const name of plugin.skills) {
+    const { fields } = frontmatter(show(rev, `skills/${name}/SKILL.md`));
     lines.push(`- **${fields.name}**: ${fields.description}`, "");
     if (fields.compatibility) needs.push(`- **${fields.name}**: ${fields.compatibility}`, "");
   }
-  lines.push("## Install", "", "```sh", `claude plugin marketplace add ${plugin.repository.replace(/^https:\/\/github\.com\//, "")}`);
-  lines.push(`claude plugin install ${plugin.name}@${market.name}`, "```", "");
+  lines.push("## Install", "", "```sh", `claude plugin marketplace add ${REPO}`);
+  lines.push(`claude plugin install ${manifest.name}@${market.name}`, "```", "");
+  const others = PLUGINS.filter((other) => other !== plugin);
+  for (const other of others) {
+    const entry = market.plugins?.find((p) => p.name === other.name);
+    if (entry) lines.push(`The same marketplace has \`${other.name}\`: ${entry.description}`, "");
+  }
   if (needs.length > 0) lines.push("## Requirements", "", ...needs);
-  const mcp = spawnSync("git", ["show", "HEAD:.mcp.json"], { cwd: ROOT, encoding: "utf8" });
-  const hosted = mcp.status === 0 ? JSON.parse(mcp.stdout).mcpServers?.lunox?.url : undefined;
-  if (hosted) {
+  const mcp = show(rev, ".mcp.json");
+  const hosted = mcp === null ? undefined : JSON.parse(mcp).mcpServers?.lunox?.url;
+  if (plugin.mcp && hosted) {
     lines.push("## Hosted mode", "", `The plugin bundles the \`lunox\` MCP server, Lunox's hosted platform at ${hosted}.`);
-    lines.push("Claude Code signs in to it on first use (`/mcp`); signed out, the skill runs locally as before.");
+    lines.push("Claude Code signs in to it on first use (`/mcp`).");
     lines.push(`Without the plugin: \`claude mcp add --transport http lunox ${hosted}\`; other MCP clients take the`);
     lines.push("same URL as a remote HTTP server.", "");
+  } else if (!plugin.mcp) {
+    lines.push("## No sign-in", "", "The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.", "");
   }
-  const data = spawnSync("git", ["show", "HEAD:.claude-plugin/data.md"], { cwd: ROOT, encoding: "utf8" });
-  if (data.status === 0) lines.push("## Data", "", data.stdout.trim(), "");
-  const links = Object.entries(LISTING_LINKS).filter(([key]) => plugin[key]);
-  if (links.length > 0) lines.push("## Links", "", ...links.map(([key, label]) => `- [${label}](${plugin[key]})`), "");
-  lines.push("## Source", "", `This branch holds only the plugin's files. The CLI, its documentation and the`);
-  lines.push(`skills' source are on the main branch of ${plugin.repository}. License: ${plugin.license}.`, "");
+  // Links before Data: the directory takes the first privacy link in the README as the plugin's policy.
+  const links = Object.entries(LISTING_LINKS).filter(([key]) => manifest[key]);
+  if (links.length > 0) lines.push("## Links", "", ...links.map(([key, label]) => `- [${label}](${manifest[key]})`), "");
+  const data = show(rev, ".claude-plugin/data.md");
+  if (data !== null) lines.push("## Data", "", data.trim(), "");
+  const layout = PLUGINS.map((p) => `\`${p.name}\` ${p.dir === "" ? "at its root" : `in ${p.dir}/`}`).join(", ");
+  lines.push("## Source", "", `This branch holds only the plugins' files: ${layout}. The CLI, its documentation and the`);
+  lines.push(`skills' source are on the main branch of ${manifest.repository}. License: ${manifest.license}.`, "");
   return lines.join("\n");
 }
 
-function pluginBranch(push) {
+/** Writes `content` as a blob and adds it to the scratch index at `path`. */
+function addBlob(env, path, content) {
+  const blob = spawnSync("git", ["hash-object", "-w", "--stdin"], { cwd: ROOT, input: content, encoding: "utf8" });
+  if (blob.status !== 0) throw new Error(`git hash-object: ${blob.stderr.trim()}`);
+  git(["update-index", "--add", "--cacheinfo", `100644,${blob.stdout.trim()},${path}`], env);
+}
+
+/** Adds `path` as of `rev` to the scratch index at `to`. */
+function addFromRev(env, rev, path, to) {
+  const [mode, type, object] = git(["ls-tree", rev, "--", path]).split(/\s+/);
+  if (!object) throw new Error(`${path}: not in ${rev}`);
+  if (type === "tree") git(["read-tree", `--prefix=${to}/`, object], env);
+  else git(["update-index", "--add", "--cacheinfo", `${mode},${object},${to}`], env);
+}
+
+function pluginBranch(push, rev) {
   const scratch = mkdtempSync(join(tmpdir(), "plugin-branch-"));
   try {
     const env = { GIT_INDEX_FILE: join(scratch, "index") };
     git(["read-tree", "--empty"], env);
-    for (const path of PLUGIN_FILES) {
-      const [mode, type, object] = git(["ls-tree", "HEAD", "--", path]).split(/\s+/);
-      if (!object) return [`${path}: not in HEAD`];
-      if (type === "tree") git(["read-tree", `--prefix=${path}/`, object], env);
-      else git(["update-index", "--add", "--cacheinfo", `${mode},${object},${path}`], env);
+    for (const plugin of PLUGINS) {
+      const at = (path) => (plugin.dir === "" ? path : `${plugin.dir}/${path}`);
+      const files = [...PLUGIN_FILES, ...(plugin.mcp ? [".mcp.json"] : []), ...plugin.skills.map((name) => `skills/${name}`)];
+      for (const path of files) addFromRev(env, rev, path, at(path));
+      const manifest = JSON.parse(show(rev, plugin.manifest) ?? "null");
+      if (!manifest) return [`${plugin.manifest}: not in ${rev}`];
+      for (const key of Object.keys(LISTING_LINKS)) delete manifest[key];
+      addBlob(env, at(".claude-plugin/plugin.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+      addBlob(env, at("README.md"), pluginReadme(plugin, rev));
     }
-    const manifest = JSON.parse(git(["show", "HEAD:.claude-plugin/plugin.json"]));
-    for (const key of Object.keys(LISTING_LINKS)) delete manifest[key];
-    const json = spawnSync("git", ["hash-object", "-w", "--stdin"], { cwd: ROOT, input: `${JSON.stringify(manifest, null, 2)}\n`, encoding: "utf8" });
-    if (json.status !== 0) return [`git hash-object: ${json.stderr.trim()}`];
-    git(["update-index", "--add", "--cacheinfo", `100644,${json.stdout.trim()},.claude-plugin/plugin.json`], env);
-    const readme = spawnSync("git", ["hash-object", "-w", "--stdin"], { cwd: ROOT, input: pluginReadme(), encoding: "utf8" });
-    if (readme.status !== 0) return [`git hash-object: ${readme.stderr.trim()}`];
-    git(["update-index", "--add", "--cacheinfo", `100644,${readme.stdout.trim()},README.md`], env);
     const tree = git(["write-tree"], env);
     const remote = spawnSync("git", ["fetch", "--quiet", "origin", PLUGIN_BRANCH], { cwd: ROOT }).status === 0;
     const parent = remote ? git(["rev-parse", "FETCH_HEAD"]) : null;
@@ -310,12 +421,16 @@ function pluginBranch(push) {
       console.log(`${PLUGIN_BRANCH}: up to date at ${parent.slice(0, 7)}`);
       return [];
     }
-    const head = git(["rev-parse", "--short", "HEAD"]);
-    const message = `Plugin files from main ${head}\n\n${PLUGIN_FILES.join(", ")}; built by scripts/skill.mjs plugin-branch.`;
+    const head = git(["rev-parse", "--short", rev]);
+    const layout = PLUGINS.map((p) => `${p.name} at ${p.dir === "" ? "the root" : `${p.dir}/`}`).join(", ");
+    const message = `Plugin files from main ${head}\n\n${layout}; built by scripts/skill.mjs plugin-branch.`;
     const commit = git(["commit-tree", tree, ...(parent ? ["-p", parent] : []), "-m", message]);
     if (push) git(["push", "--quiet", "origin", `${commit}:refs/heads/${PLUGIN_BRANCH}`]);
     console.log(`${PLUGIN_BRANCH}: ${commit.slice(0, 7)} from main ${head}${push ? ", pushed" : " (not pushed; add --push)"}`);
+    if (!push) for (const line of git(["ls-tree", "-r", "--name-only", tree]).split("\n")) console.log(`  ${line}`);
     return [];
+  } catch (error) {
+    return [error.message];
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
@@ -326,9 +441,12 @@ let problems;
 if (command === "check") problems = check();
 else if (command === "sync") (sync(), (problems = check()));
 else if (command === "pack") problems = pack(args.includes("--offline"));
-else if (command === "plugin-branch") problems = pluginBranch(args.includes("--push"));
+else if (command === "plugin-branch") {
+  const at = args.indexOf("--rev");
+  problems = pluginBranch(args.includes("--push"), at === -1 ? "HEAD" : args[at + 1]);
+}
 else {
-  console.error("usage: node scripts/skill.mjs check | sync | pack [--offline] | plugin-branch [--push]");
+  console.error("usage: node scripts/skill.mjs check | sync | pack [--offline] | plugin-branch [--push] [--rev <rev>]");
   process.exit(1);
 }
 for (const problem of problems) console.error(problem);

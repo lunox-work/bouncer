@@ -6,9 +6,7 @@ on:
     branches: [main]
     paths:
       [
-        ".claude-plugin/plugin.json",
-        ".claude-plugin/data.md",
-        ".claude-plugin/icon.png",
+        ".claude-plugin/**",
         ".mcp.json",
         "LICENSE",
         "skills/**",

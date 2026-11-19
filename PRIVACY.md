@@ -4,6 +4,13 @@ bouncer is a command-line tool and agent skill that runs on your machine. It
 needs no account and sends no telemetry, and nothing it handles reaches its
 authors unless you use Lunox's hosted platform, which is optional (below).
 
+- **Which plugin reaches the platform:** two plugins, installed separately.
+  `bouncer` bundles no MCP server and its skill runs the CLI on the machine;
+  installing it asks for no sign-in, and it reaches Lunox's platform only if
+  the person runs `bouncer login`, `push` or `ci --platform` themselves
+  (below). `bouncer-hosted` bundles the `lunox` MCP server and the
+  `bouncer-hosted` and `lunox-contribute` skills; it talks to
+  platform.lunox.work once the person signs in through `/mcp`.
 - **Sent off the machine:** the spec, the ticket it came from and the code
   being judged go to the model backend the person chooses, on their own
   account: a Claude Code session, the Codex CLI, or the Anthropic API with
@@ -28,27 +35,27 @@ authors unless you use Lunox's hosted platform, which is optional (below).
   the run's GitHub OIDC token (no saved token) to be judged against a
   published version's hidden suite, and reads back the verdict. No other
   spec, ticket, suite or code is uploaded.
-- **The bundled `lunox` MCP server:** in Claude Code it talks to
-  platform.lunox.work only once the person signs in to it through `/mcp`.
-  Its read tools (`list_*`, `get_*`) read the account and the workspace, with
-  its bounties, repositories, sandboxes and runs. Its write tools run only
-  when the person asks for that action: a bounty posted (title and spec text,
-  with the person's confirmation when the spec was confirmed here) or
-  imported from a GitHub or Jira issue, a spec changed, a sandbox version
-  built, an implementation's changed files submitted for a verdict or graded
-  again, a contributor invited to a published version, and a passing
+- **The `lunox` MCP server, in the `bouncer-hosted` plugin only:** in Claude
+  Code it talks to platform.lunox.work only once the person signs in to it
+  through `/mcp`. Its read tools (`list_*`, `get_*`) read the account and the
+  workspace, with its bounties, repositories, sandboxes and runs. Its write
+  tools run only when the person asks for that action: a bounty posted (title
+  and spec text, with the person's confirmation when the spec was confirmed
+  here) or imported from a GitHub or Jira issue, a spec changed, a sandbox
+  version built, an implementation's changed files submitted for a verdict or
+  graded again, a contributor invited to a published version, and a passing
   submission's files taken back. `size_bounty`, `respec`, `prepare` and
-  `retry` start model runs on the platform that count against the
-  workspace's monthly token limit. Hidden tests are written and kept on the
-  platform and never sent to the session. Confirming a priced spec's
-  decisions, approving a price, publishing and merging back happen in the
-  platform's web app, not through the plugin. The platform's privacy policy
-  is at https://platform.lunox.work/privacy.
-- **The `lunox-contribute` skill:** for a person invited to contribute, it
-  talks to platform.lunox.work only through the contributor MCP server they
-  add and sign in to themselves (`/mcp/contribute`), or their own `lnxc_`
-  token: it reads the version they were invited to and submits the files they
-  changed for a verdict.
+  `retry` start model runs on the platform that count against the workspace's
+  monthly token limit. Hidden tests are written and kept on the platform and
+  never sent to the session. Confirming a priced spec's decisions, approving a
+  price, publishing and merging back happen in the platform's web app, not
+  through the plugin. The platform's privacy policy is at
+  https://platform.lunox.work/privacy.
+- **The `lunox-contribute` skill, in the `bouncer-hosted` plugin:** for a
+  person invited to contribute, it talks to platform.lunox.work only through
+  the contributor MCP server they add and sign in to themselves
+  (`/mcp/contribute`), or their own `lnxc_` token: it reads the version they
+  were invited to and submits the files they changed for a verdict.
 - **Personal data:** a ticket can name people; it is stored with the spec
   under `~/.bouncer/specs/` on the same machine.
 - **Retention:** bouncer itself runs no service. What the model backends
@@ -58,4 +65,4 @@ authors unless you use Lunox's hosted platform, which is optional (below).
 Questions about this policy: open an issue at
 https://github.com/lunox-work/bouncer/issues.
 
-Last updated 2026-11-14.
+Last updated 2026-11-19.
