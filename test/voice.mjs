@@ -57,4 +57,18 @@ console.log("ok say");
 const judge = readFileSync(new URL("../bin/judge.mjs", import.meta.url), "utf8");
 assert.equal(judge.match(/\bsay\(/g).length, 3, "judge calls say() for the new-module verdict, the repository verdict and a changed list");
 assert.ok(!/console\.log\([^)]*LINES/.test(judge), "no line printed around say()");
+// The card (bin/card.mjs): pure, carries only what the implementer may see.
+const { card, wrap } = await import("../bin/card.mjs");
+const counts = { public: { passed: 22, total: 22 }, hidden: { passed: 38, total: 39 } };
+const out = card({ verdict: "overfit", claim: "All <21> tests pass & done.", keys: ["unhappy-1"], slug: "duration-parse", counts, sha: "011e72943df09a8b6b55" });
+assert.match(out, /^<svg /);
+assert.ok(out.includes("Not tonight.") && out.includes("unhappy-1") && out.includes("hidden 38/39") && out.includes("sha256 011e72943df0"));
+assert.ok(out.includes("&lt;21&gt;") && out.includes("&amp;"), "the claim is escaped");
+assert.ok(out.includes("YOUR AGENT"));
+const noClaim = card({ verdict: "passed", claim: null, slug: "duration-parse", counts });
+assert.ok(!noClaim.includes("YOUR AGENT"), "no claim, no agent bubble: a card never invents what an agent said");
+assert.ok(noClaim.includes("You're in.") && noClaim.includes("IN"));
+assert.deepEqual(wrap("one two three four five six", 9, 2), ["one two", "three…"]);
+assert.ok(judge.includes("console.error(`Card: "), "the card's path goes to stderr, so stdout stays the verdict");
+console.log("ok card");
 console.log("voice passed");

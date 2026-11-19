@@ -5,7 +5,11 @@
 // verdict, the counts and the spec scenarios the failing hidden tests are
 // keyed to, which name nothing the spec does not. Writes nothing.
 //
-//   node bin/judge.mjs <slug> <src-dir> [--detail]
+//   node bin/judge.mjs <slug> <src-dir> [--detail] [--card <file.svg> [--claim "<text>"]]
+//
+// --card writes the verdict as an SVG to post (bin/card.mjs): the agent's
+// claim, Bouncer's answer, the counts, the keys and the hash; no hidden
+// test's name.
 //
 // --detail adds each failing hidden test's name and message. That is for
 // the person classifying an overfit, never for the agent that wrote the
@@ -59,6 +63,7 @@ import { spawnSync } from "node:child_process";
 import { judgement } from "./rules.mjs";
 import { unseal } from "./seal.mjs";
 import { say } from "./voice.mjs";
+import { card, lastClaim } from "./card.mjs";
 
 const sealed = openSeal(process.argv.slice(2));
 const { commitment, commitmentLine, hiddenSha256 } = await import("./commitment.mjs");
@@ -152,6 +157,7 @@ writeRecord({
   compiled: { public: judged.public.compiled, hidden: judged.hidden.compiled },
   failedScenarios: scenarios,
 });
+writeCard({ verdict: result, keys: scenarios, counts: { public: publicCount, hidden: hiddenCount }, retry: /-retry-keyed(\/|$)/.test(resolve(src)), transcript: null });
 process.exit(result === "passed" ? 0 : result === "overfit" ? 2 : 1);
 
 /** A repository target judged from a checkout; returns the exit code. */
@@ -250,7 +256,35 @@ function judgeRepo() {
     peekAttempts: peeks === null ? null : peeks.attempts.length,
     hiddenSha256: committed.current,
   });
+  writeCard({
+    verdict: result,
+    keys: scenarios,
+    counts: { public: publicCount, hidden: hiddenCount },
+    retry: false,
+    transcript: peeks?.transcript ?? (sealed === null ? newestTranscript(found.root) : null),
+  });
   return { passed: 0, overfit: 2, regressed: 3 }[result] ?? 1;
+}
+
+/**
+ * --card <file.svg>: the verdict as a card to post (bin/card.mjs). The
+ * agent's claim is --claim, else the last claim in the implementing
+ * session's transcript (repository targets), else left out. Prints the
+ * path on stderr, so stdout stays the verdict.
+ */
+function writeCard({ verdict, keys, counts, retry, transcript }) {
+  if (typeof options.card !== "string") return;
+  let claim = typeof options.claim === "string" ? options.claim : null;
+  if (claim === null && transcript) {
+    try {
+      claim = lastClaim(transcript);
+    } catch {
+      claim = null;
+    }
+  }
+  const file = resolve(options.card.endsWith(".svg") ? options.card : `${options.card}.svg`);
+  writeFileSync(file, card({ verdict, claim, keys, slug, counts, sha: committed.current, retry }));
+  console.error(`Card: ${file}`);
 }
 
 /** The hash line printed with a verdict: the seal's, or the spec's commitment. */
