@@ -19,6 +19,8 @@ referee ([Writer backends](#writer-backends)) and as implementer
 to end ([Go and Rust](#go-and-rust)), and commands and services written in
 Python, Go and Rust
 ([Commands and services in other languages](#commands-and-services-in-other-languages)).
+Run 2026-11-20: which repositories `fit` takes, static checks on 50 libraries
+([Which repositories fit](#which-repositories-fit)).
 p-values are Fisher's exact test,
 two-sided.
 
@@ -278,6 +280,67 @@ resumes a set.
   GB; sandbox-factory's apps/web suite peaks at 2.2 GB) with `--maxWorkers=2`,
   which vitest before 4 rejects under its default minimum unless
   `--minWorkers=1` comes with it; the runner adds it there.
+
+## Which repositories fit
+
+`bouncer fit` decides whether a package of an existing repository can be a
+target at all. Two funnels, run 2026-11-20 on 50 popular open-source
+libraries, 25 TypeScript and 25 Python, default branch, no model. **Static
+checks only** (`fit --no-run`): nothing was installed and no existing suite
+was run, so every count is an upper bound. The install-and-run stage, which
+adds "does not build on a clean install" and "over ten minutes", is pending.
+
+| per repository, one package each, statically supported | all 50 | TypeScript |  Python |
+| ------------------------------------------------------ | -----: | ---------: | ------: |
+| before the fixes it led to                             |     27 |    12 / 25 | 15 / 25 |
+| after                                                  | **43** |    19 / 25 | 24 / 25 |
+
+| per commit, the last 20 non-merge commits of each |             all |      TypeScript |          Python |
+| ------------------------------------------------- | --------------: | --------------: | --------------: |
+| commits                                           |           1,000 |             500 |             500 |
+| change no source file (docs, config, releases)    |             451 |             192 |             259 |
+| change source                                     |             549 |             308 |             241 |
+| of those: only tests                              |              37 |              12 |              25 |
+| of those: span packages                           |              59 |              56 |               3 |
+| of those: in one package                          |             453 |             240 |             213 |
+| in one package that is statically supported       | **358 (65.2%)** | **155 (50.3%)** | **203 (84.2%)** |
+
+- **Per repository** (`evidence/fit-funnel.mjs`, `evidence/fit-funnel.json`;
+  the first run is `evidence/fit-funnel-before.json`): the package was picked
+  by hand, the one a change would most likely touch.
+- **Per commit** (`evidence/fit-funnel-commits.mjs`,
+  `evidence/fit-funnel-commits.json`): nobody picks. Each commit's changed
+  files go through `bouncer check`'s own rule (`packageOf`: the nearest
+  folder with a manifest, for every changed source file), then `fit` on that
+  package. It is the question `check` asks of a real change, and its share
+  is of the commits that change source.
+- **What the first run fixed, 27 to 43.** Ten libraries commit no lockfile:
+  the install is now resolved as of the commit's date (`npm --before`,
+  `uv --exclude-newer`). vitest's test folder was read from the first
+  `include` in the config, which is often coverage's; vitest is now found
+  from a `test:*` script or the workspace root's config; `__tests__/` counts;
+  a byte-order mark in a `package.json` no longer ends the scan (vite);
+  pytest's `testpaths` and `python_files` are read (pluggy, tqdm); a package
+  with no `tsconfig.json` takes the root's (xstate). `test/fit.mjs` holds a
+  case for each.
+- **The seven still refused.** ky runs AVA and nanostores its own scripts
+  (runners `fit` does not drive); date-fns nests vitest `projects` and names
+  its tests `test.ts`; immer's tests are plain `.js` names in `__tests__/`;
+  react-router's Jest matches `*-test.tsx` from a shared config; fastify is
+  JavaScript; more-itertools is on unittest.
+- **Why the per-commit share is lower than 43 of 50.** Changes that span
+  packages are 59 of 549, 37 of them in six monorepos (vite 11, TanStack
+  Query 6, Effect, xstate, React Router and tRPC 5 each); 41 of the 59 span
+  two packages, and 8 are one real package plus an example or docs folder.
+  18 single-package commits land in a docs, example, website or tooling
+  package nobody would judge. And a refused repository counts 20 times: ky
+  alone is 18 of the 95 refused single-package commits.
+- **Limits.** These are libraries, not the applications most people work in:
+  no application's suite, environment or database was sampled, and a
+  committed lockfile is rarer here than there. The per-commit funnel runs
+  `fit` once per package at each clone's HEAD, not at each commit's parent,
+  and "the last 20 commits" includes bot and release commits. Counts are
+  commits, so a busy repository weighs as much as a quiet one.
 
 ## Installed as a package
 
