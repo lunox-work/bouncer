@@ -30,9 +30,11 @@ export const LINES = {
   "left-a-note": "Come back when it's finished.",
   clipboard: "You don't write on my clipboard.",
   "door-clean": "Dress code's fine. The list is another matter: bouncer check.",
+  id: "Let me see some ID.",
 };
 
 const IN = new Set(["passed", "passed-retry", "door-clean"]);
+const ASK = new Set(["id"]);
 
 /**
  * Whether a person is reading `stream`: a TTY, and nothing asked for plain
@@ -52,7 +54,7 @@ export function lineFor(verdict, { retry = false, keys = [], aside = null } = {}
   const text = LINES[id];
   if (text === undefined) return null;
   const extra = aside !== null && LINES[aside] !== undefined ? ` ${LINES[aside]}` : "";
-  return { id, text: `${text}${extra}`, keys: id === "overfit" ? keys : [], tone: IN.has(id) ? "in" : "out" };
+  return { id, text: `${text}${extra}`, keys: id === "overfit" ? keys : [], tone: IN.has(id) ? "in" : ASK.has(id) ? "ask" : "out" };
 }
 
 /**
@@ -65,7 +67,7 @@ export const MARK = ["▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ", "▀██�
 export function banner(line, { color = true } = {}) {
   if (line === null) return "";
   const paint = (code, text) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
-  const said = `${paint(`1;${line.tone === "in" ? 32 : 31}`, line.text)}${line.keys.length > 0 ? ` ${paint(2, line.keys.join(", "))}` : ""}`;
+  const said = `${paint(`1;${{ in: 32, ask: 33 }[line.tone] ?? 31}`, line.text)}${line.keys.length > 0 ? ` ${paint(2, line.keys.join(", "))}` : ""}`;
   return [`  ${MARK[0]}`, `  ${MARK[1]}   ${said}`, `  ${MARK[2]}`, ""].join("\n");
 }
 

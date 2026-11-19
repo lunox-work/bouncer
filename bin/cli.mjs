@@ -17,6 +17,7 @@ const BIN = dirname(fileURLToPath(import.meta.url));
 const COMMANDS = {
   fit: "whether a repository's package can be a target",
   repo: "point a spec at a package: seam, allowed paths, base tree, baseline",
+  id: "what the ticket never said and what the agent's diff picked: questions to confirm (one session)",
   confirm: "a spec's decisions in context; record a confirmation (--by); --from <issue>, --export",
   prepare: "confirmed spec -> skeleton, both suites, calibration (Opus sessions)",
   handout: "what an outside agent may see, in a folder of your choice",
