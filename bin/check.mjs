@@ -6,11 +6,13 @@
 //
 //   node bin/check.mjs [--repo <checkout>] [--from <issue> | --ticket <file>]
 //     [--base <ref>] [--package <dir>] [--seam <file>[,<file>]] [--slug <slug>]
-//     [--accept-open] [--card <file.svg>] [--no-door]
+//     [--new] [--accept-open] [--card <file.svg>] [--no-door]
 //
 // 1. The door (bin/door.mjs): a report, never a stop.
 // 2. The change: --base, else the merge-base with the default branch when
-//    HEAD is past it, else HEAD (the working tree's change). Its package is
+//    HEAD is past it, else HEAD (the working tree's change). A base two or
+//    more commits behind HEAD is said, with --base, since on a shared branch
+//    those commits may not all be the agent's. Its package is
 //    the nearest folder with a package.json or a pyproject.toml shared by
 //    every changed source file; a change spanning packages stops. The seam
 //    is the changed source files that are not tests. --package and --seam
@@ -27,31 +29,116 @@
 // 8. Once confirmed: bin/prepare.mjs, then bin/judge.mjs --repo --audit on
 //    the working tree, exiting with the judge's code.
 //
-// specs/<slug>/check.json keeps the checkout, base, package and seam, so a
-// rerun judges the same change after the agent commits it. The slug is
-// --slug, else `check-<folder>-<branch>`.
+// specs/<slug>/check.json keeps the checkout, branch, base, package, seam
+// and where the ticket came from, so a rerun judges the same change after
+// the agent commits it. A rerun on the same checkout and branch resumes the
+// newest check there and says which: its base, seam and ticket. --new starts
+// another (a second task on the same branch); a --base, --package, --seam,
+// --from or --ticket that differs from the resumed check's is refused, not
+// ignored. The slug is --slug, else `check-<folder>-<branch>-<base>`.
+//
+// The change can move between runs. Before drafting and before preparing,
+// the diff is hashed against the one the list was read from: while the spec
+// is unconfirmed the list and the draft are redone (unless the person edited
+// the draft), once it is confirmed the move is said and judged as it is.
+// Sources changed since the check started are named: they are outside its
+// seam.
+//
+// Exit: once judged, the judge's code (0 passed, 2 overfit, 3 regressed, 1
+// otherwise). Before that: 1 nothing to check, a refused flag or a failed
+// step; 2 out of scope or `fit` unsupported; 3 the person must confirm; 4
+// prepare's open questions (answer them in spec.md, or --accept-open).
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { basename, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { confirmation } from "./confirm.mjs";
-import { render } from "./id.mjs";
-import { ROOT, RUNS, args, discard, log, prompt, readJson, session, specDir, stage, toolchainOf, workdir, writeJson } from "./lib.mjs";
+import { diffOf, render } from "./id.mjs";
+import { ROOT, RUNS, SPECS, args, discard, log, prompt, readJson, session, sha256, specDir, stage, toolchainOf, workdir, writeJson } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
 const SOURCE = /\.(?:[cm]?[jt]sx?|py)$/;
-const TEST = /(?:^|\/)(?:__tests__|__mocks__|tests?|spec|e2e)\/|\.(?:test|spec)\.[cm]?[jt]sx?$|(?:^|\/)test_[^/]*\.py$|_test\.py$|(?:^|\/)conftest\.py$/;
+// A test by its name or by a test folder anywhere in the path.
+const TEST = /(?:^|\/)(?:__tests__|__mocks__|tests?)\/|\.(?:test|spec)\.[cm]?[jt]sx?$|(?:^|\/)test_[^/]*\.py$|_test\.py$|(?:^|\/)conftest\.py$/;
+// spec/, specs/ and e2e/ are test folders only at the top of the package: src/spec/parser.ts is source.
+const TEST_ROOT = /^(?:specs?|e2e)\//;
+
+/** Whether a repository-relative path is a test, for a package at `pkg` ("." is the root). */
+export function isTest(path, pkg = ".") {
+  const inside = pkg === "." ? path : path.startsWith(`${pkg}/`) ? path.slice(pkg.length + 1) : path;
+  return TEST.test(path) || TEST_ROOT.test(inside);
+}
 const MANIFESTS = ["package.json", "pyproject.toml", "setup.py", "setup.cfg"];
 
-/** A kebab-case slug for a checkout and branch: `check-<folder>-<branch>`, at most 60 characters. */
-export function slugFor(folder, branch) {
+/**
+ * A kebab-case slug for a checkout and branch, at most 60 characters:
+ * `check-<folder>-<branch>`, and with `base` (a commit) its first seven
+ * characters after it, so two changes on one branch get two slugs.
+ */
+export function slugFor(folder, branch, base = "") {
   const kebab = (text) =>
     String(text ?? "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-  return ["check", kebab(folder), kebab(branch)].filter(Boolean).join("-").slice(0, 60).replace(/-+$/, "");
+  const short = kebab(base).slice(0, 7);
+  const stem = ["check", kebab(folder), kebab(branch)]
+    .filter(Boolean)
+    .join("-")
+    .slice(0, short ? 52 : 60)
+    .replace(/-+$/, "");
+  return short ? `${stem}-${short}` : stem;
+}
+
+/** `slug`, or `slug-2`, `slug-3`... : the first that `taken(slug)` does not hold. */
+export function freeSlug(slug, taken) {
+  if (!taken(slug)) return slug;
+  for (let n = 2; ; n += 1) if (!taken(`${slug}-${n}`)) return `${slug}-${n}`;
+}
+
+/**
+ * The newest check started on this checkout and branch, among `records`
+ * ([{ slug, record }], each a specs/<slug>/check.json): { slug, record } or
+ * null. A record from before branches were kept matches by its slug.
+ */
+export function newestCheck(records, root, branch, legacySlug) {
+  const mine = records.filter(({ slug, record }) => record?.checkout === root && (record.branch === undefined ? slug === legacySlug : record.branch === branch));
+  return mine.sort((a, b) => String(b.record.at ?? "").localeCompare(String(a.record.at ?? "")))[0] ?? null;
+}
+
+/**
+ * What a rerun's flags ask for that the resumed check is not: one line each,
+ * empty when they agree. `given` holds only the flags passed: { base (a
+ * commit), package, seam: [..], from, ticketSha256 }.
+ */
+export function resumeConflicts(record, given) {
+  const found = [];
+  if (given.base !== undefined && given.base !== record.base) found.push(`--base is ${given.base.slice(0, 12)}; this check's base is ${String(record.base).slice(0, 12)}`);
+  if (given.package !== undefined && given.package !== record.package) found.push(`--package is ${given.package}; this check's package is ${record.package}`);
+  if (given.seam !== undefined && [...given.seam].sort().join("\n") !== [...record.seam].sort().join("\n")) found.push(`--seam is ${given.seam.join(", ")}; this check's seam is ${record.seam.join(", ")}`);
+  // A check that holds no ticket yet takes the one this run brings.
+  if (given.from !== undefined && record.ticket !== undefined && given.from !== record.ticket.from) found.push(`--from is ${given.from}; this check's ticket ${record.ticket?.from ? `came from ${record.ticket.from}` : "did not come from there"}`);
+  if (given.ticketSha256 !== undefined && record.ticket !== undefined && given.ticketSha256 !== record.ticket.sha256) found.push("--ticket is not the ticket this check holds");
+  return found;
+}
+
+/**
+ * What to do when the diff may have moved since the list was read:
+ * "fresh" (same diff, or no list yet), "redo" (moved, unconfirmed, the
+ * draft untouched: read the list and draft again), "edited" (moved,
+ * unconfirmed, but the person edited the draft: leave both), "confirmed"
+ * (moved after the person confirmed: say so and judge it as it is).
+ */
+export function staleness({ listedSha256, nowSha256, confirmed, draftIntact }) {
+  if (listedSha256 === undefined || listedSha256 === null || listedSha256 === nowSha256) return "fresh";
+  if (confirmed) return "confirmed";
+  return draftIntact ? "redo" : "edited";
+}
+
+/** Sources changed now, in the check's package and outside its tests, that its seam does not hold. */
+export function seamDrift(record, changedNow) {
+  return seamOf(changedNow, record.package).filter((path) => !record.seam.includes(path));
 }
 
 /**
@@ -79,7 +166,7 @@ export function packageOf(changed, has) {
 /** The seam: changed source files inside `pkg` that are not tests, repository-relative. */
 export function seamOf(changed, pkg) {
   const inside = (path) => pkg === "." || path.startsWith(`${pkg}/`);
-  return changed.filter((path) => SOURCE.test(path) && !TEST.test(path) && inside(path)).sort();
+  return changed.filter((path) => SOURCE.test(path) && !isTest(path, pkg) && inside(path)).sort();
 }
 
 /** What the drafting session is told beyond prompts/repo/spec-from-ticket.md. */
@@ -148,6 +235,16 @@ async function draftSpec(slug, out) {
   }
 }
 
+/** Every check started on this machine: [{ slug, record }]. */
+function checks() {
+  if (!existsSync(SPECS)) return [];
+  return readdirSync(SPECS)
+    .map((slug) => ({ slug, record: readJson(join(SPECS, slug, "check.json"), null) }))
+    .filter(({ record }) => record !== null);
+}
+
+const headingOf = (file) => (existsSync(file) ? (/^#\s+(.+)$/m.exec(readFileSync(file, "utf8"))?.[1] ?? readFileSync(file, "utf8").split("\n").find((line) => line.trim() !== "") ?? "").trim() : "");
+
 async function main() {
   const { options } = args();
   const checkout = realpathSync(resolve(typeof options.repo === "string" ? options.repo : "."));
@@ -156,25 +253,80 @@ async function main() {
     return 1;
   }
   const root = git(checkout, "rev-parse", "--show-toplevel").stdout.trim();
-  const branch = git(root, "rev-parse", "--abbrev-ref", "HEAD").stdout.trim();
-  const slug = typeof options.slug === "string" ? options.slug : slugFor(basename(root), branch === "HEAD" ? git(root, "rev-parse", "--short", "HEAD").stdout.trim() : branch);
+  const named = git(root, "rev-parse", "--abbrev-ref", "HEAD").stdout.trim();
+  const branch = named === "HEAD" ? git(root, "rev-parse", "--short", "HEAD").stdout.trim() : named;
+  const stem = slugFor(basename(root), branch);
+  const fresh = options.new !== undefined;
+  const givenBase = typeof options.base === "string" ? baseOf(root, options.base) : undefined;
+  const givenPackage = typeof options.package === "string" ? options.package.replace(/\/+$/, "") || "." : undefined;
+  const givenSeam = typeof options.seam === "string" ? options.seam.split(",").map((item) => item.trim()).filter(Boolean) : undefined;
+  if (typeof options.ticket === "string" && !existsSync(resolve(options.ticket))) {
+    console.error(`--ticket ${options.ticket}: no such file.`);
+    return 1;
+  }
+  const givenTicket = typeof options.ticket === "string" ? readFileSync(resolve(options.ticket), "utf8") : undefined;
+
+  // Which check: --slug, else the newest one started on this checkout and branch, else a new one.
+  let slug;
+  let record = null;
+  if (typeof options.slug === "string") {
+    slug = options.slug;
+    record = readJson(join(specDir(slug), "check.json"), null);
+    if (record !== null && fresh) {
+      console.error(`--new, but ${slug} already holds a check (started ${String(record.at).slice(0, 10)}). Pick another --slug.`);
+      return 1;
+    }
+  } else {
+    const earlier = fresh ? null : newestCheck(checks(), root, branch, stem);
+    if (earlier !== null) ({ slug, record } = earlier);
+    else slug = freeSlug(slugFor(basename(root), branch, givenBase ?? baseOf(root)), (candidate) => existsSync(specDir(candidate)));
+  }
   const out = specDir(slug);
   const recordPath = join(out, "check.json");
-  let record = readJson(recordPath, null);
-  console.log(`bouncer check: ${slug} (${root})`);
+  const ticketPath = join(out, "ticket.md");
+
+  if (record === null) console.log(`bouncer check: ${slug} (${root})`);
+  else {
+    // A resumed check is said, so a second task on the same branch is not judged against the first one's spec.
+    // The ticket held is the file as it is now: the person may have edited it since.
+    const held = existsSync(ticketPath) ? { from: record.ticket?.from, sha256: sha256(readFileSync(ticketPath, "utf8")) } : undefined;
+    const conflicts = resumeConflicts({ ...record, ticket: held }, {
+      base: givenBase,
+      package: givenPackage,
+      seam: givenSeam,
+      from: typeof options.from === "string" ? options.from : undefined,
+      ticketSha256: givenTicket === undefined ? undefined : sha256(givenTicket),
+    });
+    const ticket = headingOf(ticketPath);
+    console.log(
+      [
+        `bouncer check: resuming ${slug}, started ${String(record.at).slice(0, 10)} (${record.checkout})`,
+        `base ${String(record.base).slice(0, 12)}, package ${record.package}, seam ${record.seam.join(", ")}`,
+        ...(ticket ? [`ticket: ${ticket}`] : []),
+        "A different change or ticket on this branch? bouncer check --new",
+      ].join("\n"),
+    );
+    if (conflicts.length > 0) {
+      console.error(`This run asks for something else than the check it resumes:\n${conflicts.map((line) => `- ${line}`).join("\n")}\nNothing was changed. Start another check with --new, or drop the flag to go on with this one.`);
+      return 1;
+    }
+  }
 
   // 1. The door: a report, never a stop.
   if (options["no-door"] === undefined && record === null) step("door.mjs", ["--repo", root]);
 
   // 2. The change.
   if (record === null) {
-    const base = baseOf(root, typeof options.base === "string" ? options.base : undefined);
+    const base = givenBase ?? baseOf(root);
     const changed = changedFiles(root, base);
     if (changed.length === 0) {
       console.error(`No change against ${base.slice(0, 12)}. Leave the agent's change in the working tree, or pass --base <the commit before it>.`);
       return 1;
     }
-    let pkg = typeof options.package === "string" ? options.package.replace(/\/+$/, "") || "." : null;
+    const behind = Number(git(root, "rev-list", "--count", `${base}..HEAD`).stdout.trim() || 0);
+    if (givenBase === undefined && behind >= 2)
+      console.log(`Note: the base is ${behind} commits behind HEAD, so the change read is everything since ${base.slice(0, 12)} (${changed.length} files). If only the last of them are the agent's, stop and pass --base <the commit before its change>.`);
+    let pkg = givenPackage ?? null;
     if (pkg === null) {
       const found = packageOf(changed, (path) => existsSync(join(root, path)));
       if (found.none) {
@@ -187,12 +339,12 @@ async function main() {
       }
       pkg = found.pkg;
     }
-    const seam = typeof options.seam === "string" ? options.seam.split(",").map((item) => item.trim()).filter(Boolean) : seamOf(changed, pkg);
+    const seam = givenSeam ?? seamOf(changed, pkg);
     if (seam.length === 0) {
       console.error(`No changed source file in ${pkg} outside the tests. Pass --seam <file>[,<file>].`);
       return 2;
     }
-    record = { checkout: root, base, package: pkg, seam, changed, at: new Date().toISOString() };
+    record = { checkout: root, branch, base, package: pkg, seam, seamGiven: givenSeam !== undefined, changed, at: new Date().toISOString() };
     console.log(`base ${base.slice(0, 12)}, package ${pkg}, seam ${seam.join(", ")}`);
   }
 
@@ -204,26 +356,50 @@ async function main() {
   writeJson(recordPath, record);
 
   // 4. The ticket.
-  if (!existsSync(join(out, "ticket.md"))) {
+  if (!existsSync(ticketPath)) {
     if (typeof options.from === "string") {
       const status = step("confirm.mjs", [slug, "--from", options.from]);
       if (status !== 0) return status;
-    } else if (typeof options.ticket === "string") {
-      writeFileSync(join(out, "ticket.md"), readFileSync(resolve(options.ticket), "utf8"));
+    } else if (givenTicket !== undefined) {
+      writeFileSync(ticketPath, givenTicket);
     } else {
       console.error(`No ticket. Pass --from <issue url | owner/repo#n | JIRA-KEY>, or --ticket <file> with the request in the person's words.`);
       return 1;
     }
+    record.ticket = { ...(typeof options.from === "string" ? { from: options.from } : {}), ...(existsSync(ticketPath) ? { sha256: sha256(readFileSync(ticketPath, "utf8")) } : {}) };
+    writeJson(recordPath, record);
   }
 
+  // The change may have moved since this check read it.
+  const specPath = join(out, "spec.md");
+  const idPath = join(RUNS, slug, "id.json");
+  const changedNow = changedFiles(record.checkout, record.base);
+  const drift = record.seamGiven ? [] : seamDrift(record, changedNow);
+  if (drift.length > 0)
+    console.log(`Note: changed since this check started and outside its seam: ${drift.join(", ")}. The judge reports them as outside the allowed paths; bouncer check --new starts a check that includes them.`);
+  const moved = staleness({
+    listedSha256: readJson(idPath, null)?.diffSha256,
+    nowSha256: sha256(diffOf(record.checkout, record.base).diff),
+    confirmed: confirmation(slug).ok,
+    draftIntact: !existsSync(specPath) || (typeof record.draftSha256 === "string" && sha256(readFileSync(specPath, "utf8")) === record.draftSha256),
+  });
+  const again = `bouncer id ${slug} --repo ${record.checkout} --base ${String(record.base).slice(0, 12)}`;
+  if (moved === "redo") console.log("The change moved since the list was read: reading the list and drafting spec.md again.");
+  if (moved === "edited") console.log(`Note: the change moved since the list was read, and spec.md was edited after it was drafted, so neither is redone. ${again} reads the list again.`);
+  if (moved === "confirmed") console.log(`Note: the change moved since the list was read and the spec confirmed. It is judged as it is now; what it picked since is not on the list (${again}).`);
+
   // 5. The ID check, on the working tree against base.
-  if (!existsSync(join(RUNS, slug, "id.json"))) {
+  if (!existsSync(idPath) || moved === "redo") {
     const status = step("id.mjs", [slug, "--repo", record.checkout, "--base", record.base]);
     if (status !== 0) return status;
   }
 
   // 6. spec.md from the ticket and the list.
-  if (!existsSync(join(out, "spec.md"))) await draftSpec(slug, out);
+  if (!existsSync(specPath) || moved === "redo") {
+    await draftSpec(slug, out);
+    record.draftSha256 = sha256(readFileSync(specPath, "utf8"));
+    writeJson(recordPath, record);
+  }
 
   // 7. The person confirms.
   const confirmed = confirmation(slug);
@@ -233,7 +409,8 @@ async function main() {
       [
         `${slug}: ${confirmed.reason}.`,
         `The list above is what the ticket never said and what the agent picked; spec.md makes each pick a Decided: item.`,
-        `1. bouncer confirm ${slug}            lists each decision: keep the agent's pick or take the other, and edit ${join(out, "spec.md")}`,
+        `Keeping every pick makes the hidden tests say what the code already does: the verdict is independent where the ticket states a rule and where the person changes a pick.`,
+        `1. bouncer confirm ${slug}            lists each decision: keep the agent's pick or take the other, and edit ${specPath}`,
         `2. bouncer confirm ${slug} --by "<name>"   only after the person said yes to the spec as it stands`,
         `3. bouncer check${typeof options.slug === "string" ? ` --slug ${slug}` : ""}                prepares the suites (about $1-7 of Opus, 10-25 minutes) and judges`,
       ].join("\n"),

@@ -14,6 +14,22 @@ exit 3 for step 3's confirmation. Put the decisions to the person as step 3
 says, record `--by`, then run `bouncer check` again: it prepares and
 judges. The steps below are what it runs, for when one needs doing by hand.
 
+Run again in the same checkout and branch, it resumes the newest check there
+and says which (base, seam, ticket). For a second task on the same branch use
+`bouncer check --new`: a flag that differs from the resumed check is refused,
+not ignored. When the change moved since the list was read it says so, and
+redoes the list and the draft while the spec is still unconfirmed.
+
+## What the confirmation means here
+
+Here the spec is drafted from the agent's own picks. If the person keeps
+every pick as it is, the hidden suite encodes what the code already does and
+the verdict says little. It is independent in two places: the rules the
+ticket states, and the picks the person changes. So put each decision as a
+real choice between the pick and the alternative, never as a list to wave
+through, and say this when they keep everything. The list holds twelve picks
+at most: a larger change has decisions that are not on it.
+
 ## 1. The door (no model, seconds)
 
 `bouncer door` in the checkout reads the agent's session transcript (the
