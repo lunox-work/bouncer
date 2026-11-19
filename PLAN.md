@@ -17,6 +17,11 @@ references/, `bouncer-hosted` as its own plugin), `bouncer door`, `bouncer id`,
 the after-the-fact flow (skills/bouncer/references/check.md), the CLI help
 tidy-up.
 
+A second pass the same day: the mark and the hero were redrawn (the first try,
+a floating visor and a dot chart, had no character; see [The look](#the-look)),
+and `door`, `id` and `--card` were fixed for long transcripts, large diffs
+and Windows.
+
 Measured, and what it changed:
 
 - **Phase 0 failed its gate** (evidence/DOOR.md): any rule fired on 8.7% of
@@ -169,16 +174,16 @@ Borrow the mechanics, not the looks:
 **Bouncer's set.** Sources in `assets/src/`, rebuilt by
 `assets/src/render.mjs`, every number citing RESULTS.md in a comment.
 
-| asset             | what it is                                                                                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The mark          | His head in three features: wraparound sunglasses, the coiled earpiece, a flat mouth. Hand-written SVG, one colour, light and dark files. Replaces the check-card icon.                  |
-| The banner        | The mark beside "Bouncer", for the top of the README.                                                                                                                                    |
-| The hero: a queue | The 105 runs drawn as the queue at his rope, one figure per run: 30 past the rope, 75 turned away. Headline and the two-line exchange beside it. Also the social preview.                |
-| The stamp         | A club hand stamp, NOT TONIGHT and YOU'RE IN, set slightly off square. On every card, on `--card`, and usable as a sticker.                                                              |
-| The list          | His clipboard: scenario keys as guest-list rows, hidden tests as redaction bars, ticked or struck. "He never shows it" in one look.                                                      |
-| The cards         | One template, five cards: before and after (escrow-split), the verdict (re-recorded with the `bouncer` command), the queue's seven stereotypes, the runs, how it works (door, ID, list). |
-| The rope          | An 18 px inline SVG for table headers and the verdict line. On `passed` the rope drops: one whole-object move, no spin.                                                                  |
-| The terminal mark | Three lines of Unicode or fewer, printed with his line on a terminal, so a screenshot of a verdict carries him.                                                                          |
+| asset              | what it is                                                                                                                                                                                                                                                                 |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The mark           | Him as a figure: no neck, shoulders edge to edge, a small bald head, wraparound sunglasses, arms crossed, the coiled earpiece. One colour, light and dark files, from one source (`bin/mark.mjs`) that the icon and the card also draw from. Replaces the check-card icon. |
+| The banner         | The mark beside "Bouncer", for the top of the README.                                                                                                                                                                                                                      |
+| The hero: the door | A club called DONE in neon. He fills its doorway; outside the rope a small agent holds up an ID, "ALL TESTS PASS, issued by: me". Headline and the two-line exchange beside it. Also the social preview. The 105 runs are drawn as dots on the runs card.                  |
+| The stamp          | A club hand stamp, NOT TONIGHT and YOU'RE IN, set slightly off square. On every card, on `--card`, and usable as a sticker.                                                                                                                                                |
+| The list           | His clipboard: scenario keys as guest-list rows, hidden tests as redaction bars, ticked or struck. "He never shows it" in one look.                                                                                                                                        |
+| The cards          | One template, five cards: before and after (escrow-split), the verdict (re-recorded with the `bouncer` command), the queue's seven stereotypes, the runs, how it works (door, ID, list).                                                                                   |
+| The rope           | An 18 px inline SVG for table headers and the verdict line. On `passed` the rope drops: one whole-object move, no spin.                                                                                                                                                    |
+| The terminal mark  | Three lines of Unicode or fewer, printed with his line on a terminal, so a screenshot of a verdict carries him.                                                                                                                                                            |
 
 - **Palette.** Night black, paper white, velvet-rope red as the one accent,
   green only for "in". Not the Lunox gradient, not Ponytail's blue to pink.
@@ -187,20 +192,23 @@ Borrow the mechanics, not the looks:
   be rebuilt and edited, and nothing reads as stock illustration.
 - **Order.** Three variants of the mark first, mocked in the README header at
   real size, light and dark, with a 16, 32 and 64 px strip. One is chosen, then
-  the rest of the set is drawn from it.
+  the rest of the set is drawn from it. Done twice: the first choice, his head
+  in three features, read as a floating visor and was replaced by the figure.
 - **One card template, two users.** The README cards and `judge --card` come
   from the same function (`bin/card.mjs`, no dependency), so a card someone
   posts looks like the ones in the README.
 - **The plugin directory's icon is set once.** The draft was saved on
   2026-11-12 with the check-card icon: check whether the draft can be
   discarded and filed again before counting on the new mark there.
-- **Gates.** The mark is identifiable at 16 px. It can be redrawn from memory
-  in three strokes. No asset contains "duediligence". Each image is checked at
+- **Gates.** The mark is identifiable at 16 px (the figure holds at 32 px; at
+  16 px only the shoulders and head outline is left). It can be redrawn from
+  memory in three strokes (the figure takes more: shoulders, head, shades,
+  arms). No asset contains "duediligence". Each image is checked at
   880 px (README width), at 375 px and as a 1280×640 social crop. Beside
   Ponytail's and Caveman's marks it shares no technique: no brush ink, no
   pixel grid.
-- **Fallback.** If 105 figures do not read at 880 px, the hero keeps the
-  waffle grid and puts him at the rope beside it.
+- **Fallback.** Not needed: the hero is no longer the queue, and the runs card
+  draws the 105 as a dot grid.
 
 ## Capability
 
