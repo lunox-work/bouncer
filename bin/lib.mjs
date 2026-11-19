@@ -1153,7 +1153,9 @@ const PYTHON_INSTALL = {
     ...(config.installProject === false ? [] : [[VENV_PYTHON, "-m", "pip", "install", "-q", "--disable-pip-version-check", "--no-deps", "."]]),
   ],
 };
-const PYTHON_ENV = { UV_PROJECT_ENVIRONMENT: ".venv", UV_PYTHON_DOWNLOADS: "never", POETRY_VIRTUALENVS_IN_PROJECT: "true", PIP_NO_INPUT: "1" };
+// SETUPTOOLS_SCM_PRETEND_VERSION: the staged copy has no .git, so a project
+// versioned by setuptools-scm or hatch-vcs (tqdm, urllib3) cannot build without one.
+const PYTHON_ENV = { SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0", UV_PROJECT_ENVIRONMENT: ".venv", UV_PYTHON_DOWNLOADS: "never", POETRY_VIRTUALENVS_IN_PROJECT: "true", PIP_NO_INPUT: "1" };
 export const PACKAGE_MANAGERS = [...Object.keys(INSTALL), ...Object.keys(PYTHON_INSTALL)];
 export const baseTree = (config) =>
   join(

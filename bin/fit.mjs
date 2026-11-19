@@ -604,7 +604,17 @@ if (isMain) {
     if (found.supported && boundary !== null) found.config.boundary = boundary;
     if (found.supported && options["no-run"] !== true) {
       log(`${found.config.package}: staging ${found.config.base.slice(0, 12)} and running its existing suite`);
-      found.suite = runExisting(found.config);
+      try {
+        found.suite = runExisting(found.config);
+      } catch (error) {
+        // A dependency install that fails on a clean copy is an answer, not a crash.
+        const failed = /^(\S+) install failed:\n([\s\S]*)$/.exec(error.message);
+        if (failed === null) throw error;
+        const lines = failed[2].split("\n").map((line) => line.trim()).filter((line) => line !== "" && !/^(npm )?warn|^hint:|^\^|^~/i.test(line));
+        const why = lines.findLast((line) => /error|failed|unable|not found|cannot/i.test(line)) ?? lines.at(-1) ?? "";
+        console.log(`unsupported: the dependencies do not install on a clean copy (${failed[1]}): ${why.slice(0, 300)}`);
+        process.exit(2);
+      }
       // ts-jest type-checks each test file itself: a project-wide tsc that
       // fails on a clean install is no check to keep.
       if (!found.suite.compiled && found.config.runner === "jest" && found.config.build !== undefined) {
