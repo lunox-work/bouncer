@@ -74,7 +74,7 @@ $ bouncer id --ticket ticket.md --repo .
 ```
 
 17 seconds, $0.06. On 75 wrong "all tests pass" runs, a blind reader with the
-list and the spec found the bad pick in 57, and never flagged a right one ([how](RESULTS.md#the-id-check-after-the-fact)).
+list and the spec found the bad pick in 57, and never flagged a right one (35 of 45 in Python, Go and Rust; [how](RESULTS.md#the-id-check-after-the-fact)).
 
 ## Before / After
 
