@@ -6,7 +6,10 @@
 // path the run changed, peek attempts). <variant> is the model's family
 // (opus, sonnet, haiku), from --model or the default.
 //
-//   node bin/run.mjs <slug> [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team] [--force]
+//   node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket] [--force]
+//
+// A session costs money, so a call that names no spec prints the usage
+// instead of running every calibrated spec.
 //
 // --no-public is the control arm of the evidence (RESULTS.md): the agent
 // gets the spec and the stub but no public suite, briefed by
@@ -61,6 +64,10 @@ const git = (dir, ...argv) =>
   );
 
 const { options, rest } = args();
+if (rest.length === 0) {
+  console.error("usage: node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket] [--force]");
+  process.exit(1);
+}
 const runs = Number(options.runs ?? 1);
 // --backend runs the agent on another backend (lib.mjs `backendOf`, by
 // default whichever agent the person has); its variant is the backend's

@@ -77,7 +77,7 @@ if (!Object.hasOwn(COMMANDS, command ?? "")) {
       `  ${"where".padEnd(width)}  the folders it reads and writes`,
       `  ${"evidence".padEnd(width)}  the method's measurement tools: ${Object.keys(EVIDENCE).join(", ")}`,
       "",
-      "Each command prints its own usage when called without arguments.",
+      "A command that needs arguments prints its own usage when called without them.",
       "Data: BOUNCER_HOME (default ~/.bouncer/).",
       "Platform sign-in (optional; every other command is local): ~/.lunox/credentials (LUNOX_CREDENTIALS),",
       "against https://platform.lunox.work (LUNOX_PLATFORM_URL).",

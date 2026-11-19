@@ -61,6 +61,13 @@ try {
     assert.equal(run.status, 0, show(run));
     assert.match(run.stdout, /duration-parse: passed\./);
   });
+  step("run with no spec named: usage, no session", () => {
+    const run = cli("run");
+    assert.equal(run.status, 1, show(run));
+    assert.match(run.stderr, /^usage: /);
+    const flagsOnly = cli("run", "--model", "haiku");
+    assert.equal(flagsOnly.status, 1, show(flagsOnly));
+  });
   step("platform and session settings", () => {
     const script = `
       const platform = await import(${JSON.stringify(new URL("../bin/platform.mjs", import.meta.url).href)});
