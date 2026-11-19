@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { diffOf, itemsOf, render } from "../bin/id.mjs";
+import { NEW_FILE_BYTES, diffOf, itemsOf, render } from "../bin/id.mjs";
 
 const answer = 'Reading both.\n```json\n[{"question":"What does a $0 bounty release?","ticket":"","chose":"Records a release of 0.","where":"src/index.ts:41","instead":"Records nothing."},{"bad":1}]\n```';
 assert.deepEqual(itemsOf(answer), [{ question: "What does a $0 bounty release?", ticket: "silent", chose: "Records a release of 0.", where: "src/index.ts:41", instead: "Records nothing." }]);
@@ -28,9 +28,13 @@ try {
   git("init", "-q");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "base");
   writeFileSync(join(repo, "new.ts"), "export const a = 1;\n");
-  const diff = diffOf(repo);
+  writeFileSync(join(repo, "big.bin"), Buffer.alloc(NEW_FILE_BYTES + 1, 97));
+  writeFileSync(join(repo, "blob.dat"), Buffer.from([1, 0, 2]));
+  const { diff, left } = diffOf(repo);
   assert.match(diff, /\+\+\+ b\/new\.ts/);
   assert.match(diff, /\+export const a = 1;/);
+  assert.ok(!diff.includes("a".repeat(1000)), "a large new file is named, not quoted");
+  assert.deepEqual(left, ["big.bin (new, large: named only)", "blob.dat (new, binary: named only)"]);
 } finally {
   rmSync(repo, { recursive: true, force: true });
 }

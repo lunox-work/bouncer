@@ -4,7 +4,7 @@
 // A card carries only what the implementer may see: the verdict, counts,
 // failing scenario keys and the hidden suite's hash, never a hidden test's
 // name or body.
-import { readFileSync } from "node:fs";
+import { linesOf } from "./lines.mjs";
 import { lineFor } from "./voice.mjs";
 
 const INK = "#0b0b0c";
@@ -107,11 +107,11 @@ ${parts.join("\n")}
 /**
  * The agent's last claim in a Claude Code transcript (.jsonl): the last
  * sentence of its final message that says tests pass or the work is done,
- * else null. Reads the file once; nothing else.
+ * else null. Reads the file once, a line at a time.
  */
 export function lastClaim(transcript) {
   let last = null;
-  for (const raw of readFileSync(transcript, "utf8").split("\n")) {
+  for (const raw of linesOf(transcript)) {
     if (raw === "") continue;
     let event;
     try {

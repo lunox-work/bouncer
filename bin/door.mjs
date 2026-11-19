@@ -19,9 +19,11 @@
 // prints { transcript, claimsDone, findings, gate }.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { addClaudeCodeEvent, doorRules } from "./door-rules.mjs";
+import { linesOf } from "./lines.mjs";
 import { args, newestTranscript } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
@@ -38,7 +40,7 @@ export const ASK = {
 /** The session in `transcript` as door-rules events, read line by line. */
 export function sessionOf(transcript) {
   const session = [];
-  for (const raw of readFileSync(transcript, "utf8").split("\n")) {
+  for (const raw of linesOf(transcript)) {
     if (raw === "") continue;
     try {
       addClaudeCodeEvent(session, JSON.parse(raw));
@@ -63,7 +65,7 @@ export function gateOf(checkout) {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { options } = args();
   const checkout = resolve(typeof options.repo === "string" ? options.repo : ".");
   const transcript = typeof options.transcript === "string" ? resolve(options.transcript) : newestTranscript(checkout);

@@ -19,8 +19,9 @@
 // empty), 1 when the session gave no list.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { PROMPTS, RUNS, args, log, session, sha256, specDir, workdir, writeJson, discard } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
@@ -60,25 +61,46 @@ export function render(items) {
   return [head, "", ...lines, "", "Keep or change each one; the answers go into spec.md as Decided: lines."].join("\n");
 }
 
-/** The working tree's change in `checkout` against `base`, untracked files included. */
+/** A new file larger than this is named in the diff, not quoted. */
+export const NEW_FILE_BYTES = 256 * 1024;
+/** The diff a session is given is cut here: past it the list would cost more than it tells. */
+export const DIFF_BYTES = 600 * 1024;
+
+/**
+ * The working tree's change in `checkout` against `base`, untracked files
+ * included (binary ones and those over NEW_FILE_BYTES by name only), cut at
+ * DIFF_BYTES. Returns { diff, left: what was named or cut, for the person }.
+ */
 export function diffOf(checkout, base = "HEAD") {
   const git = (...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const tracked = git("diff", base, "--no-color", "--no-ext-diff");
-  if (tracked.status !== 0) throw new Error(`${checkout}: git diff ${base} failed: ${tracked.stderr.trim()}`);
-  const untracked = git("ls-files", "--others", "--exclude-standard").stdout.split("\n").filter(Boolean);
-  const added = untracked
+  if (tracked.status !== 0) throw new Error(`${checkout}: git diff ${base} failed: ${(tracked.stderr ?? "").trim() || tracked.error?.message}`);
+  const left = [];
+  const added = git("ls-files", "--others", "--exclude-standard")
+    .stdout.split("\n")
+    .filter(Boolean)
     .map((path) => {
       const file = join(checkout, path);
-      const text = readFileSync(file, "utf8");
-      if (text.includes("\u0000")) return "";
+      const size = statSync(file, { throwIfNoEntry: false })?.size;
+      if (size === undefined) return "";
+      const text = size > NEW_FILE_BYTES ? null : readFileSync(file, "utf8");
+      if (text === null || text.includes("\u0000")) {
+        left.push(`${path} (new, ${text === null ? "large" : "binary"}: named only)`);
+        return `diff --git a/${path} b/${path}\nnew file mode 100644\n(${size} bytes, not shown)\n`;
+      }
       const lines = text.split("\n");
       return `diff --git a/${path} b/${path}\nnew file mode 100644\n--- /dev/null\n+++ b/${path}\n@@ -0,0 +1,${lines.length} @@\n${lines.map((line) => `+${line}`).join("\n")}\n`;
     })
     .join("");
-  return tracked.stdout + added;
+  let diff = tracked.stdout + added;
+  if (Buffer.byteLength(diff) > DIFF_BYTES) {
+    left.push(`the diff past its first ${DIFF_BYTES / 1024} KiB`);
+    diff = `${Buffer.from(diff).subarray(0, DIFF_BYTES).toString("utf8")}\n(diff cut here)\n`;
+  }
+  return { diff, left };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { options, rest } = args();
   const [slug] = rest;
   const ticketFile = typeof options.ticket === "string" ? resolve(options.ticket) : slug ? join(specDir(slug), "ticket.md") : null;
@@ -88,10 +110,12 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
   }
   let diff;
   try {
-    diff =
-      typeof options.diff === "string"
-        ? readFileSync(resolve(options.diff), "utf8")
-        : diffOf(resolve(typeof options.repo === "string" ? options.repo : "."), typeof options.base === "string" ? options.base : "HEAD");
+    if (typeof options.diff === "string") diff = readFileSync(resolve(options.diff), "utf8");
+    else {
+      const found = diffOf(resolve(typeof options.repo === "string" ? options.repo : "."), typeof options.base === "string" ? options.base : "HEAD");
+      diff = found.diff;
+      if (found.left.length > 0) console.error(`id: not read: ${found.left.join("; ")}.`);
+    }
   } catch (error) {
     console.error(error.message);
     process.exit(1);
