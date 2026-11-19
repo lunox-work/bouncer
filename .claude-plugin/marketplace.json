@@ -5,7 +5,7 @@
     "url": "https://github.com/lunox-work"
   },
   "metadata": {
-    "description": "bouncer: hidden, calibrated test suites that judge AI coding agents' work. Two plugins: bouncer (local, no sign-in) and bouncer-hosted (Lunox's hosted platform)."
+    "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Two plugins: bouncer (local, no sign-in) and bouncer-hosted (Lunox's hosted platform)."
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
         "repo": "lunox-work/bouncer",
         "ref": "claude-plugin"
       },
-      "description": "Independent, hidden test suites written from the spec for AI coding agents. Local only: no MCP server, installing it asks for no sign-in.",
+      "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.",
       "version": "0.8.0",
       "category": "testing",
       "license": "MIT"

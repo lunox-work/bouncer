@@ -1,10 +1,9 @@
 {
   "name": "@lunox-work/bouncer",
   "version": "0.8.0",
-  "description": "A bouncer for AI coding agents' work: independent, hidden test suites written from the spec. The agent works against a public suite; a hidden suite it never sees judges the result.",
+  "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw: a hidden suite written from the spec you confirmed judges the result, the agent works against a public one.",
   "keywords": [
     "bouncer",
-    "due-diligence",
     "independent-tests",
     "ai-agents",
     "coding-agents",
@@ -22,7 +21,13 @@
     "go",
     "rust",
     "agent-skills",
-    "claude-code-plugin"
+    "claude-code-plugin",
+    "reward-hacking",
+    "tdd",
+    "swe-bench",
+    "spec-driven-development",
+    "llm-evaluation",
+    "vibe-coding"
   ],
   "homepage": "https://github.com/lunox-work/bouncer#readme",
   "bugs": {

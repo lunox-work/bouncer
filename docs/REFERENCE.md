@@ -1,7 +1,7 @@
 # Bouncer: the full reference
 
 The contract behind the [README](../README.md): what it covers, every
-measurement, the pipeline, install, the optional platform sign-in, CI, how
+measurement, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
 the hidden suite is kept honest, scope and the file layout. Steps as the
 skill runs them: [skills/bouncer/SKILL.md](../skills/bouncer/SKILL.md).
 
@@ -71,6 +71,75 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 | Agents inside a repository                    | Haiku passed 110 of 110 runs on 11 confirmed specs, and 109 of 110 on ufo and pathe; Codex CLI 25 of 25 on ufo and 17 of 17 on pathe; 0 broke an existing test, 0 changed code outside the allowed paths                                                                                     |
 | Did any agent tamper with tests or harness?   | 0 of 2,522 sandboxed Haiku runs, 0 of 50 Codex CLI runs, 0 of 40 Opus runs told to game; 0 of 262 in a repository (Haiku and Codex)                                                                                                                                                          |
 | Cost per spec                                 | $1–4 on Opus 5.5 (median $2) and 10–25 minutes, plus the person's confirmation (median minutes pending); an agent run is cents on Haiku 5.5                                                                                                                                                  |
+
+## Real catches
+
+Every one of these passed every test it could see. None was on the list.
+
+- **Shipped code, in a real commit.** A priority named `constructor` ranked as
+  a function instead of `"high"`; `categories` looks names up in a plain
+  object. The confirmed spec said otherwise
+  ([In an existing repository](../RESULTS.md#in-an-existing-repository)).
+- **An HTTP service.** Three of five blind runs accepted a status sent as
+  `["open"]`: `Object.hasOwn(labels, status)` turns the array into the string
+  `"open"`. Told only the scenario key, the first retry passed 48/48
+  ([Black-box seams](../RESULTS.md#black-box-seams)).
+- **A Rust port.** Creation times cut to whole milliseconds, so two records
+  0.1 ms apart sorted by id
+  ([Commands and services in other languages](../RESULTS.md#commands-and-services-in-other-languages)).
+- **And one against us.** A Go run read `1e400` as the integer 10^400, which
+  the spec allows; the hidden test expected JavaScript's reading. The overfit
+  was the judge's, and RESULTS.md says so.
+
+## How it compares
+
+| approach                     | who writes the tests that decide "done"                 | how it fits                                                                   |
+| ---------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Ask the agent to write tests | the agent that wrote the code                           | what this replaces: 75 of 105 green runs from loose tickets were wrong        |
+| TDD enforcement              | the agent, test first                                   | complementary: it fixes the order; Bouncer changes the author                 |
+| AI code review               | nobody: a model reads the diff                          | complementary: review reads the code, Bouncer runs it against the spec        |
+| Spec-driven toolkits         | usually the implementing agent                          | complementary: they turn a spec into tasks, Bouncer into the check            |
+| SWE-bench                    | the issue's real fix, as tests the model never sees     | the same idea, for benchmarking models on public issues                       |
+| **Bouncer**                  | **separate writer sessions, from a spec you confirmed** | **hidden tests for your own ticket, calibrated against a separate reference** |
+
+## FAQ
+
+**Isn't this just TDD?** TDD fixes the order: tests first. The tests are still
+written by the agent that writes the code, so they test its reading of the
+ticket. Here they come from separate sessions, from a spec you confirmed.
+
+**Why not show the agent every test?** The public suite is where the gain comes
+from: 81 of 105 passed with it, 30 without. The hidden suite is how you know the
+agent learned the rule and not the examples: with the public suite in hand, 24
+of 105 still failed it.
+
+**What if a hidden test is wrong?** One is kept only if it fails on the
+skeleton and passes a separately written reference. When an `overfit` reads a
+question the spec left open, you decide it in the spec and regenerate.
+
+**Can my agent talk its way in?** It never sees the list, and the sandbox keeps
+it off the tests and the harness. A shortcut is the real risk: all 21 gamed
+Haiku submissions were turned away; Opus 5.5, told to game, got in on two of
+four specs ([Red team](../RESULTS.md#red-team)).
+
+**Does he ever say yes?** Most nights. With the public suite, 81 of 105 runs
+from a loose ticket got in first time and 15 more after one retry.
+
+**What does it cost?** About $1–4 of Opus 5.5 and 10–25 minutes per spec, plus
+your time to confirm the decisions. An agent run on Haiku 5.5 costs cents.
+
+**Does my code leave my machine?** The spec, the ticket and the code go to the
+model backend you choose, on your own account. No telemetry. The Lunox
+platform is used only by the separate `bouncer-hosted` plugin, after you sign
+in ([PRIVACY.md](../PRIVACY.md)).
+
+**Why "Bouncer"?** Saying you're on the list doesn't get you in; someone who
+isn't you checks. It was called duediligence until 0.7.0, and that command
+still works.
+
+<p align="center">
+  <img src="../assets/how.png" width="880" alt="You write the list. He holds it. The owner writes the list (confirm), the dress code goes on the door (handout), he keeps the list (prepare), one word at the rope (judge).">
+</p>
 
 ## How it works
 

@@ -29,8 +29,7 @@ judges the result.
 `bouncer --version` prints another version or nothing, ask the person before
 installing it (`npm i -g @lunox-work/bouncer@0.8.0`), or put
 `npx @lunox-work/bouncer@0.8.0` in place of `bouncer` (in a clone of the repository,
-`node bin/cli.mjs`). Run it from any folder; `specs/` and `runs/` are in the
-home, `~/.bouncer/` (`BOUNCER_HOME`; `bouncer where`).
+`node bin/cli.mjs`). From any folder: `specs/` and `runs/` are in `~/.bouncer/` (`bouncer where`).
 
 **A new module** is built on its own: TypeScript by default; Python, Go, Rust,
 or a command or HTTP service checked at its boundary by
@@ -84,8 +83,7 @@ no sign-in.
   `specs/duration-parse/` is an example (its list predates the two lines).
 - **It reads or writes a format another tool defines** (git diffs, CSV for
   Excel, cron lines, HTTP headers): paste real examples of that tool's output
-  into the spec. The test writers see only the spec, and hand-written examples
-  of an outside format are where the hidden suite is weakest.
+  into the spec; invented examples are where the hidden suite is weakest.
 
 ## 2. Confirm, with the person (required)
 
@@ -114,8 +112,7 @@ many public and hidden tests were kept; 3, 4, 1: [references/verdicts.md](refere
 ## 4. Implement, as the person picks
 
 - **A blind session:** `bouncer run <slug> [--model haiku]`; the submission
-  lands in `runs/<slug>/<variant>/1/submission/src/` (`<variant>`: `opus` by
-  default, `haiku` with `--model haiku`).
+  lands in `runs/<slug>/<opus | haiku>/1/submission/src/`.
 - **Their own agent, anywhere:** `bouncer handout <slug> <dir>`, `<dir>`
   outside this folder and the home: template, `spec.md`, skeleton, public suite
   and `BRIEF.md`. Give the agent `BRIEF.md`.
