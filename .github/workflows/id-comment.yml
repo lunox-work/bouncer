@@ -6,8 +6,8 @@
 #
 # It is never a check. The job posts no check run or status and its step
 # cannot fail: with no key, no ticket, or a fork's read-only token it leaves
-# a warning in the log and stays green. One model session a push (about 16
-# seconds and $0.05 on Claude Sonnet, evidence/ID.md).
+# a warning in the log and stays green. One model session a push (a median 17
+# seconds and $0.06 on Claude Sonnet 5.5, evidence/ID.md).
 #
 #   on:
 #     pull_request:
