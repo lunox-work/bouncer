@@ -5,6 +5,7 @@
 // failing scenario keys and the hidden suite's hash, never a hidden test's
 // name or body.
 import { linesOf } from "./lines.mjs";
+import { markShapes } from "./mark.mjs";
 import { lineFor } from "./voice.mjs";
 
 const INK = "#0b0b0c";
@@ -37,9 +38,9 @@ export function wrap(text, width, max) {
   return kept;
 }
 
-/** The mark's three shapes (assets/src/mark.mjs), placed at x, y, `scale` px per unit. */
-function mark(x, y, scale, color) {
-  return `<g transform="translate(${x} ${y}) scale(${scale}) translate(-4 -13)"><path fill="${color}" d="M6 21 Q32 16 58 21 L57 31 Q45 34.5 36 31 L32 28.5 L28 31 Q19 34.5 7 31 Z"/><rect fill="${color}" x="24" y="44" width="16" height="4.4" rx="2.2"/><path fill="none" stroke="${color}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M56.5 30.5 Q61 32.5 58.8 36.2 Q56.6 39.8 59.8 42.2 Q63 44.8 59.8 47.6 Q57 50.2 59.2 53.6"/></g>`;
+/** Him (bin/mark.mjs), `size` px square, at x, y. */
+function mark(x, y, size, color) {
+  return `<g transform="translate(${x} ${y}) scale(${size / 120})">${markShapes(color, "card-cut")}</g>`;
 }
 
 /** The club hand stamp: two words in a double border, a little off square. */
@@ -65,28 +66,28 @@ export function card({ verdict, claim = null, keys = [], slug = "", counts = nul
   const parts = [];
   parts.push(`<rect width="1280" height="640" fill="${INK}"/>`);
   parts.push(`<rect width="1280" height="640" fill="url(#glow)"/>`);
-  parts.push(mark(72, 60, 0.95, PAPER));
-  parts.push(`<text x="140" y="92" font-family="${MONO}" font-size="24" fill="${PAPER}">bouncer</text>`);
+  parts.push(mark(72, 52, 56, PAPER));
+  parts.push(`<text x="144" y="92" font-family="${MONO}" font-size="24" fill="${PAPER}">bouncer</text>`);
 
   let y = 170;
   if (claim !== null && String(claim).trim() !== "") {
-    const lines = wrap(`“${String(claim).trim().replace(/^["“]|["”]$/g, "")}”`, 40, 3);
+    const lines = wrap(`“${String(claim).trim().replace(/^["“]|["”]$/g, "")}”`, 46, 3);
     parts.push(`<text x="72" y="${y}" font-family="${MONO}" font-size="17" letter-spacing="4" fill="${MUTED}">YOUR AGENT</text>`);
-    const height = lines.length * 46 + 40;
-    parts.push(`<rect x="72" y="${y + 18}" width="720" height="${height}" rx="20" fill="#1a1a1d"/>`);
-    lines.forEach((line, i) => parts.push(`<text x="100" y="${y + 70 + i * 46}" font-family="${BODY}" font-size="34" fill="${PAPER}">${escape(line)}</text>`));
+    const height = lines.length * 42 + 40;
+    parts.push(`<rect x="72" y="${y + 18}" width="760" height="${height}" rx="20" fill="#1a1a1d"/>`);
+    lines.forEach((line, i) => parts.push(`<text x="100" y="${y + 66 + i * 42}" font-family="${BODY}" font-size="30" fill="${PAPER}">${escape(line)}</text>`));
     y += 18 + height + 46;
   } else y = 250;
 
-  parts.push(`<text x="792" y="${y}" text-anchor="end" font-family="${MONO}" font-size="17" letter-spacing="4" fill="${MUTED}">BOUNCER</text>`);
+  parts.push(`<text x="832" y="${y}" text-anchor="end" font-family="${MONO}" font-size="17" letter-spacing="4" fill="${MUTED}">BOUNCER</text>`);
   const keyText = said.keys.length > 0 ? said.keys.slice(0, 3).join(", ") + (said.keys.length > 3 ? ", …" : "") : "";
-  parts.push(`<rect x="152" y="${y + 18}" width="640" height="104" rx="20" fill="${said.tone === "in" ? "#0d2416" : "#2a0d13"}" stroke="${tone}" stroke-opacity="0.55" stroke-width="2"/>`);
+  parts.push(`<rect x="192" y="${y + 18}" width="640" height="104" rx="20" fill="${said.tone === "in" ? "#0d2416" : "#2a0d13"}" stroke="${tone}" stroke-opacity="0.55" stroke-width="2"/>`);
   parts.push(
-    `<text x="184" y="${y + 86}" font-family="${SANS}" font-weight="700" font-size="46" fill="${PAPER}">${escape(said.text)}${keyText ? `<tspan dx="18" font-family="${MONO}" font-weight="400" font-size="34" fill="${tone}">${escape(keyText)}</tspan>` : ""}</text>`,
+    `<text x="224" y="${y + 86}" font-family="${SANS}" font-weight="700" font-size="46" fill="${PAPER}">${escape(said.text)}${keyText ? `<tspan dx="18" font-family="${MONO}" font-weight="400" font-size="34" fill="${tone}">${escape(keyText)}</tspan>` : ""}</text>`,
   );
 
   const words = said.tone === "in" ? ["YOU'RE", "IN"] : verdict === "incomplete" ? ["NOT", "DRESSED"] : ["NOT", "TONIGHT"];
-  parts.push(stamp(1040, 300, words, tone));
+  parts.push(stamp(1052, 300, words, tone));
 
   const facts = [
     slug,

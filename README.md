@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/mark-dark.svg">
-    <img src="assets/mark-light.svg" width="200" alt="Bouncer: wraparound sunglasses, a flat mouth and an earpiece coil">
+    <img src="assets/mark-light.svg" width="180" alt="Bouncer: no neck, shoulders edge to edge, wraparound shades, an earpiece, arms crossed">
   </picture>
 </p>
 
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. Your agent: the build is clean and my 21 tests pass. Bouncer: Not tonight, boundary-2. 30 inside the rope, 75 turned away.">
+  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. Your agent: the build is clean and my 21 tests pass. Bouncer: Not tonight, boundary-2. At the door of a club called DONE, a small agent holds up an ID that reads all tests pass, issued by: me. He fills the doorway, arms crossed.">
 </p>
 
 <p align="center">
