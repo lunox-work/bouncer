@@ -92,12 +92,33 @@ export function diffOf(checkout, base = "HEAD") {
       return `diff --git a/${path} b/${path}\nnew file mode 100644\n--- /dev/null\n+++ b/${path}\n@@ -0,0 +1,${lines.length} @@\n${lines.map((line) => `+${line}`).join("\n")}\n`;
     })
     .join("");
-  let diff = tracked.stdout + added;
-  if (Buffer.byteLength(diff) > DIFF_BYTES) {
-    left.push(`the diff past its first ${DIFF_BYTES / 1024} KiB`);
-    diff = `${Buffer.from(diff).subarray(0, DIFF_BYTES).toString("utf8")}\n(diff cut here)\n`;
+  const capped = capDiff(tracked.stdout + added);
+  return { diff: capped.diff, left: [...left, ...capped.left] };
+}
+
+/** A diff cut at DIFF_BYTES: { diff, left: what was cut, for the person }. */
+export function capDiff(diff) {
+  if (Buffer.byteLength(diff) <= DIFF_BYTES) return { diff, left: [] };
+  return { diff: `${Buffer.from(diff).subarray(0, DIFF_BYTES).toString("utf8")}\n(diff cut here)\n`, left: [`the diff past its first ${DIFF_BYTES / 1024} KiB`] };
+}
+
+/**
+ * One ID session (prompts/id.md) over a ticket and a diff, in a scratch
+ * folder that holds nothing else. `items` is null when the session gave no
+ * list. `name` labels the scratch folder; the transcript goes under `slug`.
+ */
+export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", slug = null }) {
+  const dir = workdir(`id-${name}`);
+  let result;
+  try {
+    writeFileSync(join(dir, "ticket.md"), ticket);
+    writeFileSync(join(dir, "diff.patch"), diff);
+    const transcript = join(RUNS, slug ?? "_id", "id", `${sha256(diff).slice(0, 16)}.jsonl`);
+    result = await session({ cwd: dir, text: readFileSync(join(PROMPTS, "id.md"), "utf8"), transcript, kind: "generate", model });
+  } finally {
+    discard(dir);
   }
-  return { diff, left };
+  return { items: itemsOf(result.finalText), costUsd: result.costUsd ?? null, subtype: result.subtype ?? null, apiError: result.apiError ?? null };
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -124,23 +145,14 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     console.error("No change to check: the diff is empty.");
     process.exit(1);
   }
-  const dir = workdir(`id-${slug ?? "ticket"}`);
-  let result;
-  try {
-    writeFileSync(join(dir, "ticket.md"), readFileSync(ticketFile, "utf8"));
-    writeFileSync(join(dir, "diff.patch"), diff);
-    const transcript = join(RUNS, slug ?? "_id", "id", `${sha256(diff).slice(0, 16)}.jsonl`);
-    log("id: reading the ticket and the diff");
-    result = await session({ cwd: dir, text: readFileSync(join(PROMPTS, "id.md"), "utf8"), transcript, kind: "generate", model: typeof options.model === "string" ? options.model : ID_MODEL });
-  } finally {
-    discard(dir);
-  }
-  const items = itemsOf(result.finalText);
+  log("id: reading the ticket and the diff");
+  const result = await listOf({ ticket: readFileSync(ticketFile, "utf8"), diff, model: typeof options.model === "string" ? options.model : ID_MODEL, name: slug ?? "ticket", slug });
+  const { items } = result;
   if (items === null) {
     console.error(`id: the session gave no list (${result.subtype ?? "no result"}${result.apiError ? `, ${result.apiError}` : ""}).`);
     process.exit(1);
   }
-  if (slug) writeJson(join(RUNS, slug, "id.json"), { at: new Date().toISOString(), ticket: ticketFile, diffSha256: sha256(diff), costUsd: result.costUsd ?? null, items });
+  if (slug) writeJson(join(RUNS, slug, "id.json"), { at: new Date().toISOString(), ticket: ticketFile, diffSha256: sha256(diff), costUsd: result.costUsd, items });
   if (options.json !== undefined) console.log(JSON.stringify(items, null, 2));
   else {
     say("id", { options });

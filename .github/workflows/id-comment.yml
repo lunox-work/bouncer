@@ -1,0 +1,93 @@
+# Reusable workflow: the ID check as one comment on a pull request.
+# `bouncer id-comment` reads the issue the pull request closes ("Fixes #12";
+# else the pull request's own description) and its diff, lists what the
+# ticket never said and what the change picked, and posts that as ONE
+# comment, edited in place on every push. Questions to confirm, unranked.
+#
+# It is never a check. The job posts no check run or status and its step
+# cannot fail: with no key, no ticket, or a fork's read-only token it leaves
+# a warning in the log and stays green. One model session a push (about 16
+# seconds and $0.05 on Claude Sonnet, evidence/ID.md).
+#
+#   on:
+#     pull_request:
+#       types: [opened, synchronize, edited]
+#   jobs:
+#     id:
+#       permissions: { contents: read, pull-requests: write, issues: read }
+#       uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
+#       secrets: { anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} }
+#
+# Secrets do not reach a `pull_request` run from a fork, so a fork's pull
+# request gets no comment. Do not switch to `pull_request_target` to change
+# that: the diff and the ticket are other people's text.
+name: bouncer id
+on:
+  workflow_call:
+    inputs:
+      issue:
+        description: The issue to read as the ticket (default the ones the pull request's description closes).
+        type: string
+        default: ""
+      model:
+        description: The model for the session (default bouncer's ID model).
+        type: string
+        default: ""
+      node-version:
+        description: Node.js for the step.
+        type: string
+        default: "24"
+      package-repository:
+        description: Where bouncer itself comes from.
+        type: string
+        default: lunox-work/bouncer
+      package-ref:
+        description: Its branch, tag or SHA.
+        type: string
+        default: main
+    secrets:
+      anthropic-api-key:
+        description: Key for the session on the Messages API.
+        required: false
+      openai-api-key:
+        description: Key for the session on Codex, when there is no Anthropic key.
+        required: false
+
+permissions: {}
+
+jobs:
+  id:
+    if: github.event.pull_request != null
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+    steps:
+      - name: Check out bouncer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.package-repository }}
+          ref: ${{ inputs.package-ref }}
+          path: .bouncer
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Ask for ID
+        # The pull request's own code is never checked out or run: the diff
+        # comes from the API. continue-on-error is the second lock on "never
+        # a red job"; the command already exits 0.
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          BOUNCER_HOME: ${{ runner.temp }}/bouncer
+          ISSUE: ${{ inputs.issue }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          flags=()
+          if [ -n "$ISSUE" ]; then flags+=(--issue "$ISSUE"); fi
+          if [ -n "$MODEL" ]; then flags+=(--model "$MODEL"); fi
+          node .bouncer/bin/cli.mjs id-comment "${flags[@]}"

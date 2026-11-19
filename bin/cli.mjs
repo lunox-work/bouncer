@@ -20,6 +20,7 @@ const COMMANDS = {
   check: "the agent says it's done: door, fit, the ID check, a drafted spec for the person to confirm, then prepare and judge the working tree",
   door: "what the agent's session shows before any spec, no model: tests skipped or never run, TODOs; reports, never blocks",
   id: "what the ticket never said and what the agent's diff picked: questions to confirm (one session)",
+  "id-comment": "the ID check on a pull request: its linked issue and diff, as one comment edited in place; never a check",
   confirm: "a spec's decisions in context; record a confirmation (--by); --from <issue>, --export",
   prepare: "confirmed spec -> skeleton, both suites, calibration (Opus sessions)",
   handout: "what an outside agent may see, in a folder of your choice",
