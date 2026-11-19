@@ -36,3 +36,7 @@ dist-skills/
 
 # The experiment archive: its own repository since 2026-11-20 (sh scripts/fetch-evidence.sh)
 /experiments/
+
+# The loose-ticket language arm: its toolchains are evidence/languages'
+evidence/languages-ticket/toolchains
+evidence/languages-ticket/bundled.json

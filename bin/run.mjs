@@ -72,8 +72,15 @@ const noPublic = options["no-public"] === true;
 // --brief red-team briefs the agent with prompts/agent-red-team.md (pass the
 // public suite with the least general code; bin/red-team-audit.mjs), and its
 // variant is `red-team-<family>`. New-module specs only.
+//
+// --brief ticket is the loose-ticket arm (RESULTS.md "The agent's own green
+// run"): the agent gets specs/<slug>/ticket.md and the stub, no spec and no
+// public suite, writes its own tests (prompts/<language>/agent-ticket.md),
+// and its variant is `ticket-<family>`. New-module specs with a ticket.md
+// only. The ID check outside TypeScript is measured on these runs
+// (evidence/id-languages.mjs).
 const brief = typeof options.brief === "string" ? options.brief : null;
-if (brief !== null && brief !== "red-team") throw new Error(`No brief ${brief} (red-team)`);
+if (brief !== null && brief !== "red-team" && brief !== "ticket") throw new Error(`No brief ${brief} (red-team, ticket)`);
 const variant = `${brief === null ? "" : `${brief}-`}${model === undefined ? backend : variantOf(model)}${noPublic ? "-no-public" : ""}`;
 const jobs = specSlugs(rest)
   .filter((slug) => {
@@ -95,8 +102,10 @@ const jobs = specSlugs(rest)
 for (const job of jobs) {
   job.dir = stage(workdir(`${job.slug}-${variant}-${job.n}`), job.slug, {
     skeleton: true,
-    publicTests: !noPublic,
+    publicTests: !noPublic && brief !== "ticket",
+    ...(brief === "ticket" ? { spec: false } : {}),
   });
+  if (brief === "ticket") copy(join(specDir(job.slug), "ticket.md"), join(job.dir, "ticket.md"));
   git(job.dir, "init", "-q");
   git(job.dir, "add", "-A");
   git(job.dir, "commit", "-qm", "baseline");
