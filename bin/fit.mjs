@@ -58,6 +58,40 @@ const TEST_FILE = /\.(test|spec)\.[cm]?tsx?$/;
 const git = (repo, ...argv) =>
   spawnSync("git", ["-C", repo, ...argv], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
 
+/**
+ * JSON with comments and trailing commas (a tsconfig) as plain JSON. It
+ * walks the text, so a `/*` or `//` inside a string stays: a pattern over
+ * the whole text cut `"jotai/*": ["./src/*.ts"]` as a comment.
+ */
+export function stripJsonc(text) {
+  let out = "";
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (char === '"') {
+      const start = i;
+      for (i += 1; i < text.length && text[i] !== '"'; i += 1) if (text[i] === "\\") i += 1;
+      out += text.slice(start, i + 1);
+    } else if (char === "/" && text[i + 1] === "/") {
+      while (i < text.length && text[i] !== "\n") i += 1;
+      out += "\n";
+    } else if (char === "/" && text[i + 1] === "*") {
+      const end = text.indexOf("*/", i + 2);
+      i = end === -1 ? text.length : end + 1;
+    } else out += char;
+  }
+  // Outside strings now only: a comma before a closing bracket.
+  let plain = "";
+  for (let i = 0; i < out.length; i += 1) {
+    if (out[i] === '"') {
+      const start = i;
+      for (i += 1; i < out.length && out[i] !== '"'; i += 1) if (out[i] === "\\") i += 1;
+      plain += out.slice(start, i + 1);
+    } else if (out[i] === "," && /^\s*[}\]]/.test(out.slice(i + 1))) continue;
+    else plain += out[i];
+  }
+  return plain;
+}
+
 /** One commit of a repository, read through git: its files and their text. */
 export function reader(repo, ref = "HEAD") {
   const top = git(repo, "rev-parse", "--show-toplevel");
@@ -77,7 +111,7 @@ export function reader(repo, ref = "HEAD") {
       return JSON.parse(body);
     } catch {
       // tsconfig files take comments and trailing commas.
-      return JSON.parse(body.replace(/\/\*[\s\S]*?\*\/|(^|[^:"])\/\/.*$/gm, "$1").replace(/,(\s*[}\]])/g, "$1"));
+      return JSON.parse(stripJsonc(body));
     }
   };
   return { root, base, files, has: (path) => set.has(path), text, json };
@@ -198,8 +232,40 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
 
   const deps = { ...rootManifest.devDependencies, ...rootManifest.dependencies, ...manifest.devDependencies, ...manifest.dependencies };
   facts.typescript = deps.typescript ?? null;
-  if (facts.typescript === null || !tree.has(at("tsconfig.json")))
+  // The package's own tsconfig.json, else the root's for a workspace package
+  // that has none (xstate: one tsconfig at the root type-checks every
+  // package). The build then checks the whole root project, the
+  // repository's own check, which is slower than a package's.
+  const ownTsconfig = tree.has(at("tsconfig.json"));
+  const rootTsconfig = pkg !== "." && tree.has("tsconfig.json");
+  if (facts.typescript === null || (!ownTsconfig && !rootTsconfig)) {
+    // A JavaScript package is out of scope, not a discovery miss: say which
+    // it is (fastify has a typescript dependency for its type tests only).
+    const mine = tree.files.filter((path) => path.startsWith(at("")) && !path.includes("node_modules/"));
+    const typed = mine.filter((path) => /\.[cm]?tsx?$/.test(path) && !/\.d\.[cm]?ts$/.test(path)).length;
+    const plain = mine.filter((path) => /\.[cm]?jsx?$/.test(path)).length;
+    if (plain > typed) return no(`JavaScript, not TypeScript: ${ownTsconfig || rootTsconfig ? "no typescript dependency" : "no tsconfig.json"}, and ${plain} .js files to ${typed} .ts`);
     return no(`no TypeScript: ${facts.typescript === null ? "no typescript dependency" : `no ${at("tsconfig.json")}`}`);
+  }
+  if (!ownTsconfig) {
+    let root = null;
+    try {
+      root = tree.json("tsconfig.json");
+    } catch {}
+    // A solution file (`files: []` and references) checks nothing with `tsc -p`.
+    if (root === null || (Array.isArray(root.files) && root.files.length === 0 && root.include === undefined))
+      return no(`no TypeScript: no ${at("tsconfig.json")}, and the root tsconfig.json ${root === null ? "cannot be read" : "only references other projects"}`);
+    // An `include` that starts elsewhere (jotai's is src/, tests/, benchmarks/) leaves the package unchecked.
+    const covers = (glob) => {
+      const from = globRoot(String(glob));
+      return from === "" || from === "." || from === pkg || pkg.startsWith(`${from}/`) || from.startsWith(`${pkg}/`);
+    };
+    if (Array.isArray(root.include) && !root.include.some(covers))
+      return no(`no TypeScript: no ${at("tsconfig.json")}, and the root tsconfig.json does not include ${pkg}`);
+  }
+  // As the build names it, from the package's folder.
+  const tsconfigArg = ownTsconfig ? "tsconfig.json" : posix.relative(pkg, "tsconfig.json");
+  facts.tsconfig = ownTsconfig ? at("tsconfig.json") : "tsconfig.json";
   facts.engine = manifest.engines?.node ?? rootManifest.engines?.node ?? null;
   facts.node = process.version;
 
@@ -260,7 +326,7 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
     config.testDir = at(folder);
     config.testPattern = patternIn(folder);
     // vitest does not type-check; the build is the package's own check.
-    config.build = `tsc -p ${tree.has(at("tsconfig.test.json")) ? "tsconfig.test.json" : "tsconfig.json"} --noEmit`;
+    config.build = `tsc -p ${tree.has(at("tsconfig.test.json")) ? "tsconfig.test.json" : tsconfigArg} --noEmit`;
   } else if (usesNodeTest) {
     config.runner = "node-test";
     const tsconfig = tree.json(at("tsconfig.test.json"));
@@ -283,7 +349,7 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
     config.testPattern = patternIn(folder);
     // Jest's transform may not type-check; the build is the package's own
     // check, over the tsconfig its tests compile with where it has one.
-    const tsconfig = ["tsconfig.test.json", "tsconfig.spec.json", "tsconfig.json"].find((name) => tree.has(at(name)));
+    const tsconfig = ["tsconfig.test.json", "tsconfig.spec.json", "tsconfig.json"].find((name) => tree.has(at(name))) ?? tsconfigArg;
     config.build = `tsc -p ${tsconfig} --noEmit`;
   } else {
     return no(`runner outside vitest, Jest and node:test over tsconfig.test.json: scripts.test is ${JSON.stringify(testScript || null)}`);
@@ -298,13 +364,30 @@ const dependencyGroups = (pyproject) => {
 };
 /** What marks a Python project. */
 const PYTHON_PROJECT = ["pyproject.toml", "setup.py", "setup.cfg"];
-const PYTHON_TEST_FILE = /(^|\/)test_[^/]*\.py$/;
+/** pytest's default for the files it collects from a folder, as this reads it. */
+const PYTHON_FILES = ["test_*.py"];
+
+/**
+ * A pytest list setting (`testpaths`, `python_files`) from the texts of its
+ * configuration files, ini or TOML, written on one line: the values, without
+ * quotes.
+ */
+export function pytestSetting(name, texts) {
+  return texts
+    .flatMap((text) => [...String(text ?? "").matchAll(new RegExp(`^\\s*${name}\\s*=\\s*\\[?([^\\]\\n]*)\\]?`, "gm"))].flatMap((match) => match[1].split(/[\s,]+/)))
+    .map((value) => value.replace(/["']/g, ""))
+    .filter(Boolean);
+}
+
+/** File-name globs (`*`, `?`) as one RegExp over a base name. */
+export const namesRegExp = (globs) => new RegExp(`^(?:${globs.map((glob) => glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]")).join("|")})$`);
 
 /**
  * A Python package for pytest: a pytest configuration (pytest.ini,
  * `[tool.pytest.ini_options]` in pyproject.toml, `[tool:pytest]` in
  * setup.cfg, `[pytest]` in tox.ini) or pytest among its declared
- * dependencies, a tests folder of `test_*.py` files, and a frozen install:
+ * dependencies, a tests folder of `test_*.py` files (or what its
+ * `python_files` names), and a frozen install:
  * uv.lock, poetry.lock, or requirements*.txt (pip). Sources under `src/`
  * (a src layout) go first on the suites' path.
  */
@@ -339,15 +422,21 @@ function detectPython(tree, pkg, facts, no) {
   if (facts.lockfile === null && pyproject === "") return no("no lockfile and no pyproject.toml: uv.lock, poetry.lock, requirements*.txt, or a pyproject.toml to resolve");
   facts.packageManager = lock?.[1] ?? (requirements.length > 0 ? "pip" : "uv-dated");
   if (facts.packageManager === "uv-dated") facts.resolvedBefore = commitDate(tree);
-  const packageTests = tree.files.filter((path) => path.startsWith(at("")) && PYTHON_TEST_FILE.test(path));
+  const configs = [tree.text(at("pytest.ini")), tree.text(at("tox.ini")), pyproject, setupCfg];
+  // The names pytest collects: its `python_files` where the project sets it
+  // (tqdm's tests are tests_*.py), else test_*.py. Only .py names count.
+  const named = pytestSetting("python_files", configs).filter((glob) => glob.endsWith(".py") && !glob.includes("/"));
+  const names = named.length > 0 ? [...new Set(named)] : PYTHON_FILES;
+  if (named.length > 0) facts.pythonFiles = names;
+  const isTestFile = namesRegExp(names);
+  const packageTests = tree.files.filter((path) => path.startsWith(at("")) && isTestFile.test(posix.basename(path)));
   // pytest's own `testpaths` first (pluggy keeps its tests in testing/).
-  const testpaths = [tree.text(at("pytest.ini")), tree.text(at("tox.ini")), pyproject, setupCfg]
-    .flatMap((text) => [...String(text ?? "").matchAll(/^\s*testpaths\s*=\s*\[?([^\]\n]*)\]?/gm)].flatMap((match) => match[1].split(/[\s,]+/)))
-    .map((path) => path.replace(/["']/g, "").replace(/\/+$/, ""))
-    .filter(Boolean);
+  const testpaths = pytestSetting("testpaths", configs).map((path) => path.replace(/\/+$/, ""));
   const where = [...new Set([...testpaths, "tests", "test", "src"])];
   const folder = where.find((name) => packageTests.some((path) => path.startsWith(`${at(name)}/`)));
-  if (folder === undefined) return no(`no test_*.py files under ${where.join("/, ")}/`);
+  if (folder === undefined) return no(`no ${names.join(" or ")} files under ${where.join("/, ")}/`);
+  // The existing suite by the project's names, and this spec's own files, which are always test_<slug>.py.
+  const all = [...new Set([...names, ...PYTHON_FILES])];
   const srcLayout = tree.files.some((path) => new RegExp(`^${at("src/")}[^/]+/__init__\\.py$`).test(path));
   const config = {
     name: "repo",
@@ -358,7 +447,7 @@ function detectPython(tree, pkg, facts, no) {
     buildFirst: [],
     runner: "pytest",
     testDir: at(folder),
-    testPattern: "test_*.py",
+    testPattern: all.length === 1 ? all[0] : `{${all.join(",")}}`,
     pythonPath: [srcLayout ? "src" : "."],
     ...(facts.packageManager === "pip" ? { requirements } : {}),
     ...(facts.packageManager === "uv" || facts.packageManager === "uv-dated" ? { groups: dependencyGroups(pyproject).filter((name) => /^(dev|tests?|testing)$/.test(name)) } : {}),
