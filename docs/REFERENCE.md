@@ -36,7 +36,7 @@ guessed.
   firings ([DOOR.md](../evidence/DOOR.md)).
 - `bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo <dir> --base <ref>]`
   (the ticket is `--ticket`, else `specs/<slug>/ticket.md`):
-  one Sonnet 5.5 session, about $0.07 and 20 s. What the ticket never said and
+  one Sonnet 5.5 session, a median $0.06 and 17 s. What the ticket never said and
   what the diff picked, each with the ticket sentence, where, and the usual
   alternative. Questions, never ranked: the person's keep or change becomes a
   `Decided:` line.

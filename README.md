@@ -73,8 +73,8 @@ $ bouncer id --ticket ticket.md --repo .
 ...
 ```
 
-One session, about 20 seconds and $0.07. Questions, never verdicts: you keep
-or change each pick, and your answers are the list he judges with.
+17 seconds, $0.06. On 75 wrong "all tests pass" runs, a blind reader with the
+list and the spec found the bad pick in 57, and never flagged a right one ([how](RESULTS.md#the-id-check-after-the-fact)).
 
 ## Before / After
 
@@ -177,7 +177,7 @@ What to tell them, accurately:
 
 - Agent already says done: `bouncer door` (no model, reports only; its rules
   were rarely right on real sessions) and `bouncer id`, one session of about
-  $0.07 listing what the ticket never said and what the agent picked. Their
+  $0.06 listing what the ticket never said and what the agent picked. Their
   keep or change per item confirms the spec.
 - Suites cost about $1–4 and 10–25 minutes of Opus 5.5 per spec, up to $7 in a
   repository, on their `claude` CLI, Codex login or Anthropic API key, plus

@@ -19,7 +19,8 @@ referee ([Writer backends](#writer-backends)) and as implementer
 to end ([Go and Rust](#go-and-rust)), and commands and services written in
 Python, Go and Rust
 ([Commands and services in other languages](#commands-and-services-in-other-languages)).
-Run 2026-11-20: which repositories `fit` takes, static checks on 50 libraries
+Run 2026-11-20: the ID check on all 75 rejected loose-ticket runs, judged
+blind ([The ID check, after the fact](#the-id-check-after-the-fact)), and which repositories `fit` takes, static checks on 50 libraries
 ([Which repositories fit](#which-repositories-fit)).
 p-values are Fisher's exact test,
 two-sided.
@@ -46,6 +47,31 @@ not say what a bounty of 0 releases, the agent wrote 21 tests of its own and
 all 21 passed, and the hidden suite passed 43 of 46, failing scenario
 `boundary-2`. 14 of that spec's 15 runs fail the same scenario. ([Self-grading](evidence/FINDINGS.md#self-grading),
 [Follow-ups](evidence/FINDINGS.md#follow-ups))
+
+## The ID check, after the fact
+
+`bouncer id` reads a ticket and a diff and lists what the ticket never said
+and what the diff picked, without a spec or a test. It was run on all 75
+rejected runs above (Sonnet 5.5, one session each, the stored ticket and diff
+only), and each list was judged by Opus 5.5 given the list and every scenario
+of the spec, unlabelled: never the diff, the grades or which scenarios failed.
+
+| measure                                                         |                 result |
+| --------------------------------------------------------------- | ---------------------: |
+| Rejected runs with a failing scenario matched to a list item    |         74 of 75 (99%) |
+| Failing scenarios matched, against passing ones (the base rate) |        86% against 88% |
+| Pick judged wrong, scenario failed                              |               70 of 70 |
+| Pick judged wrong, scenario passed                              |               0 of 306 |
+| Rejected runs where the judge found a wrong pick on a failure   |         57 of 75 (76%) |
+| Median list                                                     | 12 items, 17 s, $0.061 |
+
+The list covers the decisions a ticket leaves open, failing or not: coverage
+is the same for passing scenarios, so 74 of 75 says little alone. What it
+supports is pointing: a reader who knows what was meant, given the list,
+names a wrong pick in 57 of 75 rejected runs and never names a right one. The
+judge stands in for that reader, so this is an upper bound for a hurried
+person; person time is not measured yet. Cost is over the $0.05 a list the
+plan asked for. All TypeScript. ([ID.md](evidence/ID.md))
 
 ## Tests written from the spec carry it to the agent
 
