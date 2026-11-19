@@ -263,6 +263,24 @@ someone else's sandbox? The `lunox-contribute` skill works through the
 contributor server:
 `claude mcp add --transport http lunox-contribute https://platform.lunox.work/mcp/contribute`.
 
+Two commands work against a bounty already on the platform:
+
+- `bouncer prepare <slug> --hosted --version <sandbox version id> [--out <dir>] [--no-wait]`
+  builds the suites on the platform for a sandbox version cut in the web app
+  (or with the MCP tools), waits up to 90 minutes, and pulls the public
+  project into `--out`, each file checked against its sha256. Only the
+  hidden suite's count and commitment hash come back. It sends the version id
+  and nothing else; the spec went up with `push`. The version id is required
+  the first time and remembered in `specs/<slug>/hosted.json`; there is no
+  lookup from a slug to its sandbox.
+- `bouncer judge --platform <submission id> [--wait] [--json]` reads a
+  submission's verdict: counts, refused paths, failing scenario keys. Exit 0
+  `passed`, 2 `overfit`, 1 otherwise. Here `--platform` is the submission,
+  so another deployment is `--platform-url` (or `LUNOX_PLATFORM_URL`).
+
+Neither has run against the live platform yet: both are tested against a fake
+of its routes (`test/hosted.mjs`), read from the platform's source.
+
 ## Try it in five minutes
 
 `duration-parse` is a prepared example, copied into
@@ -324,6 +342,26 @@ jobs:
     secrets: { seal-token: ${{ secrets.SEALS_TOKEN }} }
 ```
 
+**The ID check on pull requests.** `.github/workflows/id-comment.yml` is the
+same idea with no seal and no suite: on each push it runs `bouncer id-comment`
+over the pull request's linked issue (or its own description) and its diff
+from the API, and posts the list as one comment, edited in place. Questions,
+never ranked, never a failing check: the job cannot go red, and nothing it
+reads is run.
+
+```yaml
+jobs:
+  id:
+    permissions: { contents: read, pull-requests: write, issues: read }
+    uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
+    secrets: { anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} }
+```
+
+Measured by replaying the 11 commits as pull requests with two pushes each:
+one comment per pull request, 0 of 671 hidden test names in a comment, no call
+to a check or status endpoint. In that replay the lists stand in for model
+output, and the workflow has not run on a real runner yet.
+
 It runs `bouncer ci --seal <file> --repo . --ref <head>`, which judges
 the head commit with `judge --seal` (the package and the seal, no `specs/`) and
 posts a check with the verdict, the counts and the failing scenario keys, never
@@ -383,7 +421,10 @@ A repository that judges its pull requests this way can say so:
   (`boundary.language`: `python`, `go` or `rust`):
   `specs/<slug>/toolchain.json` names the toolchain.
   Repositories: TypeScript on vitest, Jest or `node --test`, and Python on
-  pytest. Every runner prints one result shape (`bin/runners/shared.mjs`);
+  pytest. A frozen install where there is a lockfile; without one, the
+  dependencies are resolved as of the base commit's date (`npm install
+--before`, `uv pip install --exclude-newer`), so a commit installs the same
+  versions every time. Every runner prints one result shape (`bin/runners/shared.mjs`);
   nothing above it differs by language.
 - The archive's calibrated specs come in with
   `bouncer import-archive <slug>...`, marked not held out and with no
@@ -395,8 +436,10 @@ A repository that judges its pull requests this way can say so:
   so they are no longer held out. Prepare your own spec for any use where that
   matters.
 - `specs/` ships one example, `duration-parse`. The other 25 specs and their
-  suites are in the experiment archive, `double-blind-experiment/`, which is not
-  part of this repository; its write-ups are in `evidence/`. The repository
+  suites are in the experiment archive,
+  [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence)
+  (`sh scripts/fetch-evidence.sh` clones it as `experiments/`); its write-ups
+  are in `evidence/`. The repository
   specs measured in RESULTS.md are in `evidence/in-repo/specs/`, against
   [sandbox-factory](https://github.com/lunox-work/sandbox-factory) checked out
   beside this folder, and in `evidence/in-repo-ufo/specs/` and
