@@ -70,7 +70,8 @@ export function reader(repo, ref = "HEAD") {
   const set = new Set(files);
   const text = (path) => (set.has(path) ? git(root, "show", `${base}:${path}`).stdout : null);
   const json = (path) => {
-    const body = text(path);
+    // A byte-order mark is valid in a tsconfig and fatal to JSON.parse (vite).
+    const body = text(path)?.replace(/^﻿/, "") ?? null;
     if (body === null) return null;
     try {
       return JSON.parse(body);
@@ -92,8 +93,7 @@ function workspaces(tree) {
   const folders = new Set(
     tree.files.filter((path) => path.endsWith("/package.json")).map((path) => posix.dirname(path)),
   );
-  const matches = (glob, folder) =>
-    new RegExp(`^${glob.replace(/\/\*\*$/, "/.+").replace(/\/\*$/, "/[^/]+")}$`).test(folder);
+  const matches = (glob, folder) => globRegExp(glob).test(folder);
   const out = new Map();
   for (const folder of folders) {
     if (folder.split("/").includes("node_modules")) continue;
@@ -125,10 +125,36 @@ function buildOrder(tree, pkg, byName) {
 }
 
 /** The common folder of a glob's literal leading segments: `test/**\/*.test.ts` is `test`. */
+/**
+ * A workspace glob as a regular expression: `**` any number of folders,
+ * `*` and `?` within one folder, everything else literal. vite's
+ * `packages/**\/__tests__/**` crashed the hand-rolled version
+ * (evidence/fit-funnel.mjs).
+ */
+export function globRegExp(glob) {
+  const parts = glob.replace(/^\.\//, "").replace(/\/+$/, "").split("/");
+  let body = "";
+  parts.forEach((part, i) => {
+    const sep = i === 0 ? "" : "/";
+    if (part === "**") body += i === 0 ? "(?:[^/]+/)*" : i === parts.length - 1 ? "(?:/.+)?" : "(?:/[^/]+)*";
+    else body += (body.endsWith("/)*") ? "" : sep) + part.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+  });
+  return new RegExp("^" + body + "$");
+}
+
+/** The base commit's committer date, ISO 8601: what a lockless install resolves against. */
+const commitDate = (tree) => git(tree.root, "show", "-s", "--format=%cI", tree.base).stdout.trim();
+
+/** The names under pyproject.toml's [project.optional-dependencies]. */
+export function optionalExtras(pyproject) {
+  const block = /^\[project\.optional-dependencies\]\s*\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m.exec(pyproject)?.[1] ?? "";
+  return [...block.matchAll(/^([A-Za-z0-9_.-]+)\s*=/gm)].map((match) => match[1]);
+}
+
 const globRoot = (glob) => {
   const parts = glob.replace(/^\.\//, "").split("/");
-  const literal = parts.slice(0, parts.findIndex((part) => /[*?{[]/.test(part)));
-  return literal.join("/");
+  const wild = parts.findIndex((part) => /[*?{[]/.test(part));
+  return (wild === -1 ? parts : parts.slice(0, wild)).join("/");
 };
 
 /**
@@ -148,11 +174,15 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
   if (manifest === null) return no(`no ${at("package.json")} at ${tree.base.slice(0, 12)}`);
   const rootManifest = tree.json("package.json") ?? {};
   const lock = LOCKFILES.find(([file]) => tree.has(file));
-  if (lock === undefined) return no("no lockfile at the repository root; the install must be frozen");
-  const [lockfile, manager] = lock;
+  // No lockfile: npm resolves the manifest as of the commit's date
+  // (`npm install --before`), so the same commit installs the same
+  // versions on every run. 2 of 25 TypeScript libraries in
+  // evidence/fit-funnel.mjs commit none.
+  const [lockfile, manager] = lock ?? [null, "npm"];
+  if (lock === undefined) facts.resolvedBefore = commitDate(tree);
   const declared = /^([a-z]+)@([^+\s]+)/.exec(rootManifest.packageManager ?? "");
   facts.lockfile = lockfile;
-  facts.packageManager = declared?.[1] === manager ? `${manager}@${declared[2]}` : manager;
+  facts.packageManager = lock === undefined ? "npm-dated" : declared?.[1] === manager ? `${manager}@${declared[2]}` : manager;
   if (!PACKAGE_MANAGERS.includes(manager)) return no(`package manager ${manager} is not supported`);
   if (tree.has(".pnp.cjs") || /nodeLinker:\s*["']?pnp/.test(tree.text(".yarnrc.yml") ?? ""))
     return no("Yarn Plug'n'Play: no node_modules to stage");
@@ -178,8 +208,20 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
   const vitestConfig = ["vitest", "vite"]
     .flatMap((name) => ["ts", "mts", "js", "mjs", "cts", "cjs"].map((ext) => at(`${name}.config.${ext}`)))
     .find((path) => tree.has(path));
+  // vitest is the runner when the test script names it, or any script does
+  // (query-core's `test:lib`), or a vitest.config, or a vite.config with a
+  // `test` block, or, for a workspace package with no config of its own,
+  // the root's vitest config (effect). The runner calls vitest itself in the
+  // package's folder, never the script.
+  const rootVitest = pkg === "." ? undefined : ["vitest.config", "vitest.workspace", "vite.config"].flatMap((name) => ["ts", "mts", "js", "mjs"].map((ext) => `${name}.${ext}`)).find((path) => tree.has(path) && /vitest|\btest\s*:/.test(tree.text(path) ?? ""));
   const usesVitest =
-    deps.vitest !== undefined && (/\bvitest\b/.test(testScript) || /vitest\.config/.test(vitestConfig ?? ""));
+    deps.vitest !== undefined &&
+    (/\bvitest\b/.test(testScript) ||
+      Object.values(manifest.scripts ?? {}).some((script) => /\bvitest\b/.test(String(script))) ||
+      /vitest\.config/.test(vitestConfig ?? "") ||
+      (vitestConfig !== undefined && /\btest\s*:/.test(tree.text(vitestConfig) ?? "")) ||
+      (vitestConfig === undefined && !testScript && rootVitest !== undefined));
+  if (usesVitest && vitestConfig === undefined && rootVitest !== undefined) facts.vitestRootConfig = rootVitest;
   const usesNodeTest = /\bnode\b[^&|;]*--test\b/.test(testScript) && tree.has(at("tsconfig.test.json"));
   const jestConfig = ["ts", "mts", "js", "mjs", "cts", "cjs", "json"].map((ext) => at(`jest.config.${ext}`)).find((path) => tree.has(path));
   const usesJest =
@@ -191,6 +233,7 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
     package: pkg,
     packageManager: facts.packageManager,
     buildFirst: facts.buildFirst,
+    ...(facts.resolvedBefore ? { resolvedBefore: facts.resolvedBefore } : {}),
   };
   const packageTests = tree.files.filter((path) => path.startsWith(at("")) && TEST_FILE.test(path) && !path.includes("node_modules/"));
   const firstWithTests = (folders) => folders.find((folder) => packageTests.some((path) => path.startsWith(`${at(folder)}/`)));
@@ -205,11 +248,15 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
   if (usesVitest) {
     config.runner = "vitest";
     const source = vitestConfig === undefined ? "" : tree.text(vitestConfig);
-    const include = /include\s*:\s*\[([^\]]*)\]/.exec(source)?.[1];
-    const globs = include === undefined ? [] : [...include.matchAll(/["'`]([^"'`]+)["'`]/g)].map((match) => match[1]);
+    // Every `include: [...]` in the config, not only the test block's: a
+    // coverage or optimizeDeps include comes first in many configs (ofetch,
+    // msw, valibot in evidence/fit-funnel.mjs), so a glob counts only when
+    // it names test files and its folder holds some.
+    const globs = [...source.matchAll(/include\s*:\s*\[([^\]]*)\]/g)].flatMap((include) => [...include[1].matchAll(/["'`]([^"'`]+)["'`]/g)].map((match) => match[1]));
     facts.vitestInclude = globs.length > 0 ? globs : null;
-    const folder = globs.length > 0 ? globRoot(globs[0]) : firstWithTests(["test", "tests", "src"]);
-    if (folder === undefined || folder === "") return no("no test folder: vitest's include names none, and no test/, tests/ or src/ holds tests");
+    const roots = globs.filter((glob) => /\.(test|spec)\./.test(glob)).map(globRoot).filter((root) => root !== "");
+    const folder = firstWithTests([...roots, "test", "tests", "__tests__", "src"]);
+    if (folder === undefined) return no("no test folder: no include glob's folder, test/, tests/, __tests__/ or src/ holds *.test or *.spec files");
     config.testDir = at(folder);
     config.testPattern = patternIn(folder);
     // vitest does not type-check; the build is the package's own check.
@@ -222,8 +269,8 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
     config.rootDir = options.rootDir ?? parent?.compilerOptions?.rootDir ?? ".";
     config.outDir = options.outDir ?? parent?.compilerOptions?.outDir;
     if (config.outDir === undefined) return no(`${at("tsconfig.test.json")} names no outDir; node --test runs its compiled output`);
-    const folder = firstWithTests(["test", "tests", "src"]);
-    if (folder === undefined) return no("no test files under test/, tests/ or src/");
+    const folder = firstWithTests(["test", "tests", "__tests__", "src"]);
+    if (folder === undefined) return no("no test files under test/, tests/, __tests__/ or src/");
     config.testDir = at(folder);
     config.testPattern = patternIn(folder);
     config.build = "tsc -p tsconfig.test.json";
@@ -285,11 +332,22 @@ function detectPython(tree, pkg, facts, no) {
     ["poetry.lock", "poetry"],
   ].find(([file]) => tree.has(at(file)));
   facts.lockfile = lock?.[0] ?? (requirements.length > 0 ? requirements.join(", ") : null);
-  if (facts.lockfile === null) return no("no lockfile: uv.lock, poetry.lock or requirements*.txt; the install must be frozen");
-  facts.packageManager = lock?.[1] ?? "pip";
+  // No lockfile and no requirements: uv resolves pyproject.toml as of the
+  // commit's date (`--exclude-newer`), with its test extras and groups, so
+  // the same commit installs the same versions on every run. 8 of 25
+  // Python libraries in evidence/fit-funnel.mjs commit no lockfile.
+  if (facts.lockfile === null && pyproject === "") return no("no lockfile and no pyproject.toml: uv.lock, poetry.lock, requirements*.txt, or a pyproject.toml to resolve");
+  facts.packageManager = lock?.[1] ?? (requirements.length > 0 ? "pip" : "uv-dated");
+  if (facts.packageManager === "uv-dated") facts.resolvedBefore = commitDate(tree);
   const packageTests = tree.files.filter((path) => path.startsWith(at("")) && PYTHON_TEST_FILE.test(path));
-  const folder = ["tests", "test", "src"].find((name) => packageTests.some((path) => path.startsWith(`${at(name)}/`)));
-  if (folder === undefined) return no("no test_*.py files under tests/, test/ or src/");
+  // pytest's own `testpaths` first (pluggy keeps its tests in testing/).
+  const testpaths = [tree.text(at("pytest.ini")), tree.text(at("tox.ini")), pyproject, setupCfg]
+    .flatMap((text) => [...String(text ?? "").matchAll(/^\s*testpaths\s*=\s*\[?([^\]\n]*)\]?/gm)].flatMap((match) => match[1].split(/[\s,]+/)))
+    .map((path) => path.replace(/["']/g, "").replace(/\/+$/, ""))
+    .filter(Boolean);
+  const where = [...new Set([...testpaths, "tests", "test", "src"])];
+  const folder = where.find((name) => packageTests.some((path) => path.startsWith(`${at(name)}/`)));
+  if (folder === undefined) return no(`no test_*.py files under ${where.join("/, ")}/`);
   const srcLayout = tree.files.some((path) => new RegExp(`^${at("src/")}[^/]+/__init__\\.py$`).test(path));
   const config = {
     name: "repo",
@@ -303,7 +361,8 @@ function detectPython(tree, pkg, facts, no) {
     testPattern: "test_*.py",
     pythonPath: [srcLayout ? "src" : "."],
     ...(facts.packageManager === "pip" ? { requirements } : {}),
-    ...(facts.packageManager === "uv" ? { groups: dependencyGroups(pyproject).filter((name) => /^(dev|tests?|testing)$/.test(name)) } : {}),
+    ...(facts.packageManager === "uv" || facts.packageManager === "uv-dated" ? { groups: dependencyGroups(pyproject).filter((name) => /^(dev|tests?|testing)$/.test(name)) } : {}),
+    ...(facts.packageManager === "uv-dated" ? { resolvedBefore: facts.resolvedBefore, extras: optionalExtras(pyproject).filter((name) => /^(dev|tests?|testing)$/.test(name)) } : {}),
   };
   return { supported: true, config, facts };
 }

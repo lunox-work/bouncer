@@ -1069,6 +1069,8 @@ export const BASES = join(WORK_ROOT, "bases");
 /** Each package manager's frozen install, by the version `packageManager` names. */
 const INSTALL = {
   npm: (version = "10.9.2") => ["npx", "-y", `npm@${version}`, "ci", "--no-audit", "--no-fund"],
+  // No lockfile (fit's `resolvedBefore`): the manifest resolved as of the base commit's date.
+  "npm-dated": (version = "10.9.2", config = {}) => ["npx", "-y", `npm@${version}`, "install", "--no-audit", "--no-fund", "--no-package-lock", `--before=${config.resolvedBefore}`],
   pnpm: (version = "9") => ["npx", "-y", `pnpm@${version}`, "install", "--frozen-lockfile"],
   yarn: (version = "1") =>
     version.startsWith("1.")
@@ -1127,6 +1129,22 @@ const PYTHON_INSTALL = {
     [pythonTool("poetry", version), "env", "use", PYTHON],
     [pythonTool("poetry", version), "install", "--no-interaction", "--all-extras"],
   ],
+  // No lockfile (fit's `resolvedBefore`): pyproject.toml resolved as of the base commit's date.
+  "uv-dated": (version = "0.12.24", config) => [
+    [pythonTool("uv", version), "venv", ".venv", "--python", PYTHON],
+    [
+      pythonTool("uv", version),
+      "pip",
+      "install",
+      "--python",
+      VENV_PYTHON,
+      "--exclude-newer",
+      config.resolvedBefore,
+      `.${(config.extras ?? []).length > 0 ? `[${config.extras.join(",")}]` : ""}`,
+      ...(config.groups ?? []).flatMap((group) => ["--group", group]),
+      "pytest",
+    ],
+  ],
   pip: (_, config) => [
     [PYTHON, "-m", "venv", ".venv"],
     ...(config.requirements ?? []).map((file) => [VENV_PYTHON, "-m", "pip", "install", "-q", "--disable-pip-version-check", "-r", file]),
@@ -1173,7 +1191,7 @@ export function prepareBase(config) {
       }
     else {
       if (INSTALL[manager] === undefined) throw new Error(`No install for package manager ${manager}`);
-      const [bin, ...argv] = INSTALL[manager](version);
+      const [bin, ...argv] = INSTALL[manager](version, config);
       log(`${basename(config.repo)} ${config.base.slice(0, 12)}: ${bin} ${argv.join(" ")}`);
       // HUSKY=0: a `prepare` script that installs git hooks has no repository here.
       step(`${manager} install`, bin, argv, { env: installEnv({ HUSKY: "0" }) });
