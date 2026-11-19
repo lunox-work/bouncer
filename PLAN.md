@@ -26,7 +26,8 @@ Measured, and what it changed:
 - **Phase 2 (the ID check) is the hero**: on a 10-run sample, a failing
   decision was in the list for 10 of 10 rejected runs (25 of 28 scenarios),
   16 s median, $0.07 a run (over the $0.05 bar), model-judged
-  (evidence/ID.md). A blind full pass over the 75 rejected runs is next.
+  (evidence/ID.md). A blind full pass over the 75 rejected runs is next, then
+  its reach steps (other languages, a pull-request comment).
 
 Not done, each needing a decision or an outside action: push and publish
 (npm 0.8.0 needs the passkey; the plugin branch rebuilds on push); the About
@@ -50,6 +51,23 @@ languages, CI from a sealed suite. Limits that cost reach:
   repositories have little evidence, and nobody has measured how often `fit`
   says `supported` on repositories people actually have.
 - The person's confirmation time is still "median minutes pending".
+
+**The verdict stays narrow by design** (decided 2026-11-19). Both attempts to
+reach more people by loosening the method failed: the door (1 of 50 firings
+upheld) and suites from an unconfirmed draft (0 of 11). Reach comes from the
+way in, never from a weaker verdict:
+
+- The ID check is the wide product: a ticket and a diff, no spec, no `fit`, no
+  test runner (phase 2, [Reach](#reach-the-id-check-outside-typescript-and-on-pull-requests)).
+- One more audience the narrow shape already fits: people grading someone
+  else's work (a contractor task, a candidate exercise, a bounty). They write
+  the task before the code exists and the wait costs them nothing
+  ([The repository](#the-repository)).
+- The `fit` funnel, which measures how narrow it is before anything is fixed
+  (phase 5).
+
+Not in this plan: a cheaper verdict tier, more than one package per change, or
+more languages for the full pipeline ahead of the funnel.
 
 **Virality: low today, for product-shape reasons, not copy.** 0 stars, 0 forks.
 
@@ -247,6 +265,31 @@ model's risk label is worse than chance. So it is a list of questions, never
 - **Kill:** if answers need a second confirmation pass more than 1 time in 5,
   keep it as a reader, not as the confirm step.
 
+#### Reach: the ID check outside TypeScript and on pull requests
+
+Added 2026-11-19. Nothing in `bouncer id` is tied to a language, a test runner
+or the one-module scope, but its evidence is 10 runs, all TypeScript, judged
+by a model that was not blind. No claim wider than that until these pass, in
+this order:
+
+1. The blind pass over the 75 rejected runs, judged on another model, holds
+   the 90% gate above.
+2. Other languages. The archive cannot answer this: evidence/languages has 24
+   runs and 2 rejections. Run loose tickets in Python, Go and Rust until there
+   are at least 20 rejected runs, one at a time, in a new folder (`grade`
+   rewrites results.jsonl).
+3. The pull-request form: a workflow step that runs `bouncer id` on a pull
+   request's linked issue and its diff and posts the list as one comment,
+   edited in place on each push. Questions, unranked, never "bugs found", and
+   never a failing check. It is the always-on surface the door could not be.
+
+- **Gate:** on the non-TypeScript runs, a failing decision is in the list for
+  90% or more of rejected runs, judged blind, at the same time and cost bars.
+  For the comment: on the 11 replayed commits, one comment per pull request, 0
+  hidden test names, and no change to any check's status.
+- **Kill:** under 90% outside TypeScript, the README says "TypeScript" beside
+  the ID check and the comment ships for TypeScript repositories only.
+
 ### 3. One command after the fact: `bouncer check`
 
 The viral moment is "it just said done". Today the skill starts before the
@@ -341,6 +384,11 @@ description triggers on "hidden suite" wording, not on what people say.
   hosted sign-in, CI detail and the full pipeline move to `docs/REFERENCE.md`.
   The agent section stays verbatim with AGENTS.md. Every number still traces
   to RESULTS.md.
+- **A section for people grading someone else's work** (added 2026-11-19):
+  a contractor task, a candidate exercise, a bounty. Below the catches, never
+  the hero, so the launch tells one story. It says what they already do (write
+  the task first) and what he adds (a list the submitter never sees), and
+  points to `bouncer-hosted`. The skill description already triggers on it.
 - **V3's images are not restored.** Its source never reached origin (only
   `main` and `claude-plugin` are there), and the Notion page holds PNGs that
   still say duediligence. They are redrawn under [The look](#the-look).
@@ -369,7 +417,8 @@ description triggers on "hidden suite" wording, not on what people say.
 2. The rest of the look, then the README landing with it.
 3. The skill split and description, with its trigger gate.
 4. Phase 4's terminal lines (small, and everything after shows them).
-5. Phase 1 or phase 2 first, as phase 0 decides; then phase 3.
+5. Phase 1 or phase 2 first, as phase 0 decides; then phase 3. Phase 2's
+   reach steps follow its blind pass and do not hold the launch.
 6. Phase 5 and the evidence move.
 7. Launch only after phases 1–4: the author's own r/ClaudeCode post with the
    two-line exchange, then Show HN. No post before the door exists; the first
@@ -380,4 +429,6 @@ description triggers on "hidden suite" wording, not on what people say.
 All decided 2026-11-19, none open: the door is bouncer's own and calls
 `carveout gate` when installed (phase 1); name and pronouns follow Ponytail
 and Caveman (The persona); the images are redrawn (The look); the lunox MCP
-server moves to a second plugin, `bouncer-hosted` (The skill).
+server moves to a second plugin, `bouncer-hosted` (The skill); the verdict
+stays narrow and reach comes from the ID check, the grading audience and the
+funnel (Where it stands).
