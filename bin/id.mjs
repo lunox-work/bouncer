@@ -27,16 +27,40 @@ import { say } from "./voice.mjs";
 
 export const ID_MODEL = "claude-sonnet-5-5";
 
+/**
+ * The JSON a session ends with: the last ```json block, read to the answer's
+ * final fence rather than the first one after it, since an item may quote a
+ * fence (a markdown or gherkin parser's diff does: all 12 gherkin-parse
+ * lists were lost to that, evidence/id-blind.mjs); else the outermost array
+ * or object in the text. undefined when nothing parses.
+ */
+export function lastJsonBlock(text) {
+  const all = String(text ?? "");
+  const tries = [];
+  const open = all.lastIndexOf("```json");
+  if (open !== -1) {
+    const body = all.slice(open + "```json".length);
+    const close = body.lastIndexOf("```");
+    tries.push(close === -1 ? body : body.slice(0, close));
+    for (const match of all.matchAll(/```json\s*([\s\S]*?)```/g)) tries.push(match[1]);
+  }
+  for (const [first, last] of [["[", "]"], ["{", "}"]]) {
+    const from = all.indexOf(first);
+    const to = all.lastIndexOf(last);
+    if (from !== -1 && to > from) tries.push(all.slice(from, to + 1));
+  }
+  tries.push(all.trim());
+  for (const raw of tries) {
+    try {
+      return JSON.parse(raw);
+    } catch {}
+  }
+  return undefined;
+}
+
 /** The items of a session's answer: the last ```json block, checked; null when there is none. */
 export function itemsOf(text) {
-  const blocks = [...String(text ?? "").matchAll(/```json\s*([\s\S]*?)```/g)];
-  const raw = blocks.length > 0 ? blocks.at(-1)[1] : String(text ?? "").trim();
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  const parsed = lastJsonBlock(text);
   if (!Array.isArray(parsed)) return null;
   return parsed
     .filter((item) => item && typeof item.question === "string" && typeof item.chose === "string")
