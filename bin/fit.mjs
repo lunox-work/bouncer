@@ -456,6 +456,72 @@ function detectPython(tree, pkg, facts, no) {
   return { supported: true, config, facts };
 }
 
+/** A toolchain's testPattern (`*` and `{a,b}`) as a RegExp over a file's base name. */
+const testNames = (glob) => new RegExp(`^${glob.replace(/\./g, "\\.").replace(/\*/g, "[^/]*").replace(/\{([^}]*)\}/g, (_, alts) => `(?:${alts.split(",").join("|")})`)}$`);
+
+/**
+ * The existing test files nearest the seam, best first: a test that imports
+ * a seam file, then one named after it, then one importing from its folder.
+ */
+export function nearest(tree, config, seam, limit = 3) {
+  if (config.runner === "pytest") return nearestPython(tree, config, seam, limit);
+  const stem = (path) => path.replace(/\.[cm]?[jt]sx?$/, "").replace(/\/index$/, "");
+  const seams = seam.map(stem);
+  const folders = seam.map((path) => posix.dirname(path));
+  const pattern = testNames(config.testPattern);
+  const scored = tree.files
+    .filter((path) => path.startsWith(`${config.testDir}/`) && pattern.test(posix.basename(path)))
+    .map((path) => {
+      const imports = [...(tree.text(path) ?? "").matchAll(/from\s+["'](\.[^"']+)["']/g)].map((match) =>
+        stem(posix.normalize(posix.join(posix.dirname(path), match[1]))),
+      );
+      const name = posix.basename(path).replace(/\.(test|spec)\.[cm]?tsx?$/, "");
+      const score = imports.some((item) => seams.includes(item))
+        ? 3
+        : seams.some((item) => posix.basename(item) === name)
+          ? 2
+          : imports.some((item) => folders.includes(posix.dirname(item)))
+            ? 1
+            : 0;
+      return { path, score };
+    })
+    .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
+  const ranked = scored.filter((item) => item.score > 0);
+  return (ranked.length > 0 ? ranked : scored).slice(0, ranked.length > 0 ? limit : 2).map((item) => item.path);
+}
+
+/**
+ * The same for pytest: a test that imports the seam's module, then one
+ * named after it (`test_<module>.py`, or as the project's `python_files`
+ * names its tests: tqdm's `tests_<module>.py`), then one importing from its
+ * package. The files are the ones config.testPattern takes.
+ */
+function nearestPython(tree, config, seam, limit) {
+  const root = posix.join(config.package, config.pythonPath[0]);
+  const moduleOf = (path) => posix.relative(root, path).replace(/(\/__init__)?\.py$/, "").split("/").join(".");
+  const modules = seam.map(moduleOf);
+  const packages = modules.map((name) => name.split(".").slice(0, -1).join(".")).filter(Boolean);
+  const pattern = testNames(config.testPattern ?? "test_*.py");
+  const scored = tree.files
+    .filter((path) => path.startsWith(`${config.testDir}/`) && pattern.test(posix.basename(path)))
+    .map((path) => {
+      const text = tree.text(path) ?? "";
+      const imports = [...text.matchAll(/^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))/gm)].map((match) => match[1] ?? match[2]);
+      const name = posix.basename(path).replace(/\.py$/, "").replace(/^tests?_|_tests?$/g, "");
+      const score = imports.some((item) => modules.includes(item))
+        ? 3
+        : modules.some((item) => item.split(".").at(-1) === name)
+          ? 2
+          : imports.some((item) => packages.some((pkg) => item === pkg || item.startsWith(`${pkg}.`)))
+            ? 1
+            : 0;
+      return { path, score };
+    })
+    .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
+  const ranked = scored.filter((item) => item.score > 0);
+  return (ranked.length > 0 ? ranked : scored).slice(0, ranked.length > 0 ? limit : 2).map((item) => item.path);
+}
+
 /** The package's existing suite once, on a clone of the prepared base tree: counts and duration. */
 export function runExisting(config) {
   prepareBase(config);

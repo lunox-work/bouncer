@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { detect, globRegExp, namesRegExp, optionalExtras, pytestSetting, stripJsonc } from "../bin/fit.mjs";
+import { detect, globRegExp, namesRegExp, nearest, optionalExtras, pytestSetting, reader, stripJsonc } from "../bin/fit.mjs";
 
 const ok = (name) => console.log(`ok ${name}`);
 const scratch = mkdtempSync(join(tmpdir(), "bouncer-fit-"));
@@ -254,6 +254,38 @@ try {
     assert.equal(none.reason, "no pytest: no pytest configuration and pytest is not a declared dependency");
   }
   ok("pytest: python_files names the test files; no lockfile is uv-dated with its test extras and groups");
+
+  // The example tests bin/repo.mjs shows a writer: the nearest to the seam, by the names the project uses.
+  {
+    const dir = repoOf({
+      "pyproject.toml": '[project]\nname = "bar"\n\n[tool.pytest.ini_options]\npython_files = ["tests_*.py"]\n',
+      "uv.lock": "",
+      "bar/__init__.py": "",
+      "bar/core.py": "",
+      "bar/util.py": "",
+      "tests/tests_core.py": "from bar.core import run\n",
+      "tests/tests_util.py": "import os\n",
+      "tests/tests_misc.py": "import os\n",
+      "tests/helpers.py": "from bar.core import run\n",
+    });
+    const { config } = detect({ repo: dir });
+    const tree = reader(dir);
+    assert.deepEqual(nearest(tree, config, ["bar/core.py"]), ["tests/tests_core.py"], "the test that imports the seam's module");
+    assert.deepEqual(nearest(tree, config, ["bar/util.py"]), ["tests/tests_util.py", "tests/tests_core.py"], "named after it, then one importing its package");
+    assert.deepEqual(nearest(tree, { ...config, testPattern: "test_*.py" }, ["bar/core.py"]), [], "by the default names this project has no tests");
+    const ts = repoOf({
+      "package.json": json({ scripts: { test: "vitest" }, devDependencies: { ...TS, vitest: "3.0.0" } }),
+      "package-lock.json": "{}\n",
+      "tsconfig.json": tsconfig,
+      "src/parse.ts": "",
+      "src/format.ts": "",
+      "test/parse.test.ts": 'import { parse } from "../src/parse";\n',
+      "test/format.test.ts": "",
+      "test/other.test.ts": "",
+    });
+    assert.deepEqual(nearest(reader(ts), detect({ repo: ts }).config, ["src/format.ts"]), ["test/format.test.ts", "test/parse.test.ts"]);
+  }
+  ok("nearest: the existing tests closest to the seam, by python_files for pytest");
   console.log("fit passed");
 } finally {
   rmSync(scratch, { recursive: true, force: true });
