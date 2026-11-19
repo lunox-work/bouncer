@@ -10,7 +10,7 @@
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const BIN = dirname(fileURLToPath(import.meta.url));
@@ -20,20 +20,23 @@ const COMMANDS = {
   confirm: "a spec's decisions in context; record a confirmation (--by); --from <issue>, --export",
   prepare: "confirmed spec -> skeleton, both suites, calibration (Opus sessions)",
   handout: "what an outside agent may see, in a folder of your choice",
-  judge: "a src/, or a checkout or commit -> passed | overfit | incomplete | regressed | refused",
+  judge: "a src/, or a checkout or commit -> passed | overfit | incomplete | regressed | refused; --card <file.svg>",
   promote: "a passed repository spec's hidden suite into the repository",
   run: "a blind agent session",
   grade: "grade blind runs into results.jsonl",
   retry: "one retry of a blind run, told its failing scenarios",
-  "import-archive": "a calibrated spec from the experiment archive, marked not held out",
   seal: "one spec's suites in one file, for a judge that has no specs/ (CI)",
   ci: "judge a commit from a seal and report it as a check; --platform judges it on the hosted platform (OIDC)",
-  referee: "a blind referee of rejected runs' failing tests, on any backend (--backend)",
-  "red-team-audit": "red-team passes (run --brief red-team) audited: literals, a second suite, a session",
   push: "a confirmed spec as a bounty in the signed-in platform workspace",
   login: "sign in to the Lunox platform (device code in the browser); --org, --platform, --open",
   whoami: "the account, workspace and token expiry signed in with",
   logout: "delete the saved platform token",
+};
+// The method's own measurement tools: `bouncer evidence <name>`, or `bouncer <name>` as before.
+const EVIDENCE = {
+  referee: "a blind referee of rejected runs' failing tests, on any backend (--backend)",
+  "red-team-audit": "red-team passes (run --brief red-team) audited: literals, a second suite, a session",
+  "import-archive": "a calibrated spec from the experiment archive, marked not held out",
 };
 
 const [command, ...rest] = process.argv.slice(2);
@@ -43,17 +46,32 @@ if (command === "--version" || command === "-v") {
 }
 if (command === "where") {
   const { HOME, SPECS, RUNS, RESULTS, TEMPLATE, ROOT } = await import("./lib.mjs");
+  const before = !process.env.BOUNCER_HOME && basename(HOME) === ".duediligence";
   console.log(JSON.stringify({ home: HOME, specs: SPECS, runs: RUNS, results: RESULTS, template: TEMPLATE, package: ROOT }, null, 2));
+  if (before) console.error(`${HOME} is the home from before the rename (0.7.0); it stays the default until ~/.bouncer exists. To move it: mv ${HOME} ${join(dirname(HOME), ".bouncer")}`);
   process.exit(0);
 }
+let [name, args] = [command, rest];
+if (command === "evidence") [name, ...args] = rest;
+if (Object.hasOwn(EVIDENCE, name ?? "")) {
+  const child = spawnSync(process.execPath, [join(BIN, `${name}.mjs`), ...args], { stdio: "inherit" });
+  if (child.signal) process.kill(process.pid, child.signal);
+  process.exit(child.status ?? 1);
+}
+if (command === "evidence") {
+  const width = Math.max(...Object.keys(EVIDENCE).map((key) => key.length));
+  console.error(["usage: bouncer evidence <name> [args...]", "", ...Object.entries(EVIDENCE).map(([key, what]) => `  ${key.padEnd(width)}  ${what}`)].join("\n"));
+  process.exit(name === undefined ? 0 : 1);
+}
 if (!Object.hasOwn(COMMANDS, command ?? "")) {
-  const width = Math.max(...Object.keys(COMMANDS).map((name) => name.length));
+  const width = Math.max(...[...Object.keys(COMMANDS), "where", "evidence"].map((key) => key.length));
   console.error(
     [
       "usage: bouncer <command> [args...]",
       "",
       ...Object.entries(COMMANDS).map(([name, what]) => `  ${name.padEnd(width)}  ${what}`),
       `  ${"where".padEnd(width)}  the folders it reads and writes`,
+      `  ${"evidence".padEnd(width)}  the method's measurement tools: ${Object.keys(EVIDENCE).join(", ")}`,
       "",
       "Each command prints its own usage when called without arguments.",
       "Data: BOUNCER_HOME (default ~/.bouncer/).",
