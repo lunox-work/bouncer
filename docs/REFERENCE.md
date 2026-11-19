@@ -335,6 +335,15 @@ beside the hidden suite when it is judged, as in any CI: the judge's environment
 carries no token and its output names no hidden test, but a submission that
 reads the runner's disk and sends it over the network is not stopped.
 
+A repository that judges its pull requests this way can say so:
+
+```markdown
+[![bouncer on the door](https://raw.githubusercontent.com/lunox-work/bouncer/main/assets/badge.svg)](https://github.com/lunox-work/bouncer)
+```
+
+`assets/badge.svg` is shields.io's flat-square badge with the mark
+(`assets/mark-dark.svg`) as its logo.
+
 ## How the hidden suite is kept honest
 
 - A hidden test survives calibration only if it fails on the empty skeleton and
