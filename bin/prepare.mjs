@@ -29,6 +29,7 @@ import { join } from "node:path";
 import { recordCommitment } from "./commitment.mjs";
 import { confirmation } from "./confirm.mjs";
 import { ROOT, args, readJson, specDir, writeJson } from "./lib.mjs";
+import { say } from "./voice.mjs";
 
 const { options, rest } = args();
 const [slug] = rest;
@@ -45,6 +46,7 @@ const step = (script, ...argv) =>
 
 const confirmed = confirmation(slug);
 if (!confirmed.ok) {
+  say("unconfirmed", { options });
   console.log(
     `${slug}: ${confirmed.reason}. Show the person its decisions (node bin/confirm.mjs ${slug}), then record their confirmation with --by.`,
   );

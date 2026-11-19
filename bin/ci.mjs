@@ -37,6 +37,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { IDENTITY } from "./identity.mjs";
+import { lineFor } from "./voice.mjs";
 
 const BIN = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -119,7 +120,9 @@ if (record === null) {
   title = "not judged";
   summary = `**not judged.** ${why.slice(0, 1000)}`;
 } else {
-  title = `${record.verdict}: public ${fraction(record.public)}, hidden ${fraction(record.hidden)}${record.existing ? `, existing ${fraction(record.existing)}` : ""}`;
+  // His line first (bin/voice.mjs), then the machine word and counts, unchanged; the body is the record's.
+  const said = lineFor(record.verdict, { keys: record.failedScenarios ?? [] });
+  title = `${said === null ? "" : `${said.text} `}${record.verdict}: public ${fraction(record.public)}, hidden ${fraction(record.hidden)}${record.existing ? `, existing ${fraction(record.existing)}` : ""}`;
   const rows = [
     "| verdict | public | hidden | existing |",
     "| --- | ---: | ---: | ---: |",

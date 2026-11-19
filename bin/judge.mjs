@@ -48,6 +48,9 @@
 //
 //   node bin/judge.mjs --seal <file> <src-dir> | --seal <file> --repo [<checkout>] [--ref <rev>] [--strict-scope] [--json <file>]
 //
+// On a terminal Bouncer's line goes above the verdict (bin/voice.mjs); off
+// one (a pipe, --json, --plain, NO_COLOR, CI, --seal) the output is unchanged.
+//
 // Exit 0 passed, 2 overfit, 3 regressed, 1 incomplete, refused or not judged.
 
 import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -55,6 +58,7 @@ import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { judgement } from "./rules.mjs";
 import { unseal } from "./seal.mjs";
+import { say } from "./voice.mjs";
 
 const sealed = openSeal(process.argv.slice(2));
 const { commitment, commitmentLine, hiddenSha256 } = await import("./commitment.mjs");
@@ -103,6 +107,7 @@ const changedSince = !committed.ok
     ? `the handout (${handedOut.at})`
     : null;
 if (changedSince !== null) {
+  say("list-changed", { stream: process.stderr, options, sealed: sealed !== null });
   console.error(
     `${slug}: hidden suite changed since ${changedSince}; not judged. sha256 now ${committed.current}, committed ${committed.ok ? handedOut.hiddenSha256 : committed.recorded}.`,
   );
@@ -128,6 +133,8 @@ const judged = judge(slug, realpathSync(src));
 const outcome = judgement({ public: judged.public, hidden: judged.hidden, publicIds: calibration.publicIds, kept: calibration.kept });
 const { verdict: result, public: publicCount, hidden: hiddenCount, failures, failedScenarios: scenarios } = outcome;
 
+// His line, on a terminal only (bin/voice.mjs); a keyed retry's submission sits under <variant>-retry-keyed/.
+say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)) });
 console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}.`);
 console.log(hashLine());
 const imported = readJson(join(specDir(slug), "imported.json"), null);
@@ -190,6 +197,7 @@ function judgeRepo() {
   }
 
   const where = ref === undefined ? `${found.root} (working tree)` : `${found.root} at ${ref}`;
+  say(result, { options, sealed: sealed !== null, keys: scenarios, aside: result === "passed" && !strict && scope.outsideScope.length > 0 ? "outside-scope" : null });
   console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}, existing ${judged === null ? "-" : `${outcome.existing.passed}/${baseline.passing.length}`}; ${where}.`);
   console.log(hashLine());
   if (refused.length > 0) console.log(`Refused:\n${pathsOf(refused).map((line) => `- ${line}`).join("\n")}`);
