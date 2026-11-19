@@ -38,8 +38,12 @@ or a command or HTTP service checked at its boundary by
 repository** is built in the person's checkout of one package and keeps its
 existing suite green: start at step 0 of
 [references/repository.md](references/repository.md), which adds to each step.
-Hosted mode (the `lunox` MCP tools) is the `bouncer-hosted` skill; this one is
-local and needs no sign-in.
+**The agent already says it's done** ("check my agent's work", "is this
+really done"): [references/check.md](references/check.md) runs `bouncer door`,
+then `bouncer id` (what the ticket never said and what the agent picked) as
+the confirmation, then steps 3 and 5 on the working tree. Hosted mode (the
+`lunox` MCP tools) is the `bouncer-hosted` skill; this one is local and needs
+no sign-in.
 
 ## Before you start
 

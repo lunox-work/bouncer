@@ -22,13 +22,7 @@ export const LINES = {
   "outside-scope": "Just you. Not your twelve friends.",
   unconfirmed: "No list tonight. Ask the owner.",
   "list-changed": "Someone touched my list. Nobody gets in.",
-  // The door (no spec, no model): what the agent did, read from the diff and transcript.
-  "crossed-off": "Crossing a name off doesn't put yours on.",
-  "never-queued": "You never queued.",
-  "homemade-id": "That ID's homemade.",
-  "last-run-red": "Your own ID says no.",
-  "left-a-note": "Come back when it's finished.",
-  clipboard: "You don't write on my clipboard.",
+  // The door reports without his voice (its rules are often wrong, evidence/DOOR.md); only a clean door gets a line.
   "door-clean": "Dress code's fine. The list is another matter: bouncer check.",
   id: "Let me see some ID.",
 };
