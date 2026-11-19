@@ -51,7 +51,7 @@ no sign-in.
   checkable through its exports, as a command or over HTTP. Larger work: split
   it into specs of that size, or say this skill does not fit. Not a migration
   or rendered UI (UI through Playwright is too noisy to calibrate).
-- **Preconditions.** Node 20.19 or later, and `claude` signed in, a Codex
+- **Preconditions.** Node ^20.19 or 22+, and `claude` signed in, a Codex
   login or `ANTHROPIC_API_KEY` ([references/toolchains.md](references/toolchains.md)).
   On Windows there is no OS sandbox: say so before step 3, and that WSL2 gives one.
 - **Cost.** Step 3 starts four blind sessions, on Opus 5.5 with `claude`: about
