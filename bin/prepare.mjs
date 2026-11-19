@@ -22,6 +22,12 @@
 //
 // Exit 0 ready to implement, 3 not confirmed, 4 open questions, 1 a step
 // failed or, on a repository target, the reference broke existing tests.
+//
+// --hosted builds a draft sandbox version on the hosted platform instead
+// (hosted.mjs `prepareHosted`): nothing below runs, no session starts here,
+// and only the public project comes back.
+//
+//   node bin/prepare.mjs <slug> --hosted [--version <id>] [--out <folder>] [--no-wait] [--platform <url>]
 
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -31,6 +37,10 @@ import { confirmation } from "./confirm.mjs";
 import { ROOT, args, readJson, specDir, writeJson } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
+if (process.argv.includes("--hosted")) {
+  const [{ run }, { IDENTITY }] = await Promise.all([import("./hosted.mjs"), import("./identity.mjs")]);
+  process.exit(await run("prepare", process.argv.slice(2), { ...IDENTITY, version: readJson(join(ROOT, "package.json")).version }));
+}
 const { options, rest } = args();
 const [slug] = rest;
 if (slug === undefined) {

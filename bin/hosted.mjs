@@ -25,20 +25,36 @@
 //                     pass or fail is the check. A 409 `retryable` (the
 //                     platform's active-run limit) is sent again after its
 //                     Retry-After, a few times.
+//   prepare --hosted  a draft sandbox version built on the platform instead of
+//                     here: POST .../sandboxes/versions/:vid/build, the run
+//                     read at .../github/runs/:id until it ends, then the
+//                     handout (.../versions/:vid/handout and its paged
+//                     /files) written to a folder, each file checked against
+//                     its sha256 and kept inside that folder. The hidden
+//                     suite stays on the platform: only its count and
+//                     commitment hash come back. Recorded in
+//                     specs/<slug>/hosted.json, so running it again needs no
+//                     --version.
+//   judge --platform  a verdict the platform already gave, read at
+//                     .../sandboxes/submissions/:sid and printed as a local
+//                     verdict is: verdict, counts, failing scenario keys,
+//                     refused paths, the same exit codes.
 //
 // Each takes its argv and the outside world as `deps` (account.mjs's, plus
 // `git` and `readFile`), so test/hosted.mjs drives them against a fake
 // platform.
 
 import { execFileSync } from "node:child_process";
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 
 import { defaultDeps as accountDeps } from "./account.mjs";
 import { confirmation } from "./confirm.mjs";
 import { specDir } from "./lib.mjs";
 import { credentialFor, credentialsPath, platformUrl, PlatformError, request, sendRetrying } from "./platform-client.mjs";
+import { say } from "./voice.mjs";
 
 /** The platform's limits on one submission (sandbox-factory SUBMISSION_LIMITS). */
 const MAX_FILES = 200;
@@ -47,6 +63,10 @@ const MAX_BYTES = 4_000_000;
 /** How often a verdict is asked for, and for how long. */
 const POLL_MS = 10_000;
 const POLL_LIMIT_MS = 45 * 60_000;
+/** A build writes and calibrates a hidden suite: it is waited for longer than a verdict. */
+const BUILD_LIMIT_MS = 90 * 60_000;
+/** More pages than a handout can have: a cursor that never ends is the platform's fault, not a loop here. */
+const MAX_PAGES = 2_000;
 const TITLE_MAX = 255;
 const DESCRIPTION_MAX = 20_000;
 
@@ -54,6 +74,8 @@ export function defaultDeps() {
   return {
     ...accountDeps(),
     git: (args, cwd) => execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }),
+    // Where Bouncer's own line goes, on a terminal (voice.mjs); a test passes none and gets none.
+    voice: process.stdout,
     readFile: (path) => readFileSync(path),
   };
 }
@@ -304,10 +326,207 @@ export async function ciPlatform(argv, { client, cli = client, pkg = client, ver
   return EXIT[outcome] ?? 1;
 }
 
+/** The signed-in workspace on `given` (a URL, else LUNOX_PLATFORM_URL, else the default), and a request bound to it. */
+function workspace(given, { client, cli = client, pkg = client, version }, deps) {
+  const base = platformUrl(given, deps.env);
+  const saved = credentialFor(credentialsPath(deps.env), base, client);
+  if (saved === undefined) throw new PlatformError(`Not signed in to ${base}. Run \`${cli} login\`.`);
+  const org = `/api/v1/orgs/${encodeURIComponent(saved.organizationId)}`;
+  const call = (path, options = {}) => request({ base, token: saved.token, client, cli, pkg, version, fetchImpl: deps.fetchImpl, path: `${org}${path}`, ...options });
+  return { base, saved, call };
+}
+
+/** Where `path`, a platform's file name, lands under `root`: never outside it. */
+export function insideOf(root, path) {
+  const target = resolve(root, path);
+  const back = relative(root, target);
+  if (typeof path !== "string" || path === "" || isAbsolute(path) || path.includes("\0") || back === "" || back === ".." || back.startsWith(`..${sep}`) || isAbsolute(back))
+    throw new PlatformError(`The platform named a file outside the folder (${JSON.stringify(path)}); nothing more was written.`);
+  return target;
+}
+
+/** `prepare <slug> --hosted`: a draft version built on the platform, its public project pulled back. */
+export async function prepareHosted(argv, meta, deps) {
+  const cli = meta.cli ?? meta.client;
+  const usage = `usage: ${cli} prepare <slug> --hosted [--version <sandbox version id>] [--out <folder>] [--no-wait] [--platform <url>]`;
+  const { values, positionals } = options(
+    argv,
+    { hosted: { type: "boolean" }, version: { type: "string" }, out: { type: "string" }, "no-wait": { type: "boolean" }, platform: { type: "string" } },
+    usage,
+    true,
+  );
+  if (values.help || positionals.length !== 1) {
+    deps.out(
+      `${usage}\n\nBuilds a draft sandbox version on the platform instead of preparing here: the standalone project, its baseline\n` +
+        `and hidden tests written from the approved spec and calibrated there. Waits for the build, then writes the public\n` +
+        `project to --out (default the project's own folder name, here). The hidden tests never reach this machine: only\n` +
+        `their count and commitment hash. --version is the draft cut for the bounty (web app, or MCP start_sandbox and\n` +
+        `cut_slice); it is remembered in specs/<slug>/hosted.json. Owners and admins only.\n`,
+    );
+    return values.help ? 0 : 1;
+  }
+  const [slug] = positionals;
+  const dir = specDir(slug);
+  if (!existsSync(dir)) throw new PlatformError(`No spec: specs/${slug}.`);
+  const { base, saved, call } = workspace(values.platform, meta, deps);
+  const recordPath = join(dir, "hosted.json");
+  const before = existsSync(recordPath) ? JSON.parse(readFileSync(recordPath, "utf8")) : null;
+  const recorded = before !== null && before.base === base && before.organizationId === saved.organizationId ? before : null;
+  const versionId = values.version ?? recorded?.versionId;
+  if (versionId === undefined)
+    throw new PlatformError(`Which version? Pass --version <id>: the draft cut for this bounty (web app, or the MCP tools start_sandbox and cut_slice).\n${usage}`);
+  const version = `/sandboxes/versions/${encodeURIComponent(versionId)}`;
+  const record = (more) =>
+    writeFileSync(recordPath, `${JSON.stringify({ base, organizationId: saved.organizationId, versionId, ...more }, null, 2)}\n`);
+
+  let run;
+  try {
+    ({ run } = await call(`${version}/build`, { method: "POST" }));
+  } catch (error) {
+    if (error instanceof PlatformError && error.code === "decisions_unconfirmed")
+      throw new PlatformError(
+        `${versionId} is not built: its spec's decisions wait for a person. Confirm them in the web app${typeof error.body?.confirmUrl === "string" ? ` (${error.body.confirmUrl})` : " (MCP confirm_link)"}, or push a spec confirmed here (${cli} push), then run this again.`,
+        { status: error.status, code: error.code },
+      );
+    throw error;
+  }
+  if (typeof run?.id !== "string") throw new PlatformError(`${base} answered without a build run.`);
+  if (run.status === "queued" || run.status === "running") {
+    if (values["no-wait"]) {
+      record({ runId: run.id, out: values.out ? resolve(values.out) : (recorded?.out ?? null), preparedAt: null });
+      deps.out(`Building ${versionId} as run ${run.id} on ${base}. Run \`${cli} prepare ${slug} --hosted\` again to wait for it and pull the project.\n`);
+      return 0;
+    }
+    deps.out(`Building ${versionId} as run ${run.id}; waiting (it writes and calibrates the hidden tests there, so minutes, not seconds)...\n`);
+    const started = deps.now();
+    while (run.status === "queued" || run.status === "running") {
+      if (deps.now() - started > BUILD_LIMIT_MS)
+        throw new PlatformError(`Run ${run.id} is still ${run.status} after ${BUILD_LIMIT_MS / 60_000} minutes. Run this again to keep waiting.`);
+      await deps.sleep(POLL_MS);
+      ({ run } = await call(`/github/runs/${encodeURIComponent(run.id)}`));
+    }
+  }
+  if (run.status !== "succeeded")
+    throw new PlatformError(`The build ${run.status === "failed" ? "failed" : `ended as ${run.status}`}${run.errorCode ? ` (${run.errorCode})` : ""}${run.errorDetail ? `: ${String(run.errorDetail).replace(/[.\s]+$/, "")}` : ""}. Nothing was pulled.`);
+
+  const handout = await call(`${version}/handout`);
+  let out = values.out ? resolve(values.out) : recorded?.versionId === versionId && recorded.out ? recorded.out : null;
+  const again = () => recorded?.versionId === versionId && recorded.out === out;
+  const written = [];
+  const skipped = [];
+  let projectSha256 = null;
+  let cursor = null;
+  for (let page = 0; ; page += 1) {
+    if (page >= MAX_PAGES) throw new PlatformError(`${base} gave more than ${MAX_PAGES} pages of files; stopped.`);
+    const got = await call(`${version}/handout/files${cursor === null ? "" : `?cursor=${encodeURIComponent(cursor)}`}`);
+    if (page === 0) {
+      out ??= insideOf(resolve("."), String(got.root ?? ""));
+      projectSha256 = got.sha256 ?? null;
+      if (existsSync(out) && readdirSync(out).length > 0 && !again())
+        throw new PlatformError(`${out} is not empty. Pass --out <an empty folder>; nothing was written.`);
+    }
+    for (const file of got.files ?? []) {
+      const target = insideOf(out, file.path);
+      if (file.omitted || typeof file.content !== "string") {
+        skipped.push(file.path);
+        continue;
+      }
+      const bytes = Buffer.from(file.content, file.encoding === "base64" ? "base64" : "utf8");
+      if (createHash("sha256").update(bytes).digest("hex") !== file.sha256)
+        throw new PlatformError(`${file.path} does not match its hash; stopped. Run it again, and if it repeats the platform's copy is damaged.`);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, bytes);
+      written.push(file.path);
+    }
+    if (typeof got.nextCursor !== "string" || got.nextCursor === cursor) break;
+    cursor = got.nextCursor;
+  }
+  record({
+    runId: run.id,
+    out,
+    projectSha256,
+    files: written.length,
+    hiddenTests: handout.hiddenTests ?? null,
+    hiddenSha256: handout.hiddenSha256 ?? null,
+    preparedAt: new Date(deps.now()).toISOString(),
+  });
+  for (const path of skipped) deps.err(`not written: ${path} is too large for the API; the web app downloads the whole project as a .zip\n`);
+  const hidden =
+    typeof handout.hiddenSha256 === "string"
+      ? `${handout.hiddenTests} hidden test${handout.hiddenTests === 1 ? "" : "s"} stay on the platform (sha256 ${handout.hiddenSha256.slice(0, 12)}...): no name or body of one is on this machine.`
+      : "This version has no hidden tests recorded yet.";
+  deps.out(
+    `Prepared ${versionId} on ${base}: ${written.length} public file${written.length === 1 ? "" : "s"} in ${out}.\n${hidden}\n` +
+      `Implement there. It is judged on the platform: the MCP tool judge, or, once a person publishes the version,\n` +
+      `\`${cli} ci --platform --version ${versionId} --workspace ${saved.organizationId}\` in CI. Read a verdict with \`${cli} judge --platform <submission id>\`.\n`,
+  );
+  return 0;
+}
+
+/** `judge --platform <submission id>`: a verdict the platform gave, printed as a local one. Answers the exit code. */
+export async function judgePlatform(argv, meta, deps) {
+  const cli = meta.cli ?? meta.client;
+  const usage = `usage: ${cli} judge --platform <submission id> [--wait] [--json] [--platform-url <url>]`;
+  const { values, positionals } = options(
+    argv,
+    { platform: { type: "string" }, wait: { type: "boolean" }, json: { type: "boolean" }, "platform-url": { type: "string" } },
+    usage,
+    true,
+  );
+  if (values.help || !values.platform || positionals.length > 0) {
+    deps.out(
+      `${usage}\n\nPrints the verdict the platform gave a submission (the MCP tool judge, a contributor's patch, or ${cli} ci\n` +
+        `--platform), as a local verdict is printed: verdict, counts, failing scenario keys and refused paths, never a\n` +
+        `hidden test's name. Nothing is judged here and nothing is sent but the id. --wait polls one still being graded.\n` +
+        `Owners and admins only. Exit: 0 passed, 2 overfit, 1 otherwise.\n`,
+    );
+    return values.help ? 0 : 1;
+  }
+  const { call } = workspace(values["platform-url"], meta, deps);
+  const read = () => call(`/sandboxes/submissions/${encodeURIComponent(values.platform)}`);
+  let { submission } = await read();
+  if (typeof submission?.id !== "string") throw new PlatformError("The platform answered without a submission.");
+  const started = deps.now();
+  while (values.wait && (submission.status === "queued" || submission.status === "running")) {
+    if (deps.now() - started > POLL_LIMIT_MS) throw new PlatformError(`No verdict for ${submission.id} after ${POLL_LIMIT_MS / 60_000} minutes.`);
+    await deps.sleep(POLL_MS);
+    ({ submission } = await read());
+  }
+  if (values.json) {
+    deps.out(`${JSON.stringify(submission, null, 2)}\n`);
+    return EXIT[submission.verdict] ?? 1;
+  }
+  if (submission.status === "queued" || submission.status === "running") {
+    deps.out(`${submission.id}: not judged yet (${submission.status}). Run it again, or pass --wait.\n`);
+    return 1;
+  }
+  if (submission.status === "errored" || !submission.verdict) {
+    deps.out(
+      `${submission.id}: not judged${submission.errorCode ? ` (${submission.errorCode})` : ""}. Grading could not run on the platform's side;\n` +
+        "a workspace owner can regrade it (MCP regrade) without spending its retry.\n",
+    );
+    return 1;
+  }
+  const keys = submission.failedScenarios ?? [];
+  const count = (suite) => (suite ? `${suite.passed}/${suite.total}` : "-");
+  if (deps.voice) say(submission.verdict, { stream: deps.voice, keys, retry: Boolean(submission.retryOf) });
+  const lines = [
+    `${submission.id}: ${submission.verdict}. Public ${count(submission.public)}, hidden ${count(submission.hidden)}.`,
+    `Judged on the platform against version ${submission.sandboxVersionId}${submission.retryOf ? `, a retry of ${submission.retryOf}` : ""}.`,
+    ...((submission.refused ?? []).length > 0 ? [`Refused:\n${submission.refused.map((item) => `- ${item.path}: ${item.reason}`).join("\n")}`] : []),
+    ...(keys.length > 0 ? [`Failing scenarios: ${keys.join(", ")}`] : []),
+    ...(submission.carryBack === "failed" ? ["Carry back failed: it passed there but cannot be merged back as it is."] : []),
+  ];
+  deps.out(`${lines.join("\n")}\n`);
+  return EXIT[submission.verdict] ?? 1;
+}
+
+const COMMANDS = { push, ci: ciPlatform, prepare: prepareHosted, judge: judgePlatform };
+
 /** Runs one, printing a PlatformError as one line on stderr. */
 export async function run(command, argv, meta, deps = defaultDeps()) {
   try {
-    return await (command === "push" ? push : ciPlatform)(argv, meta, deps);
+    return await COMMANDS[command](argv, meta, deps);
   } catch (error) {
     if (!(error instanceof PlatformError)) throw error;
     deps.err(`${meta.cli ?? meta.client} ${command}: ${error.message}\n`);

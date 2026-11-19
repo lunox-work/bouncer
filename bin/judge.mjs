@@ -56,6 +56,12 @@
 // one (a pipe, --json, --plain, NO_COLOR, CI, --seal) the output is unchanged.
 //
 // Exit 0 passed, 2 overfit, 3 regressed, 1 incomplete, refused or not judged.
+//
+// --platform <submission id> judges nothing here: it prints the verdict the
+// hosted platform gave that submission, in the same shape and with the same
+// exit codes (hosted.mjs `judgePlatform`).
+//
+//   node bin/judge.mjs --platform <submission id> [--wait] [--json] [--platform-url <url>]
 
 import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -65,6 +71,11 @@ import { unseal } from "./seal.mjs";
 import { say } from "./voice.mjs";
 import { card, lastClaim } from "./card.mjs";
 
+if (process.argv.includes("--platform")) {
+  const [{ run }, { IDENTITY }] = await Promise.all([import("./hosted.mjs"), import("./identity.mjs")]);
+  const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  process.exit(await run("judge", process.argv.slice(2), { ...IDENTITY, version }));
+}
 const sealed = openSeal(process.argv.slice(2));
 const { commitment, commitmentLine, hiddenSha256 } = await import("./commitment.mjs");
 const {

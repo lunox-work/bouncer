@@ -79,6 +79,15 @@ Once the price is approved and the person asks:
    and `get_verdict` reads the verdict (counts and failing scenario keys only);
    `retry` is a failed one's single retry.
 
+From a terminal, the same without the tools (owners and admins):
+
+- `bouncer prepare <slug> --hosted --version <id>` asks the platform to build
+  the draft version, waits, and writes the public project to `--out`. Only
+  when the person asks: the build is a paid model run. It sends the version's
+  id and nothing else.
+- `bouncer judge --platform <submission id>` prints a verdict the platform
+  already gave, with the local exit codes; `--wait` polls one being graded.
+
 You never see the hidden tests in hosted mode.
 
 - A submission `errored` (with `errorCode`: grading timed out, was interrupted

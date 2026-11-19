@@ -8,19 +8,24 @@
 // the run's OIDC token, sent again after a retryable 409, polled to a
 // verdict on a virtual clock, and the exit code and step summary from the
 // verdict; quota, rate-limit and credential-kind refusals said, not looped.
+// `prepare --hosted`: a version built there, its run polled, the public
+// project written file by file (hash checked, nothing outside the folder),
+// only the hidden suite's count and hash kept; and `judge --platform`: a
+// stored verdict printed as a local one, with its exit code.
 //
 //   node test/hosted.mjs
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { IDENTITY } from "../bin/identity.mjs";
 
 const scratch = mkdtempSync(join(tmpdir(), "bouncer-hosted-"));
 process.env.BOUNCER_SPECS = join(scratch, "specs");
-const { run, titleOf } = await import("../bin/hosted.mjs");
+const { insideOf, run, titleOf } = await import("../bin/hosted.mjs");
 const { confirmation } = await import("../bin/confirm.mjs");
 const { retryAfterSeconds, writeCredentials } = await import("../bin/platform-client.mjs");
 
@@ -28,10 +33,22 @@ const CLIENT = { ...IDENTITY, version: "9.9.9" };
 const SECRET = "lnx_s3cr3t-never-printed";
 const OIDC = "oidc.header.signature";
 
-async function fakePlatform({ verdicts = ["running", "passed"], bounty = "new", judge = [] } = {}) {
+const sha = (text, encoding = "utf8") => createHash("sha256").update(Buffer.from(text, encoding)).digest("hex");
+/** The public project a built version hands out, in two pages. */
+const PROJECT = [
+  { path: "package.json", encoding: "utf8", content: '{"name":"durations"}\n' },
+  { path: "src/index.ts", encoding: "utf8", content: "export const parse = () => 0;\n" },
+  { path: "tests/public/parse.test.ts", encoding: "utf8", content: 'test("[happy-1] parses", () => {});\n' },
+  { path: "assets/logo.bin", encoding: "base64", content: Buffer.from([0, 1, 2, 255]).toString("base64") },
+  { path: "assets/big.bin", encoding: null, content: null, omitted: "too_large" },
+].map((file) => ({ omitted: null, ...file, sizeBytes: file.content === null ? 9_000_000 : Buffer.from(file.content, file.encoding).length, sha256: file.content === null ? "0".repeat(64) : sha(file.content, file.encoding) }));
+const HIDDEN_SHA = "ab".repeat(32);
+
+async function fakePlatform({ verdicts = ["running", "passed"], bounty = "new", judge = [], build = "ok", builds = ["running", "succeeded"], project = PROJECT } = {}) {
   // bounty: "new" takes `spec`; "old" is a platform before posted specs (strict body); "invalid" refuses the spec;
   // "skipped" is a token without decisions:confirm. judge: refusals POST /api/judge answers first, in order.
-  const state = { requests: [], verdicts: [...verdicts], bounties: 0, judge: [...judge] };
+  // build: "ok", "unconfirmed" (409 decisions_unconfirmed) or "member" (403); builds: the run's statuses as it is read.
+  const state = { requests: [], verdicts: [...verdicts], bounties: 0, judge: [...judge], builds: [...builds] };
   const server = createServer(async (req, res) => {
     let raw = "";
     for await (const chunk of req) raw += chunk;
@@ -78,6 +95,26 @@ async function fakePlatform({ verdicts = ["running", "passed"], bounty = "new", 
       createdAt: "2026-11-12T00:00:00.000Z",
       updatedAt: "2026-11-12T00:00:00.000Z",
     });
+    const SBX = "/api/v1/orgs/org_acme/sandboxes";
+    if (url.pathname.startsWith(SBX) || url.pathname.startsWith("/api/v1/orgs/org_acme/github/runs/")) {
+      if (req.headers.authorization !== `Bearer ${SECRET}`) return send(401, { error: "This API token is not valid." });
+      const buildRun = (status) => ({ run: { id: "arn_build", tool: "sandbox_build", status, errorCode: status === "failed" ? "agent_failed" : null, errorDetail: status === "failed" ? "The reference never passed." : null } });
+      if (route === `POST ${SBX}/versions/sbv_1/build`) {
+        if (build === "unconfirmed") return send(409, { code: "decisions_unconfirmed", error: "Confirm the spec's decisions before building.", confirmUrl: "https://app.example.test/acme/bounties/bty_1/price" });
+        if (build === "member") return send(403, { error: "Only owners and admins can build a version." });
+        return send(202, buildRun(state.builds.length > 0 ? "queued" : "succeeded"));
+      }
+      if (route === "GET /api/v1/orgs/org_acme/github/runs/arn_build") return send(200, buildRun(state.builds.shift() ?? "succeeded"));
+      if (route === `GET ${SBX}/versions/sbv_1/handout`)
+        return send(200, { versionId: "sbv_1", run: { id: "arn_build", status: "succeeded" }, files: project.map(({ path, sizeBytes, sha256 }) => ({ path, sizeBytes, sha256 })), hiddenTests: 14, hiddenSha256: HIDDEN_SHA, hiddenSha256Version: 2 });
+      if (route === `GET ${SBX}/versions/sbv_1/handout/files`) {
+        const from = Number(url.searchParams.get("cursor") ?? 0);
+        const next = from + 2 < project.length ? String(from + 2) : null;
+        return send(200, { versionId: "sbv_1", root: "durations-sandbox", sha256: "cd".repeat(32), total: project.length, files: project.slice(from, from + 2), nextCursor: next });
+      }
+      if (route === `GET ${SBX}/submissions/sbm_1`) return send(200, { submission: submission(state.verdicts.shift() ?? "passed") });
+      return send(404, { error: "Not found." });
+    }
     if (req.headers.authorization !== `Bearer ${OIDC}` && url.pathname.startsWith("/api/judge"))
       return send(401, { error: "A GitHub OIDC token is needed.", code: "oidc_required" });
     if (route === "POST /api/judge") {
@@ -394,7 +431,147 @@ try {
     // --exit-zero still needs a token to submit.
     assert.equal(await run("ci", ["--platform=", "--version", "v", "--workspace", "w", "--exit-zero"], CLIENT, zero.deps), 1);
   }
-  console.log("hosted: push and ci --platform ok");
+  // prepare --hosted: built there, the public project here, the hidden suite nowhere on this machine.
+  {
+    const platform = await fakePlatform();
+    writeCredentials(join(scratch, "credentials"), {
+      [platform.state.url]: { duediligence: { token: SECRET, organizationId: "org_acme", organizationHandle: "acme" } },
+    });
+    spec("hosted");
+    const env = { LUNOX_PLATFORM_URL: platform.state.url };
+    const out = join(scratch, "pulled");
+    const missing = deps({ env });
+    assert.equal(await run("prepare", ["hosted", "--hosted", "--out", out], CLIENT, missing.deps), 1);
+    assert.match(missing.err.join(""), /Which version\? Pass --version <id>/);
+    assert.equal(platform.state.requests.length, 0, "nothing is sent before a version is named");
+
+    const world = deps({ env });
+    assert.equal(await run("prepare", ["hosted", "--hosted", "--version", "sbv_1", "--out", out], CLIENT, world.deps), 0);
+    assert.deepEqual(
+      platform.state.requests.map((r) => `${r.method} ${r.path}`),
+      [
+        "POST /api/v1/orgs/org_acme/sandboxes/versions/sbv_1/build",
+        "GET /api/v1/orgs/org_acme/github/runs/arn_build",
+        "GET /api/v1/orgs/org_acme/github/runs/arn_build",
+        "GET /api/v1/orgs/org_acme/sandboxes/versions/sbv_1/handout",
+        "GET /api/v1/orgs/org_acme/sandboxes/versions/sbv_1/handout/files",
+        "GET /api/v1/orgs/org_acme/sandboxes/versions/sbv_1/handout/files",
+        "GET /api/v1/orgs/org_acme/sandboxes/versions/sbv_1/handout/files",
+      ],
+    );
+    assert.equal(platform.state.requests[0].body, undefined, "the build is asked for by id: no spec, ticket or code is sent");
+    assert.deepEqual(world.slept, [10_000, 10_000]);
+    assert.equal(readFileSync(join(out, "src", "index.ts"), "utf8"), "export const parse = () => 0;\n");
+    assert.deepEqual([...readFileSync(join(out, "assets", "logo.bin"))], [0, 1, 2, 255]);
+    assert.equal(existsSync(join(out, "assets", "big.bin")), false);
+    assert.match(world.err.join(""), /not written: assets\/big\.bin is too large/);
+    assert.match(world.out.join(""), /Prepared sbv_1 on .*: 4 public files in /);
+    assert.match(world.out.join(""), /14 hidden tests stay on the platform \(sha256 abababababab\.\.\.\)/);
+    assert.equal(world.out.join("").includes(SECRET), false);
+    const record = JSON.parse(readFileSync(join(specs, "hosted", "hosted.json"), "utf8"));
+    assert.deepEqual(
+      { ...record, base: undefined },
+      { base: undefined, organizationId: "org_acme", versionId: "sbv_1", runId: "arn_build", out, projectSha256: "cd".repeat(32), files: 4, hiddenTests: 14, hiddenSha256: HIDDEN_SHA, preparedAt: "2026-11-12T00:00:20.000Z" },
+    );
+
+    // Again: the version and the folder are remembered, and the same folder is written over.
+    const again = deps({ env });
+    assert.equal(await run("prepare", ["hosted", "--hosted"], CLIENT, again.deps), 0);
+    assert.match(again.out.join(""), /4 public files in /);
+    // Another folder that holds something is left alone.
+    const taken = join(scratch, "taken");
+    mkdirSync(taken);
+    writeFileSync(join(taken, "mine.txt"), "mine");
+    const refused = deps({ env });
+    assert.equal(await run("prepare", ["hosted", "--hosted", "--out", taken], CLIENT, refused.deps), 1);
+    assert.match(refused.err.join(""), /is not empty\. Pass --out <an empty folder>; nothing was written/);
+    assert.deepEqual(readFileSync(join(taken, "mine.txt"), "utf8"), "mine");
+    await platform.close();
+  }
+
+  // prepare --hosted: refusals are said, a failed build pulls nothing, and no file leaves the folder or keeps a wrong hash.
+  {
+    const cases = [
+      [{ build: "unconfirmed" }, /its spec's decisions wait for a person\. Confirm them in the web app \(https:\/\/app\.example\.test\/acme\/bounties\/bty_1\/price\)/],
+      [{ build: "member" }, /Only owners and admins can build a version/],
+      [{ builds: ["running", "failed"] }, /The build failed \(agent_failed\): The reference never passed\. Nothing was pulled/],
+      [{ builds: [], project: [{ ...PROJECT[0], path: "../escaped.txt" }] }, /named a file outside the folder \("\.\.\/escaped\.txt"\)/],
+      [{ builds: [], project: [{ ...PROJECT[0], path: "/etc/escaped.txt" }] }, /named a file outside the folder/],
+      [{ builds: [], project: [{ ...PROJECT[0], sha256: "1".repeat(64) }] }, /package\.json does not match its hash/],
+    ];
+    for (const [index, [options, expected]] of cases.entries()) {
+      const platform = await fakePlatform(options);
+      writeCredentials(join(scratch, "credentials"), {
+        [platform.state.url]: { duediligence: { token: SECRET, organizationId: "org_acme", organizationHandle: "acme" } },
+      });
+      spec(`refused-${index}`);
+      const out = join(scratch, `refused-${index}-out`);
+      const world = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
+      assert.equal(await run("prepare", [`refused-${index}`, "--hosted", "--version", "sbv_1", "--out", out], CLIENT, world.deps), 1);
+      assert.match(world.err.join(""), expected);
+      assert.equal(existsSync(out) && readdirSync(out).length > 0, false, `${expected}: nothing written`);
+      assert.equal(existsSync(join(scratch, "escaped.txt")), false);
+      await platform.close();
+    }
+    const queued = await fakePlatform({ builds: ["running", "running"] });
+    writeCredentials(join(scratch, "credentials"), {
+      [queued.state.url]: { duediligence: { token: SECRET, organizationId: "org_acme", organizationHandle: "acme" } },
+    });
+    spec("queued");
+    const world = deps({ env: { LUNOX_PLATFORM_URL: queued.state.url } });
+    assert.equal(await run("prepare", ["queued", "--hosted", "--version", "sbv_1", "--no-wait"], CLIENT, world.deps), 0);
+    assert.match(world.out.join(""), /Building sbv_1 as run arn_build .* again to wait for it and pull the project/);
+    assert.equal(queued.state.requests.length, 1);
+    assert.equal(JSON.parse(readFileSync(join(specs, "queued", "hosted.json"), "utf8")).preparedAt, null);
+    await queued.close();
+    const signedOut = deps({ env: { LUNOX_PLATFORM_URL: "http://127.0.0.1:9", LUNOX_CREDENTIALS: join(scratch, "none") } });
+    assert.equal(await run("prepare", ["queued", "--hosted", "--version", "sbv_1"], CLIENT, signedOut.deps), 1);
+    assert.match(signedOut.err.join(""), /Not signed in to http:\/\/127\.0\.0\.1:9\. Run `bouncer login`/);
+    assert.throws(() => insideOf(scratch, "a/../../b"), /outside the folder/);
+    assert.throws(() => insideOf(scratch, "."), /outside the folder/);
+    assert.equal(insideOf(scratch, "a/b.ts"), join(scratch, "a", "b.ts"));
+  }
+
+  // judge --platform: a stored verdict in a local verdict's words and exit codes.
+  {
+    const table = [
+      [["passed"], 0, /^sbm_1: passed\. Public 1\/1, hidden 2\/2\.\nJudged on the platform against version sbv_1\.\n$/],
+      [["overfit"], 2, /sbm_1: overfit\. Public 1\/1, hidden 1\/2\.\n[^]*Failing scenarios: s2\n$/],
+      [["incomplete"], 1, /sbm_1: incomplete\./],
+      [["refused"], 1, /sbm_1: refused\.[^]*Refused:\n- src\/a\.ts: It adds a way to pass the tests without the code\./],
+      [["errored"], 1, /sbm_1: not judged \(grading_timed_out\)\. Grading could not run on the platform's side/],
+      [["running"], 1, /sbm_1: not judged yet \(running\)\. Run it again, or pass --wait\./],
+    ];
+    for (const [verdicts, exit, expected] of table) {
+      const platform = await fakePlatform({ verdicts });
+      writeCredentials(join(scratch, "credentials"), {
+        [platform.state.url]: { duediligence: { token: SECRET, organizationId: "org_acme", organizationHandle: "acme" } },
+      });
+      const world = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
+      assert.equal(await run("judge", ["--platform", "sbm_1"], CLIENT, world.deps), exit, verdicts[0]);
+      assert.match(world.out.join(""), expected);
+      assert.deepEqual(platform.state.requests.map((r) => `${r.method} ${r.path}`), ["GET /api/v1/orgs/org_acme/sandboxes/submissions/sbm_1"], "read once, nothing sent");
+      await platform.close();
+    }
+    const platform = await fakePlatform({ verdicts: ["queued", "running", "overfit"] });
+    writeCredentials(join(scratch, "credentials"), {
+      [platform.state.url]: { duediligence: { token: SECRET, organizationId: "org_acme", organizationHandle: "acme" } },
+    });
+    const waited = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
+    assert.equal(await run("judge", ["--platform", "sbm_1", "--wait"], CLIENT, waited.deps), 2);
+    assert.deepEqual(waited.slept, [10_000, 10_000]);
+    const json = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
+    assert.equal(await run("judge", ["--platform", "sbm_1", "--json"], CLIENT, json.deps), 0);
+    assert.equal(JSON.parse(json.out.join("")).verdict, "passed");
+    const gone = deps({ env: { LUNOX_PLATFORM_URL: platform.state.url } });
+    assert.equal(await run("judge", ["--platform", "sbm_404"], CLIENT, gone.deps), 1);
+    assert.match(gone.err.join(""), /Not found/);
+    const usage = deps();
+    assert.equal(await run("judge", ["sbm_1"], CLIENT, usage.deps), 1);
+    assert.match(usage.out.join(""), /usage: bouncer judge --platform <submission id>/);
+    await platform.close();
+  }
+  console.log("hosted: push, ci --platform, prepare --hosted and judge --platform ok");
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }
