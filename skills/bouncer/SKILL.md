@@ -10,7 +10,7 @@ description: >-
   spec, or wants to stop trusting an agent's own green test run.
 license: MIT
 compatibility: >-
-  Node 20.19 or later. Runs the @lunox-work/bouncer@0.6.0 CLI from npm, which starts
+  Node 20.19 or later. Runs the @lunox-work/bouncer@0.7.0 CLI from npm, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -20,10 +20,10 @@ compatibility: >-
 From one confirmed spec, generate a **public** suite the implementing agent
 works against and a **hidden** suite that judges the result.
 
-`bouncer <command>` below is the CLI, `@lunox-work/bouncer@0.6.0`. When
+`bouncer <command>` below is the CLI, `@lunox-work/bouncer@0.7.0`. When
 `bouncer --version` prints another version or nothing, ask the person
-before installing it: `npm i -g @lunox-work/bouncer@0.6.0`, or put
-`npx @lunox-work/bouncer@0.6.0` in place of `bouncer` in each command (in a clone
+before installing it: `npm i -g @lunox-work/bouncer@0.7.0`, or put
+`npx @lunox-work/bouncer@0.7.0` in place of `bouncer` in each command (in a clone
 of the repository, `node bin/cli.mjs`). Run it from any folder. `specs/` and
 `runs/` below are in the home, `~/.bouncer/` (`BOUNCER_HOME`);
 `template*/` and the briefs for the sessions the CLI starts (`prompts/`) are
