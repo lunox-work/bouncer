@@ -40,7 +40,11 @@ code and one anonymised test, upheld 95 of the 100 rejections it was shown as
 things the spec requires, and 24 of the 26 rejections of a run whose own tests
 were green. Of 74 agent-written tests that fail the calibrated reference, 66
 assert a reading the spec leaves open, 5 are wrong, 3 are rules the reference
-misses. ([Self-grading](evidence/FINDINGS.md#self-grading),
+misses. One run shows the shape (escrow-split, loose ticket, run 1, in the
+archive under `runs/escrow-split/self-tested-haiku-ticket/1`): the ticket does
+not say what a bounty of 0 releases, the agent wrote 21 tests of its own and
+all 21 passed, and the hidden suite passed 43 of 46, failing scenario
+`boundary-2`. 14 of that spec's 15 runs fail the same scenario. ([Self-grading](evidence/FINDINGS.md#self-grading),
 [Follow-ups](evidence/FINDINGS.md#follow-ups))
 
 ## Tests written from the spec carry it to the agent

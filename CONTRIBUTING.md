@@ -8,7 +8,7 @@ For a security problem, see [SECURITY.md](SECURITY.md) instead.
 
 ```sh
 npm ci
-npm test    # checks the skill, then the API, voice, id, door, platform, hosted and smoke tests
+npm test    # checks the skill, then test/: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
 ```
 
 Node `^20.19.0 || >=22.0.0`. The smoke test judges the bundled `duration-parse`
@@ -30,11 +30,16 @@ session.
   README and copy it across.
 - **Images are rendered from source.** Every README image is a `<section>` of
   `assets/src/index.html`, the mark comes from `bin/mark.mjs` and the card from
-  `bin/card.mjs`; edit those and run `node assets/src/render.mjs` (it needs
-  Playwright). Each number in them cites RESULTS.md in a comment.
-- **His voice stays off machine output.** Bouncer's lines go to a terminal
-  only, never into `--json`, a pipe, CI logs or a seal check body
-  (`test/voice.mjs`).
+  `bin/card.mjs`; edit those and run
+  `node assets/src/mark.mjs && PLAYWRIGHT=<dir> node assets/src/render.mjs`,
+  `<dir>` a folder whose `node_modules` holds Playwright (this package does
+  not depend on it). Each number in them cites RESULTS.md in a comment.
+- **His voice stays off machine output.** Bouncer's lines go to a terminal,
+  the title of a CI check (and where that title is repeated: the step
+  summary's heading, `ci`'s log line when no check is posted) and the heading
+  of the ID comment on a pull request (`BOUNCER_VOICE=0` drops that heading).
+  Never into `--json`, a pipe or a check's body, and a CI job's log gets no
+  line of his from `judge` (`test/voice.mjs`).
 - **No hidden test leaves the judge.** A change must not print, log or post a
   hidden test's name, body or compiler output.
 

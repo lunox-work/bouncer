@@ -14,7 +14,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node 20.19 or later. Runs the @lunox-work/bouncer@0.8.0 CLI from npm, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.0 CLI from npm, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---

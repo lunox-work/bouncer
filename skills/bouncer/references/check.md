@@ -36,7 +36,8 @@ at most: a larger change has decisions that are not on it.
 newest for this folder, or `--transcript <file>`) and, in a TypeScript
 checkout with carveout installed, `carveout gate`. It lists what is worth a
 look: no test run after the last edit, tests skipped, weakened or deleted, the
-last test run red, only tests the agent wrote, a TODO left in code. It never
+last test run red, only tests the agent wrote, a TODO left in code, harness or
+config edited. It never
 turns work away: measured on real sessions its rules were rarely right
 (evidence/DOOR.md), so put each finding to the person as a question, without
 his voice. Then go on.

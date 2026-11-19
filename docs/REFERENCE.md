@@ -31,18 +31,24 @@ guessed.
   installed, `carveout gate`; lists no test run after the last edit, tests
   skipped, weakened or deleted, the last test run red, only tests the agent
   wrote, a TODO in code, harness or config edited. It reports and never
-  blocks: on 127 real sessions that claimed done no rule fired on 10%, and a
-  model-judged check upheld 1 of 50 firings ([DOOR.md](../evidence/DOOR.md)).
-- `bouncer id [<slug>] --ticket <file> [--diff <file> | --repo <dir> --base <ref>]`:
+  blocks: on 127 real sessions that claimed done any rule fired on 8.7%,
+  under the 10% its gate asked for, and a model-judged check upheld 1 of 50
+  firings ([DOOR.md](../evidence/DOOR.md)).
+- `bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo <dir> --base <ref>]`
+  (the ticket is `--ticket`, else `specs/<slug>/ticket.md`):
   one Sonnet 5.5 session, about $0.07 and 20 s. What the ticket never said and
   what the diff picked, each with the ticket sentence, where, and the usual
   alternative. Questions, never ranked: the person's keep or change becomes a
   `Decided:` line.
-- `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>]`:
+- `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>] [--seam <file>[,<file>]] [--slug <slug>] [--new] [--accept-open] [--card <file.svg>] [--no-door]`:
   the whole after-the-fact flow in one command. Door, base and package from
   the change, fit, the ID check, a drafted `spec.md` with each pick as a
   `Decided:` item; exit 3 until the person confirms; run again to prepare
-  and judge the working tree. The steps by hand are
+  and judge the working tree. A rerun resumes the newest check on that
+  checkout and branch and says which; `--new` starts another, and a flag
+  that differs from the resumed check is refused. Exit: the judge's code once
+  judged; before that 1 nothing to check or a step failed, 2 out of scope or
+  `fit` unsupported, 3 the person must confirm, 4 `prepare`'s open questions. The steps by hand are
   [skills/bouncer/references/check.md](../skills/bouncer/references/check.md).
 
 ## The numbers
@@ -221,7 +227,7 @@ bundles the `lunox` MCP server, which Claude Code signs in to on first use
 
 The skill is the folder [`skills/bouncer/`](../skills/bouncer/), which
 also installs by copying it into an agent's skills folder. It runs the CLI at
-the version it names, and asks before installing it when it is missing. Needs Node 20.19 or later on macOS,
+the version it names, and asks before installing it when it is missing. Needs Node ^20.19 or 22+ on macOS,
 Linux or Windows, and one of: Claude Code signed in, a Codex login, or
 `ANTHROPIC_API_KEY`. The first command that needs the toolchain installs
 `template/`'s dependencies with npm 10.9.2 under `~/.bouncer/`, once.
@@ -265,7 +271,7 @@ contributor server:
 
 Two commands work against a bounty already on the platform:
 
-- `bouncer prepare <slug> --hosted --version <sandbox version id> [--out <dir>] [--no-wait]`
+- `bouncer prepare <slug> --hosted --version <sandbox version id> [--out <dir>] [--no-wait] [--platform <url>]`
   builds the suites on the platform for a sandbox version cut in the web app
   (or with the MCP tools), waits up to 90 minutes, and pulls the public
   project into `--out`, each file checked against its sha256. Only the
@@ -342,30 +348,13 @@ jobs:
     secrets: { seal-token: ${{ secrets.SEALS_TOKEN }} }
 ```
 
-**The ID check on pull requests.** `.github/workflows/id-comment.yml` is the
-same idea with no seal and no suite: on each push it runs `bouncer id-comment`
-over the pull request's linked issue (or its own description) and its diff
-from the API, and posts the list as one comment, edited in place. Questions,
-never ranked, never a failing check: the job cannot go red, and nothing it
-reads is run.
-
-```yaml
-jobs:
-  id:
-    permissions: { contents: read, pull-requests: write, issues: read }
-    uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
-    secrets: { anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} }
-```
-
-Measured by replaying the 11 commits as pull requests with two pushes each:
-one comment per pull request, 0 of 671 hidden test names in a comment, no call
-to a check or status endpoint. In that replay the lists stand in for model
-output, and the workflow has not run on a real runner yet.
-
-It runs `bouncer ci --seal <file> --repo . --ref <head>`, which judges
+The workflow runs `bouncer ci --seal <file> --repo . --ref <head>`, which judges
 the head commit with `judge --seal` (the package and the seal, no `specs/`) and
 posts a check with the verdict, the counts and the failing scenario keys, never
-a hidden test's name, body or compiler output. `action.yml` is the same step for
+a hidden test's name, body or compiler output. His line leads the check's
+title, before the machine word, and so appears wherever that title is repeated
+(the step summary's heading, and `ci`'s one log line when no check is posted);
+the check's body carries none. `action.yml` is the same step for
 a seal already on the runner. `ci` runs anywhere: without a token it writes the
 check body to `--out` and `$GITHUB_STEP_SUMMARY`. The judge refuses a seal whose
 hidden suite no longer matches its `hiddenSha256`. The submission's code runs
@@ -381,6 +370,27 @@ A repository that judges its pull requests this way can say so:
 
 `assets/badge.svg` is shields.io's flat-square badge with the mark
 (`assets/mark-dark.svg`) as its logo.
+
+**The ID check on pull requests.** `.github/workflows/id-comment.yml` is the
+same placement with no seal and no suite: on each push it runs `bouncer id-comment`
+over the pull request's linked issue (or its own description) and its diff
+from the API, and posts the list as one comment, edited in place, headed
+"Let me see some ID." (`BOUNCER_VOICE=0` drops the heading). Questions,
+never ranked, never a failing check: the job cannot go red, and nothing it
+reads is run.
+
+```yaml
+jobs:
+  id:
+    permissions: { contents: read, pull-requests: write, issues: read }
+    uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
+    secrets: { anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} }
+```
+
+Measured by replaying the 11 commits as pull requests with two pushes each:
+one comment per pull request, 0 of 671 hidden test names in a comment, no call
+to a check or status endpoint. In that replay the lists stand in for model
+output, and the workflow has not run on a real runner yet.
 
 ## How the hidden suite is kept honest
 
@@ -455,8 +465,8 @@ A repository that judges its pull requests this way can say so:
 
 ```
 skills/             bouncer/ (SKILL.md and references/: the steps it runs, after the fact in check.md); bouncer-hosted/ (the lunox MCP tools); lunox-contribute/ (an invited contributor's work on the platform)
-.claude-plugin/     the Claude Code plugin and its one-plugin marketplace
-.mcp.json           the plugin's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
+.claude-plugin/     the Claude Code marketplace and its two plugins: bouncer (local, no MCP server) and bouncer-hosted
+.mcp.json           bouncer-hosted's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
 AGENTS.md           this README's section for coding agents, verbatim
 RESULTS.md          what the method was measured to do
@@ -467,13 +477,20 @@ bin/api.mjs         the library entry: decisionItems, scenarios, diffDecisions, 
 bin/rules.mjs       the judge's verdict and calibration's filter over suite results, pure
 bin/hash.mjs        the commitment hash of a spec folder or a file map, reading nothing else
 bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`; `evidence <name>`
-bin/door.mjs        what a finished session shows, no model (bin/door-rules.mjs, carveout gate); reports, never blocks
+bin/door.mjs        what a finished session shows, no model (carveout gate when installed); reports, never blocks
+bin/door-rules.mjs  the door's rules over a session's events, pure
 bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
-bin/voice.mjs       his line above a verdict, on a terminal only
+bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place, never a check
+bin/check.mjs       after the fact as one command: door, fit, the ID check, a drafted spec, then prepare and judge
+bin/voice.mjs       his line: above a verdict on a terminal, leading a CI check's title, heading the ID comment; never in --json, a pipe or a check's body
 bin/card.mjs        the verdict as an SVG to post (judge --card)
+bin/mark.mjs        the mark as SVG shapes: the README's files, the icon and the card draw from it
+bin/lines.mjs       a file's lines without holding it whole (long transcripts)
 bin/platform-client.mjs  the hosted platform: its URL, ~/.lunox/credentials, one fetch-based request with the CLI version
 bin/account.mjs     login (device flow), whoami, logout; bin/login.mjs, whoami.mjs and logout.mjs run them
-evidence/           the experiment's write-ups behind RESULTS.md, vendored
+bin/hosted.mjs      push, ci --platform, prepare --hosted, judge --platform; bin/push.mjs runs push
+bin/identity.mjs    who this package is to the platform (client id duediligence) and to the person
+bin/platform.mjs    what differs between macOS, Linux and Windows on the host, in one place
 bin/fit.mjs         whether a repository's package can be a target
 bin/repo.mjs        point a spec at a package: seam, allowed paths, base tree, baseline
 bin/confirm.mjs     show the decisions in context, record a confirmation and its minutes; --from, --export
@@ -492,6 +509,7 @@ bin/seal.mjs        one spec's suites in one file, for a judge without specs/ (`
 bin/ci.mjs          judge a commit from a seal, write and post the check (CI mode)
 action.yml          the GitHub Action: `ci` on a seal already on the runner
 .github/workflows/judge.yml  reusable workflow: fetch the seal, run the action
+.github/workflows/id-comment.yml  reusable workflow: the ID check as one pull-request comment
 bin/import-archive.mjs  a calibrated archive spec into specs/, marked not held out
 bin/lib.mjs         sessions, sandboxing, toolchains, staging, hashing, scope, judging
 bin/backends.mjs    the codex-cli, anthropic-api and exec backends, and their sandbox
@@ -506,7 +524,8 @@ specs/duration-parse/  the bundled example, copied to the home on first use
 template/           the Node toolchain every new-module session and judge runs in
 template-python/    pytest toolchain (pinned in requirements.txt), its reporter plugin, the LCB checker
 template-go/, template-rust/  the Go and Rust toolchains: standard library only
-evidence/           the experiment's write-ups, and the repository arm (in-repo.mjs, in-repo/; any repository with --cases)
+test/               no-model tests, run by npm test: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
+evidence/           the experiment's write-ups behind RESULTS.md, vendored, and the repository arm (in-repo.mjs, in-repo/; any repository with --cases)
 evidence/default-match.mjs  drafted defaults against confirmed decisions, from default-match.json
 evidence/evalplus.mjs  the HumanEval+ oracle row, re-judged on the pytest runner (evalplus.json)
 evidence/runners/   the Python and Jest end-to-end specs (RESULTS.md "Runners")
@@ -519,11 +538,15 @@ evidence/in-repo-ufo/, evidence/in-repo-pathe/  the repository arm on unjs/ufo a
 evidence/seams.mjs  black-box seams: patch-apply as a command against git apply, the HTTP spec, selftests (evidence/seams/)
 evidence/languages.mjs  Go and Rust modules end to end; commands and services in Python, Go and Rust: selftest, ports, git oracle (evidence/languages/)
 evidence/door.mjs   the door's rules on local sessions (door.json, DOOR.md)
+evidence/ID.md      the ID check on 10 rejected runs (id.json)
+evidence/fit-funnel.mjs, fit-funnel-commits.mjs  which repositories fit, per repository and per commit, static (RESULTS.md "Which repositories fit")
 evidence/skill-triggers.json  prompts that should and should not load the skill
 assets/src/         the README images: index.html, mark.mjs, render.mjs; docs/REFERENCE.md, this file
 
 ~/.bouncer/   BOUNCER_HOME (BOUNCER_SPECS, _RESULTS move those)
-  specs/<slug>/     spec.md, ticket.md, confirming.json, confirmed.json, skeleton/, tests/, reference/
+  specs/<slug>/     spec.md, ticket.md, confirming.json, confirmed.json, skeleton/, tests/, reference/;
+                    toolchain.json (a repository or another toolchain), check.json (bouncer check),
+                    platform.json and hosted.json (push, prepare --hosted)
   runs/             transcripts, diffs, submissions, grade.json
   results.jsonl     one line per graded run
   template/<hash>/  template/ with its dependencies, installed on first use

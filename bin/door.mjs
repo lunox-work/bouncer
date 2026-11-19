@@ -7,8 +7,9 @@
 // only tests the agent wrote, a TODO left in code, harness or config edited.
 //
 // It reports and never turns work away. Measured on 127 finished sessions
-// in real repositories, no rule fired on 10% of those that claimed done, and
-// a model-judged check of 50 firings upheld 1 (evidence/DOOR.md). So the
+// in real repositories that claimed done, any rule fired on 8.7%, under the
+// 10% its gate asked for, and a model-judged check of 50 firings upheld 1
+// (evidence/DOOR.md). So the
 // findings are questions for the person, printed without his voice; his
 // line comes only with a clean door, which points at the real check.
 //
