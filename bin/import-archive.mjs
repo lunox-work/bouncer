@@ -66,7 +66,7 @@ if (rest.length === 0) {
   process.exit(1);
 }
 if (!existsSync(join(archive, "specs"))) {
-  console.error(`${archive} has no specs/; pass --archive <archive folder>.`);
+  console.error(`${archive} has no specs/; pass --archive <archive folder> (a clone of https://github.com/lunox-work/bouncer-evidence).`);
   process.exit(1);
 }
 
