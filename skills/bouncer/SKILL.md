@@ -38,9 +38,9 @@ repository** is built in the person's checkout of one package and keeps its
 existing suite green: start at step 0 of
 [references/repository.md](references/repository.md), which adds to each step.
 **The agent already says it's done** ("check my agent's work", "is this
-really done"): [references/check.md](references/check.md) runs `bouncer door`,
-then `bouncer id` (what the ticket never said and what the agent picked) as
-the confirmation, then steps 3 and 5 on the working tree. Hosted mode (the
+really done"): `bouncer check [--from <issue>]` runs the door, `bouncer id`
+(what the ticket never said and what the agent picked) as the confirmation,
+then steps 3 and 5 on the working tree ([references/check.md](references/check.md)). Hosted mode (the
 `lunox` MCP tools) is the `bouncer-hosted` skill; this one is local and needs
 no sign-in.
 

@@ -37,7 +37,12 @@ guessed.
   one Sonnet 5.5 session, about $0.07 and 20 s. What the ticket never said and
   what the diff picked, each with the ticket sentence, where, and the usual
   alternative. Questions, never ranked: the person's keep or change becomes a
-  `Decided:` line. The after-the-fact flow is
+  `Decided:` line.
+- `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>]`:
+  the whole after-the-fact flow in one command. Door, base and package from
+  the change, fit, the ID check, a drafted `spec.md` with each pick as a
+  `Decided:` item; exit 3 until the person confirms; run again to prepare
+  and judge the working tree. The steps by hand are
   [skills/bouncer/references/check.md](../skills/bouncer/references/check.md).
 
 ## The numbers

@@ -86,7 +86,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     const holds = gate?.refused ?? [];
     if (findings.length === 0 && holds.length === 0) {
       say("door-clean", { options });
-      console.log("Nothing obvious at the door. That says nothing about whether the code does what the ticket meant: bouncer id, then the list.");
+      console.log("Nothing obvious at the door. That says nothing about whether the code does what the ticket meant: bouncer check.");
     } else {
       console.log(`Worth a look before you trust "done" (not a verdict; these rules are often wrong, evidence/DOOR.md):`);
       for (const item of findings) console.log(`- ${item.ask}${item.evidence ? `\n  ${item.evidence}` : ""}`);

@@ -6,6 +6,14 @@ reuses steps 1–5 of SKILL.md and the repository target
 ([repository.md](repository.md)); nothing here skips the person's
 confirmation.
 
+**One command does all of it:** `bouncer check [--from <issue> | --ticket <file>]`
+in the checkout runs steps 1 to 4 below in order, picks the base, the
+package and the seam from the change (`--base`, `--package`, `--seam`
+override), drafts `spec.md` from the ticket and the list, and stops with
+exit 3 for step 3's confirmation. Put the decisions to the person as step 3
+says, record `--by`, then run `bouncer check` again: it prepares and
+judges. The steps below are what it runs, for when one needs doing by hand.
+
 ## 1. The door (no model, seconds)
 
 `bouncer door` in the checkout reads the agent's session transcript (the
@@ -28,7 +36,7 @@ his voice. Then go on.
 ## 3. The ID check, as the confirmation
 
 - Save the ticket as `specs/<slug>/ticket.md` (`bouncer confirm <slug> --from
-  <issue>` fetches one); with no ticket, ask the person for the request in
+<issue>` fetches one); with no ticket, ask the person for the request in
   their words and save that.
 - `bouncer id <slug> --repo . --base <base>` lists what the ticket never said
   and what the agent picked, with where. They are questions, not bugs: never
