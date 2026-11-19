@@ -7,8 +7,9 @@ repository, run 2026-10-23 to 2026-10-25 with Opus 5.5 writing the suites and
 Haiku 5.5 implementing unless stated. The dated write-ups are vendored into
 `evidence/` ([FINDINGS.md](evidence/FINDINGS.md),
 [EXPERIMENT.md](evidence/EXPERIMENT.md), [LADDER.md](evidence/LADDER.md)) from
-the experiment archive, `double-blind-experiment/`, which holds the runs and
-data and is not part of this repository. Run 2026-10-26: Codex CLI as writer and
+the experiment archive, [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence),
+which holds the runs and data (`sh scripts/fetch-evidence.sh` clones it as
+`experiments/`). Run 2026-10-26: Codex CLI as writer and
 referee ([Writer backends](#writer-backends)) and as implementer
 ([Other implementers](#other-implementers)), Opus 5.5 as an adversary
 ([Red team](#red-team)), and 12 changes in two public repositories
@@ -285,12 +286,12 @@ tarball in a fresh `node:22` container (Node 22.23.4), no checkout mounted, as
 the unprivileged `node` user, with the data in a fresh `~/.bouncer/`.
 No model session.
 
-| step                                           | global install (package dir root-owned) |  `npx --package <tarball>` |
-| ---------------------------------------------- | --------------------------------------: | -------------------------: |
-| `prepare` on the confirmed example             |                       ready, no session |          ready, no session |
-| toolchain installed on first use (npm 10.9.2)  |                                     yes |                        yes |
-| `judge` the handout's skeleton                 |                `incomplete`, 0/22, 0/39 |   `incomplete`, 0/22, 0/39 |
-| `judge` the reference                          |              **`passed`, 22/22, 39/39** | **`passed`, 22/22, 39/39** |
+| step                                             | global install (package dir root-owned) |  `npx --package <tarball>` |
+| ------------------------------------------------ | --------------------------------------: | -------------------------: |
+| `prepare` on the confirmed example               |                       ready, no session |          ready, no session |
+| toolchain installed on first use (npm 10.9.2)    |                                     yes |                        yes |
+| `judge` the handout's skeleton                   |                `incomplete`, 0/22, 0/39 |   `incomplete`, 0/22, 0/39 |
+| `judge` the reference                            |              **`passed`, 22/22, 39/39** | **`passed`, 22/22, 39/39** |
 | the clone URL and `npx @lunox-work/bouncer` line |                                 pending |                    pending |
 
 The last row waits on the repository being pushed and the package published;
