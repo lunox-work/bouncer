@@ -1,7 +1,7 @@
 {
   "name": "bouncer",
   "displayName": "bouncer",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Independent, hidden test suites written from the spec for AI coding agents: the agent works against a public suite, a calibrated hidden suite it never sees judges the result. Local only: no MCP server and no sign-in. Hosted mode on the Lunox platform is the separate bouncer-hosted plugin.",
   "author": {
     "name": "Charlie Angriawan",

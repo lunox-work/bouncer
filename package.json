@@ -1,6 +1,6 @@
 {
   "name": "@lunox-work/bouncer",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A bouncer for AI coding agents' work: independent, hidden test suites written from the spec. The agent works against a public suite; a hidden suite it never sees judges the result.",
   "keywords": [
     "bouncer",

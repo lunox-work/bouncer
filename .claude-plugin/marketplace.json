@@ -16,7 +16,7 @@
         "ref": "claude-plugin"
       },
       "description": "Independent, hidden test suites written from the spec for AI coding agents. Local only: no MCP server, installing it asks for no sign-in.",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "category": "testing",
       "license": "MIT"
     },
@@ -29,7 +29,7 @@
         "ref": "claude-plugin"
       },
       "description": "Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server that signs in on first use, and the lunox-contribute skill for invited contributors.",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "category": "testing",
       "license": "MIT"
     }
