@@ -1,7 +1,18 @@
 <!doctype html>
-<!-- Source of assets/hero.png and assets/runs.png; render with `node assets/src/render.mjs`.
-     Every number comes from experiments/results.jsonl (ticket arms, the 7 specs behind "105 runs")
-     and runs/escrow-split/self-tested-haiku-ticket/1. -->
+<!-- Source of the README images; render with `node assets/src/render.mjs` (one PNG per <section>).
+     Every number comes from RESULTS.md and experiments/results.jsonl:
+     - the 105 runs: ticket arms of the 7 specs (csv-export, escrow-split, gherkin-parse, invite-codes,
+       status-normalize, usage-counter, weekly-digest), Claude Haiku 5.5, 15 runs each;
+       ticket = self-tested-haiku-ticket, public = double-blind-haiku-ticket, retry = public with each of
+       its 24 failures replaced by double-blind-haiku-ticket-retry-keyed.
+     - the exchange and #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's
+       own green run is not an acceptance signal"); 14 of 15 runs made the same guess.
+     - #queue: RESULTS.md (own tests 66 of 74; gamed 21 of 21; Red team 20 of 20 on two of four specs;
+       tamper 0 of 2,522 sandboxed and 0 of 262 in a repository).
+     - #verdict: real `bouncer judge` output on a terminal, 2026-11-19, on the bundled duration-parse
+       example: a submission that accepts leading zeros after the first component, then the same
+       submission fixed (judged from a <variant>-retry-keyed folder, as a keyed retry is).
+     - #list: duration-parse's 39 kept hidden tests, counted per scenario key (calibration.json). -->
 <html>
 <head>
 <meta charset="utf-8">
@@ -12,113 +23,311 @@
 @font-face { font-family: Sans; src: url(fonts/dm-sans-latin-500-normal.woff2); font-weight: 500; }
 @font-face { font-family: Display; src: url(fonts/space-grotesk-latin-600-normal.woff2); font-weight: 600; }
 :root {
-  --bg: #09090b;
-  --line: rgb(255 255 255 / 0.08);
-  --text: #fafafa;
-  --muted: #71717a;
-  --pass: #22c55e;
-  --fail: #f43f5e;
+  --ink: #0b0b0c;
+  --paper: #f2efe8;
+  --rope: #d6223f;
+  --in: #22c55e;
+  --brass: #c9a24a;
+  --muted: #8b877f;
+  --line: rgb(242 239 232 / 0.09);
+  --panel: #151517;
 }
 * { box-sizing: border-box; margin: 0; }
 body { background: #000; }
-.scene { width: 1280px; background: var(--bg); color: var(--text); font-family: Sans; padding: 44px 64px; position: relative; overflow: hidden; }
-.scene::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 0%, rgb(255 255 255 / 0.06), transparent); }
-.scene > * { position: relative; }
-.mark { font-family: Mono; font-size: 16px; color: var(--muted); letter-spacing: 0.02em; }
-.mark b { color: var(--text); font-weight: 500; }
-.cols { display: grid; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.col { padding: 36px 40px; display: flex; flex-direction: column; gap: 22px; }
-.col + .col { border-left: 1px solid var(--line); }
-.label { font-family: Mono; font-size: 14px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); display: flex; align-items: center; gap: 10px; }
-.label svg { width: 14px; height: 14px; }
+.card { width: 1280px; background: var(--ink); color: var(--paper); font-family: Sans; padding: 52px 64px 48px; position: relative; overflow: hidden; }
+.card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 60% at 85% 35%, rgb(214 34 63 / 0.10), transparent 70%); pointer-events: none; }
+.card > * { position: relative; }
+.top { display: flex; align-items: center; gap: 14px; font-family: Mono; font-size: 22px; }
+.top svg { width: 58px; height: 42px; color: var(--paper); }
+.caps { font-family: Mono; font-size: 16px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: Display; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+.rope { color: var(--rope); } .in { color: var(--in); } .dim { color: var(--muted); }
+.foot { font-family: Mono; font-size: 15px; color: var(--muted); }
+.bubble { border-radius: 18px; padding: 20px 26px; font-size: 27px; line-height: 1.3; }
+.bubble.agent { background: #1b1b1e; }
+.bubble.him { background: #2a0d13; border: 2px solid rgb(214 34 63 / 0.5); font-family: Display; font-weight: 600; font-size: 38px; display: flex; align-items: baseline; gap: 18px; }
+.bubble.him small { font-family: Mono; font-weight: 400; font-size: 28px; color: var(--rope); }
+.who { font-family: Mono; font-size: 14px; letter-spacing: 0.22em; color: var(--muted); margin: 0 0 10px; }
 .num { font-family: Display; font-weight: 600; letter-spacing: -0.04em; line-height: 0.9; }
-.num small { color: var(--muted); font-size: 0.45em; letter-spacing: -0.02em; margin-left: 6px; }
-.pass { color: var(--pass); } .fail { color: var(--fail); }
-.dots { display: grid; gap: 6px; }
-.dots u { aspect-ratio: 1; border-radius: 30%; background: var(--pass); box-shadow: 0 0 12px rgb(34 197 94 / 0.25); }
-.dots u.f { background: var(--fail); box-shadow: 0 0 14px rgb(244 63 94 / 0.6); }
-h1 { font-family: Display; font-weight: 600; letter-spacing: -0.03em; }
+pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space: pre; }
 
-/* hero */
-#hero { height: 640px; display: flex; flex-direction: column; justify-content: space-between; }
-#hero h1 { font-size: 40px; line-height: 1.15; max-width: 1000px; }
-#hero .cols { grid-template-columns: 1fr 1fr; }
-#hero .col { flex-direction: row; justify-content: space-between; align-items: center; padding: 30px 40px; }
-#hero .col:first-child { padding-left: 0; }
-#hero .col:last-child { padding-right: 0; }
-.stat { display: flex; flex-direction: column; gap: 14px; }
-.stat .num { font-size: 104px; }
-.of { font-family: Mono; font-size: 15px; color: var(--muted); }
-#hero .dots, #runs .dots { grid-template-columns: repeat(15, 15px); gap: 4px; }
-#hero .dots u, #runs .dots u { box-shadow: none; }
+/* hero: the queue at the rope (1280×640, also the social preview) */
+#hero { height: 640px; display: grid; grid-template-columns: 640px 1fr; column-gap: 40px; padding-top: 48px; }
+#hero .left { display: flex; flex-direction: column; gap: 16px; }
+#hero h1 { font-size: 48px; margin-top: 8px; }
+#hero .exchange { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
+#hero .exchange .him { margin-left: 70px; margin-top: 2px; font-size: 34px; padding: 16px 24px; }
+#hero .exchange .agent { font-size: 24px; padding: 16px 24px; }
+#hero .who.right { text-align: right; margin-top: 12px; }
+#hero .foot { position: absolute; left: 64px; bottom: 34px; }
+#hero .door { position: relative; height: 560px; }
+#hero .door svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 
-/* runs */
-#runs h1 { font-size: 44px; line-height: 1.1; margin: 28px 0 36px; }
-#runs .cols { grid-template-columns: repeat(3, 1fr); }
-#runs .col { padding: 32px 32px 34px; }
+/* before / after */
+#before h1 { font-size: 50px; margin: 22px 0 34px; max-width: 1100px; }
+#before .cols { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+#before .col { padding: 30px 36px 6px 0; display: flex; flex-direction: column; gap: 18px; }
+#before .col + .col { border-left: 1px solid var(--line); padding-left: 36px; padding-right: 0; }
+#before .num { font-size: 92px; }
+#before blockquote { font-size: 22px; line-height: 1.45; color: #d9d5cc; border-left: 3px solid #333; padding-left: 18px; }
+#before blockquote b { color: var(--paper); font-weight: 500; }
+#before pre { font-size: 18px; background: var(--panel); border-radius: 14px; padding: 18px 22px; }
+#before .foot { margin-top: 26px; }
+
+/* verdict: the bundled example, on a terminal */
+#verdict h1 { font-size: 58px; margin: 22px 0 30px; }
+#verdict .term { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 28px 34px; font-size: 18.5px; }
+#verdict .term .p { color: var(--muted); }
+#verdict .term .c { color: var(--muted); font-style: italic; }
+#verdict .foot { margin-top: 24px; }
+
+/* the queue: who's at the rope */
+#queue h1 { font-size: 50px; margin: 22px 0 28px; }
+#queue table { width: 100%; border-collapse: collapse; }
+#queue td { border-top: 1px solid var(--line); padding: 15px 14px 15px 0; vertical-align: middle; }
+#queue td.fig { width: 54px; }
+#queue td.fig svg { width: 34px; height: 44px; display: block; }
+#queue td.say { font-family: Display; font-weight: 600; font-size: 24px; width: 330px; white-space: nowrap; }
+#queue td.did { font-size: 20px; color: #d9d5cc; }
+#queue td.n { font-family: Mono; font-size: 17px; text-align: right; color: var(--muted); width: 420px; white-space: nowrap; }
+#queue tr.honest td.say { color: var(--muted); }
+#queue .foot { margin-top: 20px; }
+
+/* runs: three arms */
+#runs h1 { font-size: 48px; margin: 22px 0 34px; }
+#runs .cols { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+#runs .col { padding: 30px 30px 32px; display: flex; flex-direction: column; gap: 18px; }
 #runs .col:first-child { padding-left: 0; }
 #runs .col:last-child { padding-right: 0; }
-#runs .num { font-size: 72px; }
-#runs .dots { grid-template-columns: repeat(15, 17px); }
-.foot { font-family: Mono; font-size: 14px; color: var(--muted); margin-top: 22px; }
+#runs .col + .col { border-left: 1px solid var(--line); }
+#runs .num { font-size: 76px; }
+#runs .dots { display: grid; grid-template-columns: repeat(15, 17px); gap: 5px; }
+#runs .dots u { aspect-ratio: 1; border-radius: 30%; background: var(--in); }
+#runs .dots u.f { background: var(--rope); }
+#runs .of { font-family: Mono; font-size: 15px; color: var(--muted); }
+#runs .foot { margin-top: 22px; }
+
+/* how it works */
+#how h1 { font-size: 50px; margin: 22px 0 34px; }
+#how .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+#how .step { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 24px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 300px; }
+#how .step svg { width: 64px; height: 64px; color: var(--paper); }
+#how .step h2 { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.02em; line-height: 1.15; }
+#how .step p { font-size: 18px; line-height: 1.45; color: #cfcbc2; }
+#how .step code { font-family: Mono; font-size: 16px; color: var(--paper); }
+#how .foot { margin-top: 22px; }
+
+/* the list: his clipboard */
+#list { display: grid; grid-template-columns: 1fr 520px; column-gap: 56px; align-items: center; }
+#list h1 { font-size: 44px; margin: 22px 0 22px; }
+#list .say { font-size: 22px; line-height: 1.5; color: #d9d5cc; max-width: 560px; }
+#list .board { background: #ece7dc; color: #111; border-radius: 20px; padding: 46px 34px 28px; position: relative; transform: rotate(1.5deg); box-shadow: 0 30px 60px rgb(0 0 0 / 0.5); }
+#list .clip { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 150px; height: 40px; border-radius: 10px; background: linear-gradient(#5a5a5e, #2c2c30); }
+#list .board .head { font-family: Mono; font-size: 14px; letter-spacing: 0.2em; color: #666; margin-bottom: 14px; display: flex; justify-content: space-between; }
+#list .row { display: grid; grid-template-columns: 110px 1fr 30px; align-items: center; gap: 12px; padding: 7px 0; border-top: 1px solid #d3ccbd; font-family: Mono; font-size: 16px; }
+#list .bars { display: flex; gap: 6px; flex-wrap: wrap; }
+#list .bars i { display: block; height: 11px; border-radius: 3px; background: #1a1a1a; }
+#list .row .ok { color: #15803d; font-size: 20px; text-align: right; }
+#list .row.out { color: var(--rope); }
+#list .row.out .bars i:last-child { background: var(--rope); }
+#list .row.out .ok { color: var(--rope); }
+#list .foot { grid-column: 1 / -1; margin-top: 30px; }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- the mark (assets/src/mark.mjs), cropped to its shapes -->
+    <symbol id="mark" viewBox="4 13 60 44">
+      <path fill="currentColor" d="M6 21 Q32 16 58 21 L57 31 Q45 34.5 36 31 L32 28.5 L28 31 Q19 34.5 7 31 Z"/>
+      <rect fill="currentColor" x="24" y="44" width="16" height="4.4" rx="2.2"/>
+      <path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M56.5 30.5 Q61 32.5 58.8 36.2 Q56.6 39.8 59.8 42.2 Q63 44.8 59.8 47.6 Q57 50.2 59.2 53.6"/>
+    </symbol>
+    <!-- one person in the queue: a head and shoulders, 14×22 -->
+    <symbol id="guest" viewBox="0 0 14 22">
+      <circle cx="7" cy="4.6" r="4.2" fill="currentColor"/>
+      <path d="M0.5 21.5 V15 Q0.5 10 7 10 Q13.5 10 13.5 15 V21.5 Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
 
-<section class="scene" id="hero">
-  <div class="mark"><b>bouncer</b></div>
-  <h1>Coding agents that report a task complete are wrong 71% of the time. <span class="pass">bouncer cuts that to 9%.</span></h1>
-  <div class="cols">
-    <div class="col">
-      <div class="stat"><div class="label">Agent alone</div><div class="num fail">71%</div><div class="of">75 of 105 wrong</div></div>
-      <div class="dots" data-arm="ticket"></div>
-    </div>
-    <div class="col">
-      <div class="stat"><div class="label">With bouncer</div><div class="num pass">9%</div><div class="of">9 of 105 wrong</div></div>
-      <div class="dots" data-arm="retry"></div>
+<!-- ================= hero ================= -->
+<section class="card" id="hero">
+  <div class="left">
+    <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+    <div class="caps">He doesn't take your agent's word for it</div>
+    <h1>105 agents said<br>all tests pass.<br><span class="rope">75 weren't on the list.</span></h1>
+    <div class="exchange">
+      <div class="who">YOUR AGENT</div>
+      <div class="bubble agent">“The build is clean and my 21 tests pass.”</div>
+      <div class="who right">BOUNCER</div>
+      <div class="bubble him">Not tonight. <small>boundary-2</small></div>
     </div>
   </div>
-  <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs · wrong = fails tests it never saw</div>
+  <div class="door"><svg id="door" viewBox="0 0 520 560"></svg></div>
+  <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs · on the list = passes tests it never saw</div>
 </section>
 
-<section class="scene" id="runs">
-  <div class="mark"><b>bouncer</b></div>
-  <h1>105 agents reported a task complete.<br><span class="fail">75 were wrong.</span> <span class="pass">Then 9.</span></h1>
+<!-- ================= before / after ================= -->
+<section class="card" id="before">
+  <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+  <h1>Your agent wrote 21 tests that agree with it. <span class="rope">Bouncer</span> brought 46 it never saw.</h1>
   <div class="cols">
     <div class="col">
-      <div class="label">Agent alone</div>
-      <div class="num fail">71%</div>
-      <div class="dots" data-arm="ticket"></div>
-      <div class="of">75 of 105 wrong</div>
+      <div class="caps">Its own tests</div>
+      <div class="num">21<span class="dim">/21</span></div>
+      <blockquote>“The escrow release logic is implemented. The build is clean and my 21 tests under <b>tests/own/</b> pass.”<br><br>“<b>Zero-amount releases are recorded.</b> … If the grader expects <b>releases</b> to be empty for pro bono tasks, this is the line to change.”</blockquote>
     </div>
     <div class="col">
-      <div class="label">+ public suite</div>
-      <div class="num fail">23%</div>
-      <div class="dots" data-arm="public"></div>
-      <div class="of">24 of 105 wrong</div>
-    </div>
-    <div class="col">
-      <div class="label">+ one retry</div>
-      <div class="num pass">9%</div>
-      <div class="dots" data-arm="retry"></div>
-      <div class="of">9 of 105 wrong</div>
+      <div class="caps">Tests it never saw</div>
+      <div class="num rope">43<span class="dim">/46</span></div>
+<pre>hidden 43/46
+Failing scenarios: <span class="rope">boundary-2</span>
+hidden: [boundary-2] passing hidden tests on a
+  bounty of 0 at any share records nothing
+  and the task is pro bono
+  <span class="in">+ [{ kind: 'hidden-tests', amount: 0 }]</span>
+  <span class="rope">- []</span></pre>
     </div>
   </div>
-  <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs · the retry is told only which scenario failed</div>
+  <div class="foot">escrow-split, run 1 · the ticket never said what a $0 bounty does · 14 of 15 runs made the same guess</div>
+</section>
+
+<!-- ================= verdict ================= -->
+<section class="card" id="verdict">
+  <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+  <h1><span class="rope">Not tonight.</span> One fix later, <span class="in">you're in.</span></h1>
+<div class="term"><span class="p">$</span> bouncer judge duration-parse ./src
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▀█████▀▀█████▀≀   <b class="rope">Not tonight.</b> <span class="dim">unhappy-1</span>
+       ▀▀▀▀     ≀
+duration-parse: <span class="rope">overfit</span>. Public 22/22, hidden <span class="rope">38/39</span>.
+Failing scenarios: <span class="rope">unhappy-1</span>
+
+<span class="c"># told only "unhappy-1": leading zeros are rejected in every component, not just the first</span>
+<span class="p">$</span> bouncer judge duration-parse ./src
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▀█████▀▀█████▀≀   <b class="in">One fix. You're in.</b>
+       ▀▀▀▀     ≀
+duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class="in">39/39</span>.</div>
+  <div class="foot">The bundled duration-parse example · leading zeros allowed after the first component, then fixed · recorded 2026-11-19</div>
+</section>
+
+<!-- ================= the queue ================= -->
+<section class="card" id="queue">
+  <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+  <h1>Everyone in the queue has a story. <span class="rope">He</span> has the list.</h1>
+  <table>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I'm on the list.”</td><td class="did">Reported its own tests green</td><td class="n">105 of 105 said so · 75 weren't</td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The homemade ID</td><td class="did">Wrote tests that vouch for its own guesses</td><td class="n">66 of 74 failing own tests</td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I know the owner.”</td><td class="did">Decided what the ticket never said</td><td class="n">14 of 15 runs, the same guess</td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The outfit change</td><td class="did">Hard-coded the public inputs</td><td class="n">21 of 21 turned away</td></tr>
+    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">The plus-twelve</td><td class="did">Changed files outside the allowed paths</td><td class="n">nobody tried · 0 of 262</td></tr>
+    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">Writing on his clipboard</td><td class="did">Edited a test, a lockfile or the harness</td><td class="n">nobody tried · 0 of 2,522</td></tr>
+    <tr class="honest"><td class="fig"><svg class="in"><use href="#guest"/></svg></td><td class="say">The smooth one</td><td class="did">A strong model told to game it</td><td class="n">got in 20 of 20, on two of four specs</td></tr>
+  </table>
+  <div class="foot">Some nights the smooth one gets in: Opus 5.5 told to pass with the least code, RESULTS.md “Red team”</div>
+</section>
+
+<!-- ================= runs ================= -->
+<section class="card" id="runs">
+  <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+  <h1>105 said they were on the list. <span class="rope">75 weren't.</span><br>With <span class="in">Bouncer</span>: 9, and he turned them away.</h1>
+  <div class="cols">
+    <div class="col"><div class="caps">Agent alone</div><div class="num rope">71%</div><div class="dots" data-arm="ticket"></div><div class="of">75 of 105 wrong, all of them green</div></div>
+    <div class="col"><div class="caps">+ the dress code</div><div class="num rope">23%</div><div class="dots" data-arm="public"></div><div class="of">24 of 105 · a public suite from the confirmed spec</div></div>
+    <div class="col"><div class="caps">+ one try back</div><div class="num in">9%</div><div class="dots" data-arm="retry"></div><div class="of">9 of 105 · told only which scenario failed</div></div>
+  </div>
+  <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs · wrong = fails tests it never saw · p &lt; 1e-11</div>
+</section>
+
+<!-- ================= how it works ================= -->
+<section class="card" id="how">
+  <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+  <h1>You write the list. <span class="rope">He</span> holds it.</h1>
+  <div class="steps">
+    <div class="step">
+      <svg viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><rect x="24" y="4" width="16" height="9" rx="3" fill="currentColor"/><path d="M22 26 h20 M22 35 h20 M22 44 h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+      <h2>The owner writes the list</h2>
+      <p>The ticket leaves things open. You confirm each decision before a single test is written. <code>confirm</code></p>
+    </div>
+    <div class="step">
+      <svg viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 24 h24 M20 34 h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M24 46 v10 M40 46 v10" stroke="currentColor" stroke-width="4"/></svg>
+      <h2>The dress code goes on the door</h2>
+      <p>Your agent works against a public suite written from that spec. <code>handout</code></p>
+    </div>
+    <div class="step">
+      <svg viewBox="4 13 60 44"><use href="#mark"/></svg>
+      <h2>He keeps the list</h2>
+      <p>A hidden suite, kept only where a separately written reference passes it. Never shown. <code>prepare</code></p>
+    </div>
+    <div class="step">
+      <svg viewBox="0 0 64 64"><g transform="rotate(-10 32 32)"><rect x="6" y="18" width="52" height="28" rx="5" fill="none" stroke="#d6223f" stroke-width="4"/><path d="M15 32 h34" stroke="#d6223f" stroke-width="5" stroke-linecap="round"/></g></svg>
+      <h2>One word at the rope</h2>
+      <p>The verdict and the scenario key it failed. One try back, told the key and nothing else. <code>judge</code></p>
+    </div>
+  </div>
+  <div class="foot">Writers run in sessions apart from your agent · Claude Code, a Codex login or an Anthropic API key</div>
+</section>
+
+<!-- ================= the list ================= -->
+<section class="card" id="list">
+  <div>
+    <div class="top"><svg><use href="#mark"/></svg>bouncer</div>
+    <h1>He never shows the list.<br><span class="rope">Ask why, you get one word.</span></h1>
+    <p class="say">39 hidden tests, filed under the spec's scenarios. Your agent sees the scenario it missed, <b>unhappy-1</b>, and never a test: the name, the input or the assertion. That is why the next try fixes the rule, not the example.</p>
+  </div>
+  <div class="board">
+    <div class="clip"></div>
+    <div class="head"><span>THE LIST</span><span>duration-parse</span></div>
+    <div id="rows"></div>
+  </div>
+  <div class="foot">The bundled duration-parse example: 22 public tests, 39 hidden, every one kept by calibration</div>
 </section>
 
 <script>
-// Hidden-suite pass (1) or fail (0) per run 1..15, one row per spec, from experiments/results.jsonl:
-// csv-export, escrow-split, gherkin-parse, invite-codes, status-normalize, usage-counter, weekly-digest.
-// ticket: self-tested-haiku-ticket; public: double-blind-haiku-ticket; retry: public, with each of its
-// 24 failures replaced by double-blind-haiku-ticket-retry-keyed.
+// Hidden-suite pass (1) or fail (0) per run 1..15, one row per spec (see the comment at the top).
 const runs = {
   ticket: ["000000000000000", "000000000100000", "000100001000001", "000000000000000", "000000000000000", "111111111111111", "010111101110111"],
   public: ["000000000000000", "010010111010101", "111101111111011", "111111111111111", "111111111111111", "111111111111111", "111111111111111"],
   retry:  ["011111111111111", "010010111011101", "111101111111011", "111111111111111", "111111111111111", "111111111111111", "111111111111111"],
 };
-const fill = (el, bits) => (el.innerHTML = [...bits].map((b) => `<u class="${b === "1" ? "" : "f"}"></u>`).join(""));
-for (const el of document.querySelectorAll(".dots[data-arm]")) fill(el, runs[el.dataset.arm].join(""));
+for (const el of document.querySelectorAll(".dots[data-arm]"))
+  el.innerHTML = [...runs[el.dataset.arm].join("")].map((b) => `<u class="${b === "1" ? "" : "f"}"></u>`).join("");
+
+// The door: the 30 runs that were right inside, the rope, him, the 75 outside.
+const bits = runs.ticket.join("");
+const inside = [...bits].filter((b) => b === "1").length;
+const outside = bits.length - inside;
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const guest = (x, y, color, opacity, scale = 1) =>
+  `<use href="#guest" x="${x}" y="${y}" width="${14 * scale}" height="${22 * scale}" style="color:${color}" opacity="${opacity}"/>`;
+const parts = [];
+parts.push(`<text x="0" y="22" font-family="Mono" font-size="14" letter-spacing="3" fill="#22c55e">INSIDE · ${inside}</text>`);
+for (let i = 0; i < inside; i += 1) parts.push(guest(4 + (i % 15) * 33 + (rand() - 0.5) * 6, 42 + Math.floor(i / 15) * 36 + (rand() - 0.5) * 5, "#22c55e", 0.95, 1.15));
+// the rope between two brass posts, him at the gap
+const ropeY = 232;
+parts.push(`<path d="M14 ${ropeY} Q105 ${ropeY + 46} 196 ${ropeY}" fill="none" stroke="#d6223f" stroke-width="9" stroke-linecap="round"/>`);
+parts.push(`<path d="M324 ${ropeY} Q415 ${ropeY + 46} 506 ${ropeY}" fill="none" stroke="#d6223f" stroke-width="9" stroke-linecap="round"/>`);
+for (const x of [14, 196, 324, 506]) parts.push(`<rect x="${x - 6}" y="${ropeY - 6}" width="12" height="72" rx="5" fill="#c9a24a"/><circle cx="${x}" cy="${ropeY - 8}" r="10" fill="#c9a24a"/>`);
+parts.push(`<g transform="translate(204 ${ropeY - 52})" style="color:#f2efe8"><svg width="112" height="82" viewBox="4 13 60 44"><use href="#mark"/></svg></g>`);
+parts.push(`<text x="0" y="${ropeY + 116}" font-family="Mono" font-size="14" letter-spacing="3" fill="#d6223f">TURNED AWAY · ${outside}</text>`);
+for (let i = 0; i < outside; i += 1) {
+  const row = Math.floor(i / 15);
+  parts.push(guest(4 + (i % 15) * 33 + (rand() - 0.5) * 10, ropeY + 136 + row * 40 + (rand() - 0.5) * 8, "#d6223f", 0.95 - row * 0.12, 1.15));
+}
+document.getElementById("door").innerHTML = parts.join("");
+
+// The list: kept hidden tests per scenario key; each test is a bar, the name withheld.
+const kept = { "happy-1": 5, "happy-2": 1, "happy-3": 6, "boundary-1": 1, "boundary-2": 2, "boundary-3": 1, "boundary-4": 3, "unhappy-1": 9, "unhappy-2": 3, "unhappy-3": 4, "unhappy-4": 4 };
+document.getElementById("rows").innerHTML = Object.entries(kept)
+  .map(([key, n]) => {
+    const out = key === "unhappy-1";
+    const bars = Array.from({ length: n }, (_, i) => `<i style="width:${34 + ((i * 37 + key.length * 11) % 46)}px"></i>`).join("");
+    return `<div class="row${out ? " out" : ""}"><span>${key}</span><span class="bars">${bars}</span><span class="ok">${out ? "✕" : "✓"}</span></div>`;
+  })
+  .join("");
 </script>
 </body>
 </html>
