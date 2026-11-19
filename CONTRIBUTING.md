@@ -7,11 +7,12 @@ For a security problem, see [SECURITY.md](SECURITY.md) instead.
 ## Before you open a pull request
 
 ```sh
-npm ci
 npm test    # checks the skill, then test/: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
 ```
 
-Node `^20.19.0 || >=22.0.0`. The smoke test judges the bundled `duration-parse`
+Node `^20.19.0 || >=22.0.0`. The package has no dependencies, so there is
+nothing to install first; the smoke test installs `template/`'s toolchain under
+a temp folder (network, once per run). It judges the bundled `duration-parse`
 example's reference and skeleton and builds a handout, without starting a model
 session.
 
