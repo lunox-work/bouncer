@@ -214,7 +214,11 @@ export function detect({ repo, pkg = ".", ref = "HEAD" }) {
   // evidence/fit-funnel.mjs commit none.
   const [lockfile, manager] = lock ?? [null, "npm"];
   if (lock === undefined) facts.resolvedBefore = commitDate(tree);
-  const declared = /^([a-z]+)@([^+\s]+)/.exec(rootManifest.packageManager ?? "");
+  // `packageManager`, or npm's newer `devEngines.packageManager` (unjs/h3
+  // names pnpm 12 there only, and pnpm 9 cannot read its lockfile).
+  const engine = rootManifest.devEngines?.packageManager;
+  const declaredText = rootManifest.packageManager ?? (engine && !Array.isArray(engine) && engine.name && engine.version ? `${engine.name}@${engine.version}` : "");
+  const declared = /^([a-z]+)@([^+\s]+)/.exec(declaredText);
   facts.lockfile = lockfile;
   facts.packageManager = lock === undefined ? "npm-dated" : declared?.[1] === manager ? `${manager}@${declared[2]}` : manager;
   if (!PACKAGE_MANAGERS.includes(manager)) return no(`package manager ${manager} is not supported`);

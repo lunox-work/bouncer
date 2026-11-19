@@ -1071,7 +1071,9 @@ const INSTALL = {
   npm: (version = "10.9.2") => ["npx", "-y", `npm@${version}`, "ci", "--no-audit", "--no-fund"],
   // No lockfile (fit's `resolvedBefore`): the manifest resolved as of the base commit's date.
   "npm-dated": (version = "10.9.2", config = {}) => ["npx", "-y", `npm@${version}`, "install", "--no-audit", "--no-fund", "--no-package-lock", `--before=${config.resolvedBefore}`],
-  pnpm: (version = "9") => ["npx", "-y", `pnpm@${version}`, "install", "--frozen-lockfile"],
+  // Not strict about `packageManager`: colinhacks/zod names a wrapper ("nub")
+  // over a pnpm 9 lockfile, and pnpm refuses to install under another name.
+  pnpm: (version = "9") => ["npx", "-y", `pnpm@${version}`, "install", "--frozen-lockfile", "--config.package-manager-strict=false", "--config.manage-package-manager-versions=false"],
   yarn: (version = "1") =>
     version.startsWith("1.")
       ? ["npx", "-y", `yarn@${version}`, "install", "--frozen-lockfile"]

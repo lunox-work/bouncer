@@ -93,6 +93,19 @@ try {
   }
   ok("vitest: __tests__/ and a test:* script");
 
+  // The pnpm version from devEngines.packageManager when packageManager is absent (unjs/h3).
+  {
+    const found = fit({
+      "package.json": json({ scripts: { test: "vitest run" }, devEngines: { packageManager: { name: "pnpm", version: "12.3.4", onFail: "warn" } }, devDependencies: { ...TS, vitest: "3.0.0" } }),
+      "pnpm-lock.yaml": "---\nlockfileVersion: '9.0'\n",
+      "tsconfig.json": tsconfig,
+      "test/a.test.ts": "",
+    });
+    assert.equal(found.supported, true, found.reason);
+    assert.equal(found.config.packageManager, "pnpm@12.3.4");
+  }
+  ok("pnpm: the version devEngines names");
+
   // A workspace package with no test script and no config of its own, under the root's vitest config (effect).
   // One workspace's package.json starts with a byte-order mark (vite's playground): read, not fatal.
   {
