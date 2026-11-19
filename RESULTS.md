@@ -20,7 +20,7 @@ to end ([Go and Rust](#go-and-rust)), and commands and services written in
 Python, Go and Rust
 ([Commands and services in other languages](#commands-and-services-in-other-languages)).
 Run 2026-11-20: the ID check on all 75 rejected loose-ticket runs, judged
-blind ([The ID check, after the fact](#the-id-check-after-the-fact)), and which repositories `fit` takes, static checks on 50 libraries
+blind, and in Python, Go and Rust ([The ID check, after the fact](#the-id-check-after-the-fact)), and which repositories `fit` takes: static checks, a clean install and the existing suite on 50 libraries
 ([Which repositories fit](#which-repositories-fit)).
 p-values are Fisher's exact test,
 two-sided.
@@ -323,15 +323,17 @@ resumes a set.
 
 `bouncer fit` decides whether a package of an existing repository can be a
 target at all. Two funnels, run 2026-11-20 on 50 popular open-source
-libraries, 25 TypeScript and 25 Python, default branch, no model. **Static
-checks only** (`fit --no-run`): nothing was installed and no existing suite
-was run, so every count is an upper bound. The install-and-run stage, which
-adds "does not build on a clean install" and "over ten minutes", is pending.
+libraries, 25 TypeScript and 25 Python, default branch, no model. Static
+checks first (`fit --no-run`), then, for the statically supported ones, a
+clean install and one run of the existing suite (plain `fit`), which adds
+"does not install", "does not build" and "over ten minutes". The per-commit
+funnel is static only.
 
 | per repository, one package each, statically supported | all 50 | TypeScript |  Python |
 | ------------------------------------------------------ | -----: | ---------: | ------: |
 | before the fixes it led to                             |     27 |    12 / 25 | 15 / 25 |
 | after                                                  | **43** |    19 / 25 | 24 / 25 |
+| installed and the existing suite run, of 42 measured   | **28** |     7 / 17 | 21 / 25 |
 
 | per commit, the last 20 non-merge commits of each |             all |      TypeScript |          Python |
 | ------------------------------------------------- | --------------: | --------------: | --------------: |
@@ -366,6 +368,20 @@ adds "does not build on a clean install" and "over ten minutes", is pending.
   its tests `test.ts`; immer's tests are plain `.js` names in `__tests__/`;
   react-router's Jest matches `*-test.tsx` from a shared config; fastify is
   JavaScript; more-itertools is on unittest.
+- **Installed and run: 28 of 42.** 8 TypeScript monorepos were not
+  measured: an install or suite process passed the 1 GB per-process cap this
+  16 GB machine runs under (TanStack Query, tRPC, jotai, xstate, SWR, Redux
+  Toolkit, valibot, Effect), so they count in neither column. Of the rest,
+  vite, axios and msw do not type-check or load their config on a clean
+  install (vite's own scripts import the unbuilt `vite`; axios's docs import
+  vitepress); zod's lockfile does not satisfy the pnpm its wrapper pins;
+  aiohttp's C extension does not compile here; pydantic needs a newer `uv`
+  than this machine has; tqdm's `addopts` name pytest plugins nothing
+  declares. The run stage found two `fit` bugs, both fixed and rerun:
+  setuptools-scm builds had no version on a copy without `.git` (eight
+  Python libraries, six now pass) and pnpm's version was not read from
+  `devEngines` (h3). The longest supported suite took 146 s, with
+  dependencies installed.
 - **Why the per-commit share is lower than 43 of 50.** Changes that span
   packages are 59 of 549, 37 of them in six monorepos (vite 11, TanStack
   Query 6, Effect, xstate, React Router and tRPC 5 each); 41 of the 59 span
