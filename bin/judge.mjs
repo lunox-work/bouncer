@@ -299,7 +299,30 @@ function writeCard({ verdict, keys, counts, retry, transcript }) {
 }
 
 /** The hash line printed with a verdict: the seal's, or the spec's commitment. */
+/**
+ * How the spec behind the hidden suite was confirmed (confirmed.json, and
+ * its `answered` from bin/confirm.mjs `answerCheck`): a verdict is only as
+ * independent as the decisions a person made. Null with a seal, whose
+ * judge holds no spec.
+ */
+function confirmationLine() {
+  if (sealed !== null) return null;
+  const record = readJson(join(specDir(slug), "confirmed.json"), null);
+  if (record === null) return "Spec: not confirmed.";
+  const changed = record.changes ? record.changes.edited.length + record.changes.added.length + record.changes.removed.length : null;
+  const how = {
+    session: `a person answered in the session (${(record.answered?.personTurns ?? 0) + (record.answered?.questionsAnswered ?? 0)} answer(s))`,
+    elsewhere: `reviewed elsewhere: ${record.answered?.elsewhere}`,
+    terminal: "recorded at a terminal",
+    unchecked: "no session to check for a person's answer",
+    none: "no answer from a person was found",
+  }[record.answered?.how] ?? "recorded before answers were checked";
+  return `Spec confirmed by ${record.by}${typeof record.minutes === "number" ? ` in ${record.minutes} min` : ""}${changed === null ? "" : `, ${changed} of ${(record.decided ?? []).length} decisions changed from the draft`}; ${how}.`;
+}
+
 function hashLine() {
+  const confirmed = confirmationLine();
+  if (confirmed !== null) console.log(confirmed);
   if (sealed === null) return commitmentLine(committed);
   const { sealedAt, committed: recorded } = sealed.seal;
   return `Hidden suite sha256 ${committed.current}, sealed ${sealedAt}${recorded ? `, committed ${recorded.at}` : ""}.`;

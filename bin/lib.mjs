@@ -1941,7 +1941,10 @@ export function audit(transcript, chain, since) {
     `${slug}/reference`,
     "calibration.json",
     "grade.json",
-    basename(chain.hiddenDir),
+    // A repository's judge tree names its hidden dir; a new module's is
+    // tests/private, matched above with its slug (a bare "private" would
+    // match macOS's /private/var).
+    ...(chain.hiddenDir ? [basename(chain.hiddenDir)] : []),
     JUDGE_ROOT,
   ];
   const sweep = (input) =>
@@ -1965,6 +1968,74 @@ export function audit(transcript, chain, since) {
     if ((block.name === "Grep" || block.name === "Glob") && searchedOver(input)) return `a search over ${input.path}`;
     return null;
   });
+}
+
+/**
+ * What a person said in a Claude Code session between `since` and `until`
+ * (ISO times): their own turns (a user message that is not a tool result,
+ * not injected by the harness) and AskUserQuestion calls that came back
+ * with an answer rather than an error. `bouncer confirm --by` reads it to
+ * tell a person's confirmation from a session recording one on its own
+ * (SKILL.md step 2), and judge prints it beside the verdict.
+ */
+export function personAnswers(transcript, since, until) {
+  const out = { personTurns: 0, questionsAnswered: 0, questionsUnanswered: 0 };
+  if (transcript === null || !existsSync(transcript)) return out;
+  const asked = new Set();
+  const injected = (text) => /^\s*(<|\[Request interrupted|Caveat:)/.test(text);
+  for (const line of readFileSync(transcript, "utf8").split("\n")) {
+    if (!line.includes('"user"') && !line.includes("AskUserQuestion")) continue;
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const at = event.timestamp;
+    if (typeof at !== "string" || (since && at < since) || (until && at > until)) continue;
+    const content = event.message?.content;
+    if (event.type === "assistant")
+      for (const block of Array.isArray(content) ? content : []) if (block.type === "tool_use" && block.name === "AskUserQuestion") asked.add(block.id);
+    if (event.type !== "user" || event.isMeta || event.isSidechain || event.isCompactSummary) continue;
+    if (typeof content === "string") {
+      if (!injected(content)) out.personTurns += 1;
+      continue;
+    }
+    const blocks = Array.isArray(content) ? content : [];
+    for (const block of blocks.filter((item) => item.type === "tool_result" && asked.has(item.tool_use_id)))
+      out[block.is_error ? "questionsUnanswered" : "questionsAnswered"] += 1;
+    if (!blocks.some((item) => item.type === "tool_result") && blocks.some((item) => item.type === "text" && !injected(item.text ?? ""))) out.personTurns += 1;
+  }
+  return out;
+}
+
+/**
+ * The newest transcript that ran `bouncer confirm <slug>` (or
+ * bin/confirm.mjs) at or after `since`: the session confirming that spec
+ * now. The project folders of `folder` and those above it first; then, as a
+ * session may have changed folder before running it, every project folder's
+ * transcripts written since `since`. Null when no agent session did.
+ */
+export function confirmingTranscript(folder, slug, since) {
+  const near = [];
+  for (let at = folder; ; at = dirname(at)) {
+    near.push(join(TRANSCRIPTS, at.replace(/[^a-zA-Z0-9]/g, "-")));
+    if (dirname(at) === at) break;
+  }
+  const all = since && existsSync(TRANSCRIPTS) ? readdirSync(TRANSCRIPTS).map((name) => join(TRANSCRIPTS, name)).filter((path) => !near.includes(path)) : [];
+  return confirmingIn(near, slug, since) ?? confirmingIn(all, slug, since);
+}
+function confirmingIn(folders, slug, since) {
+  const call = new RegExp(`\\bconfirm(\\.mjs)?\\s+${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+  const found = folders
+    .filter((path) => existsSync(path))
+    .flatMap((path) => readdirSync(path).filter((name) => name.endsWith(".jsonl")).map((name) => join(path, name)))
+    .map((path) => ({ path, mtime: lstatSync(path).mtimeMs }))
+    .filter((item) => !since || item.mtime >= Date.parse(since) - 5000)
+    .sort((a, b) => b.mtime - a.mtime);
+  for (const { path } of found)
+    if (scanTranscript(path, since ? new Date(Date.parse(since) - 5000).toISOString() : undefined, (block) => (block.name === "Bash" && call.test(String(block.input?.command ?? "")) ? "confirm" : null)).length > 0) return path;
+  return null;
 }
 
 /** Tool calls of a transcript that `match` names, each with the match, its time and its input's start. */

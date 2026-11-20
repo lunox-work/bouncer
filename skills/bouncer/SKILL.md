@@ -60,8 +60,9 @@ no sign-in.
   in confirmed.json, first listing to `--by`; median not measured yet).
 - **You are not blind.** This session can read `specs/<slug>/tests/private/`.
   Never open it, `reference/`, `calibration.json`, or any `grade.json` or
-  `judged.json` under `runs/`. On a new module, never implement the spec in this
-  session. In a repository you may implement it here after step 4's handout:
+  `judged.json` under `runs/`, nor list `specs/` or `runs/` recursively
+  (`ls -R`, `find`, `grep -r`). On a new module, never implement the spec in
+  this session. In a repository you may implement it here after step 4's handout:
   `judge --audit` scans this session's transcript for any attempt to open those
   paths and reports it with the verdict. A blind session or another agent is the
   only enforced blindness.
@@ -101,6 +102,9 @@ no sign-in.
    end, minutes and the decisions changed since the first listing). Never
    record a confirmation on your own judgment, nor for a spec that changed
    after they said yes. `prepare` refuses a spec not confirmed as it stands.
+   `--by` exits 3 if this session has no answer from them since the listing
+   (a yes given before they saw it is none); reviewed in a pull request:
+   `--answered-elsewhere "<where>"`. Nobody to answer: stop here.
 
 ## 3. Prepare the suites
 

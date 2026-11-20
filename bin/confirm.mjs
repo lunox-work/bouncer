@@ -12,6 +12,7 @@
 //
 //   node bin/confirm.mjs <slug>                 each decision with its context; starts the clock
 //   node bin/confirm.mjs <slug> --by <name>     record that <name> confirmed spec.md as it stands
+//        [--answered-elsewhere <where>] [--transcript <file>]   refused when no person answered (answerCheck)
 //   node bin/confirm.mjs <slug> --export <file> decisions.md for review in a pull request (`-`: stdout)
 //   node bin/confirm.mjs <slug> --from <github issue url | owner/repo#n | jira key | jira url> [--comments] [--body <file>|-] [--force]
 //                                               write specs/<slug>/ticket.md from the issue
@@ -37,12 +38,46 @@
 
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { closestSentence, decisionItems, decisions, dependentScenarios, diffDecisions, scenarios, ticketSentences } from "./decisions.mjs";
-import { args, readJson, sha256, specDir, writeJson } from "./lib.mjs";
+import { args, confirmingTranscript, personAnswers, readJson, sha256, specDir, writeJson } from "./lib.mjs";
 
 export { decisions };
+
+/**
+ * Whether a person answered between the listing and --by (SKILL.md step 2:
+ * never record a confirmation on your own judgment). At a terminal, the
+ * person is typing the command: nothing to check. Otherwise the agent
+ * session that listed this spec's decisions is found (lib.mjs
+ * `confirmingTranscript`, or --transcript) and read for the person's own
+ * turns and answered AskUserQuestion calls since the listing
+ * (`personAnswers`). None, and --by is refused with exit 3, unless
+ * --answered-elsewhere "<where>" says where the person reviewed it (a pull
+ * request through --export, a call). A session that is not Claude Code's
+ * leaves no transcript here, and the confirmation is recorded as unchecked.
+ * The result goes into confirmed.json `answered`, which judge prints.
+ */
+function answerCheck(slug, started, at, options) {
+  const elsewhere = typeof options["answered-elsewhere"] === "string" && options["answered-elsewhere"].trim() !== "" ? options["answered-elsewhere"].trim() : null;
+  if (process.stdin.isTTY && process.stdout.isTTY) return { record: { how: "terminal" } };
+  const since = started?.toISOString() ?? null;
+  const transcript = typeof options.transcript === "string" ? resolve(options.transcript) : confirmingTranscript(process.cwd(), slug, since);
+  if (transcript === null)
+    return { record: { how: elsewhere ? "elsewhere" : "unchecked", ...(elsewhere ? { elsewhere } : {}) }, note: elsewhere ? null : `${slug}: no Claude Code session here listed these decisions, so nobody's answer could be checked; recorded as unchecked.` };
+  const seen = personAnswers(transcript, since, at.toISOString());
+  const answers = seen.personTurns + seen.questionsAnswered;
+  const record = { how: answers > 0 ? "session" : elsewhere ? "elsewhere" : "none", transcript, ...seen, ...(elsewhere ? { elsewhere } : {}) };
+  if (answers > 0 || elsewhere) return { record };
+  return {
+    refuse: true,
+    record,
+    message:
+      `${slug}: not recorded. No answer from a person appears in this session since the decisions were listed${since ? ` (${since})` : ""}` +
+      `${seen.questionsUnanswered > 0 ? `; ${seen.questionsUnanswered} question(s) came back unanswered` : ""}. ` +
+      "Put the decisions to the person and record --by after they say yes. If they reviewed them somewhere else, say where: --answered-elsewhere \"<where>\".",
+  };
+}
 
 /** A repository target's scope decisions from toolchain.json, or null for the bundled template. */
 function scopeOf(slug) {
@@ -293,7 +328,7 @@ if (isMain) {
   const [slug] = rest;
   if (slug === undefined) {
     console.error(
-      "usage: node bin/confirm.mjs <slug> [--by <name> [--started <iso>] | --export <file>|- | --from <issue url|owner/repo#n|jira key> [--comments] [--body <file>|-] [--force]]",
+      "usage: node bin/confirm.mjs <slug> [--by <name> [--started <iso>] [--answered-elsewhere <where>] | --export <file>|- | --from <issue url|owner/repo#n|jira key> [--comments] [--body <file>|-] [--force]]",
     );
     process.exit(1);
   }
@@ -333,6 +368,12 @@ if (isMain) {
     }
     const minutes = started === null ? null : Math.round((at - started) / 6000) / 10;
     const changes = open ? diffDecisions(open.drafted, decided) : null;
+    const answered = answerCheck(slug, started, at, options);
+    if (answered.refuse) {
+      console.error(answered.message);
+      process.exit(3);
+    }
+    if (answered.note) console.error(answered.note);
     writeJson(join(specDir(slug), "confirmed.json"), {
       sha256: hash,
       by: options.by.trim(),
@@ -341,6 +382,7 @@ if (isMain) {
       minutes,
       decided,
       ...(open ? { drafted: open.drafted, changes } : {}),
+      answered: answered.record,
       ...(scope === null ? {} : scope),
     });
     if (open) writeJson(clockPath, { ...open, confirmedAt: at.toISOString() });
