@@ -74,7 +74,8 @@ $ bouncer id --ticket ticket.md --repo .
 ```
 
 17 seconds, $0.06. On 75 wrong "all tests pass" runs, a blind reader with the
-list and the spec found the bad pick in 57, and never flagged a right one (35 of 45 in Python, Go and Rust; [how](RESULTS.md#the-id-check-after-the-fact)).
+list and the spec found the bad pick in 57 and never flagged a right one (35
+of 45 in Python, Go and Rust; [how](RESULTS.md#the-id-check-after-the-fact)).
 
 ## Before / After
 
@@ -92,10 +93,9 @@ runs made the same guess. The author's tests test the author's guesses.
   <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven failure classes with their measured counts, including the smooth one who got in 20 of 20 on two of four specs.">
 </p>
 
-None of them cheated: no agent touched a test in 2,522 sandboxed runs, yet 75
-of 105 from a loose ticket were wrong. Locking tests away stops reward hacking,
-not a wrong guess.
-Some nights the smooth one gets in; [RESULTS.md](RESULTS.md#red-team) says when.
+None of them cheated: no agent touched a test in 2,522 sandboxed runs. Locking
+tests away stops reward hacking, not a wrong guess. Some nights the smooth one
+gets in; [RESULTS.md](RESULTS.md#red-team) says when.
 
 **Real catches**, each past every test it could see: `constructor` ranked as a
 function in a real commit, `["open"]` taken for `"open"`, records 0.1 ms apart
@@ -111,9 +111,8 @@ sorted by id ([all four, one against us](docs/REFERENCE.md#real-catches)).
 | `regressed`  | You broke something on the way in. | Repository: an existing test that passed before fails now, named.      |
 | `refused`    | You don't write on my clipboard.   | Repository: the change edited a test, a lockfile, a config or harness. |
 
-Agents and CI parse the machine word, so it never changes; his line goes above
-it on a terminal only. `judge --card verdict.svg` writes the exchange as a card
-to post: your agent's own claim, his answer, the counts. Never a hidden test.
+CI parses the machine word; his line shows on a terminal only. `judge --card
+verdict.svg` writes the exchange to post. Never a hidden test.
 
 ## Proof
 
@@ -121,15 +120,14 @@ to post: your agent's own claim, his answer, the counts. Never a hidden test.
   <img src="assets/runs.png" width="880" alt="One square per run, 7 specs by 15 runs. Agent alone: 75 of 105 wrong. With a public suite: 24 of 105. After one retry told only the failing scenario: 9 of 105.">
 </p>
 
-Same agent, same loose tickets: better on 5 of 7 tickets, worse on none. What
-gets them in is the owner's decisions reaching the agent; written as prose
-instead of tests, they let 80 of 105 in. A blind referee on another model
-upheld all 75 rejections; against an outside oracle the suites rejected 3 of
-289 correct HumanEval+ solutions (23 of 314 counting two tasks the suite read
-differently). Stronger agents guess no better: from the ticket alone Opus 5.5
-passed 15 of 35 and Sonnet 16, each with its own tests green, and 26 and 25
-with the public suite. About 3,000 graded runs in four languages, real
-commits and CI from a sealed suite: [every measurement](docs/REFERENCE.md#the-numbers).
+Same loose tickets: better on 5 of 7, worse on none. The gain is the owner's
+decisions; given as prose instead of tests, 80 of 105 got in. Stronger agents
+guess no better: alone, Opus 5.5 passed 15 of 35, all with green tests of
+their own; 26 with the public suite. A blind referee on another model upheld
+all 75 rejections; an outside oracle saw 3 of 289 correct HumanEval+ solutions
+rejected (23 of 314 with two tasks read differently). On ufo and pathe, judged
+by their maintainers' own tests: 151 of 152 runs from a confirmed spec pass,
+95 of 110 from the ticket. [Every measurement](docs/REFERENCE.md#the-numbers).
 **Not for:** rendered UI, work that needs the network or an outside service, a
 change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.md#scope)).
 
@@ -137,19 +135,17 @@ change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.m
 
 A contractor task, a candidate exercise, a bounty. You already write the task
 before the code exists: that is the list. He adds a hidden suite the submitter
-never sees, and the 10–25 minutes it takes cost nothing, since nobody has
-started yet. `bouncer second` adds a suite from another writer: against Opus
-told to game, Codex's caught 17 of the 20 passes the first let through.
-Submissions and payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
+never sees, and the 10–25 minutes cost nothing: nobody has started yet.
+`bouncer second` adds another writer's suite (Codex's caught 17 of 20 gaming
+passes the first let through). Payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
 
 ## FAQ
 
 **Isn't this just TDD?** TDD fixes the order; the tests are still the agent's
-reading of the ticket. Here they come from separate sessions and your spec.
-**What does it cost?** About $1–4 of Opus 5.5 and 10–25 minutes per spec,
-plus your time to confirm. **Does my code leave my machine?** Only to the model
-backend you choose, on your account. No telemetry ([PRIVACY.md](PRIVACY.md)).
-[More](docs/REFERENCE.md#faq), and how it compares to TDD, review and SWE-bench.
+reading. Here they come from other sessions and your spec. **Cost?** $1–4 of
+Opus 5.5 and 10–25 minutes a spec, plus your time. **Does my code leave my
+machine?** Only to your model backend; no telemetry ([PRIVACY.md](PRIVACY.md)).
+[More](docs/REFERENCE.md#faq), and how it compares to review and SWE-bench.
 
 ## Try it in five minutes
 

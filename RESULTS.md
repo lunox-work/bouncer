@@ -419,6 +419,44 @@ resumes a set.
   which vitest before 4 rejects under its default minimum unless
   `--minWorkers=1` comes with it; the runner adds it there.
 
+### Judged by the maintainers' own tests
+
+The arm above judges with suites written here. These are judged by tests
+nobody here wrote (2026-11-20, no model in the scoring:
+[evidence/maintainer-tests.mjs](evidence/maintainer-tests.mjs),
+`evidence/in-repo-{ufo,pathe}/maintainer-tests.json`). Per commit, the test
+files the real commit added or changed are laid over base and over the real
+commit; the tests that fail on base and pass on the commit, 1 to 44 a case,
+are the maintainers' acceptance tests for the change. Every stored run is laid
+over base with those files on top and scored on them alone. A fifth arm,
+`ticket`, is new: 5 Haiku 5.5 and 5 Sonnet 5.5 runs per case from base with the
+drafter's ticket (the commit subject and the declarations it adds), no stub,
+no spec, writing their own tests (`bin/run.mjs --brief ticket`,
+`evidence/maintainer-queue.sh`). ufo-join-relative is left out: it has no
+confirmed-spec runs.
+
+| arm, 11 commits of ufo and pathe         | runs passing every maintainer acceptance test |
+| ---------------------------------------- | --------------------------------------------: |
+| confirmed spec + public suite, Haiku 5.5 |                                  **55 of 55** |
+| confirmed spec, no public suite, Haiku   |                                      54 of 55 |
+| confirmed spec + public suite, Codex CLI |                                      42 of 42 |
+| ticket only, own tests, Haiku 5.5        |                                      46 of 55 |
+| ticket only, own tests, Sonnet 5.5       |                                      49 of 55 |
+
+- **Confirmed specs agree with code written elsewhere.** 151 of the 152 runs
+  that worked from a confirmed spec pass every acceptance test their
+  maintainers wrote, so the confirmed specs, and the hidden suites written from
+  them, describe what those maintainers meant.
+- **From the ticket, agents miss what the maintainers meant** in 4 of the 11
+  commits: `withoutHost` (Haiku 0 of 5), `format` with partial arguments
+  (Haiku 2, Sonnet 1 of 5), `reverseResolveAlias` and the UNC prefix (4 of 5
+  each). Against the confirmed arm, Haiku p = 0.003, Sonnet p = 0.03 over runs.
+  The gap is smaller than on the archive's tickets: these are small fixes whose
+  one-line subjects name most of the change.
+- **Caveat that favours the confirmed arm:** its specs were confirmed by a
+  session playing the developer, shown the real diff. A real author knows what
+  they meant as well; a confirmer who does not, does worse.
+
 ## Which repositories fit
 
 `bouncer fit` decides whether a package of an existing repository can be a
