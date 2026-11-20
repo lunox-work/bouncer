@@ -1,6 +1,6 @@
 {
   "name": "bouncer-verify",
-  "displayName": "bouncer",
+  "displayName": "bouncer verify",
   "version": "0.8.0",
   "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in. Hosted mode is the separate bouncer-hosted plugin.",
   "author": {

@@ -74,7 +74,8 @@ const REPO = "lunox-work/bouncer";
 const PLUGINS = [
   // `bouncer-verify`, not `bouncer`: the Claude plugin directory holds the name
   // "bouncer" for an existing publisher of that name (validation, 2026-11-20).
-  // The skill inside is still `bouncer`, and displayName reads "bouncer".
+  // The skill inside is still `bouncer`; displayName "bouncer" is held too, so
+  // it reads "bouncer verify", like "bouncer hosted".
   { name: `${NAME}-verify`, dir: `${NAME}-verify`, manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
   {
     name: `${NAME}-hosted`,
