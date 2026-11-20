@@ -335,7 +335,7 @@ const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE"];
 // (2.1.329's `claude plugin validate` checks only that each is https:// or
 // mailto:), so the branch's plugin.json keeps them, and its README repeats
 // them as links for readers.
-const LISTING_LINKS = { privacyPolicyUrl: "Privacy", documentationUrl: "Documentation", supportUrl: "Support" };
+const LISTING_LINKS = { privacyPolicyUrl: "Privacy", termsOfServiceUrl: "Terms", documentationUrl: "Documentation", supportUrl: "Support" };
 
 function git(args, env = {}) {
   const result = spawnSync("git", args, { cwd: ROOT, encoding: "utf8", env: { ...process.env, ...env } });
@@ -360,6 +360,9 @@ function pluginReadme(plugin, rev) {
     lines.push(`- **${fields.name}**: ${fields.description}`, "");
     if (fields.compatibility) needs.push(`- **${fields.name}**: ${fields.compatibility}`, "");
   }
+  // Example prompts (.claude-plugin/examples.md): the directory asks for at least three that work.
+  const examples = show(rev, ".claude-plugin/examples.md");
+  if (examples !== null) lines.push("## Examples", "", examples.trim(), "");
   lines.push("## Install", "", "```sh", `claude plugin marketplace add ${REPO}`);
   lines.push(`claude plugin install ${manifest.name}@${market.name}`, "```", "");
   const others = PLUGINS.filter((other) => other !== plugin);
