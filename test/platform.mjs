@@ -72,6 +72,10 @@ async function fakePlatform({ polls = ["ok"], orgs = [ORGS.acme], expiresIn = 90
       }
       const next = state.polls.shift() ?? "pending";
       const errors = { pending: "authorization_pending", slow_down: "slow_down", expired: "expired_token", denied: "access_denied" };
+      if (next === "rate_limited") {
+        res.setHeader("retry-after", "30");
+        return send(429, { message: "Too many requests. Please try again later." });
+      }
       if (next !== "ok") return send(400, { error: errors[next], error_description: next });
       state.sessions.add(SESSION);
       return send(200, { access_token: SESSION, token_type: "Bearer", expires_in: 604800, scope: "" });
@@ -161,8 +165,8 @@ const step = async (name, fn) => {
 };
 
 try {
-  await step("login: pending, slow_down, approval; file written 600, other entries kept, token never printed", async () => {
-    const platform = await fakePlatform({ polls: ["pending", "slow_down", "pending", "ok"] });
+  await step("login: pending, slow_down, a 429, approval; file written 600, other entries kept, token never printed", async () => {
+    const platform = await fakePlatform({ polls: ["pending", "slow_down", "rate_limited", "pending", "ok"] });
     const credentials = fresh();
     const other = {
       [platform.url]: { carveout: { token: "lnx_carveout", organizationId: "org_acme", organizationHandle: "acme", client: "carveout" } },
@@ -172,7 +176,7 @@ try {
     // Written by the other CLI first: login must keep it.
     await import("../bin/platform-client.mjs").then(({ writeCredentials }) => writeCredentials(credentials, other));
     assert.equal(await run("login", ["--open"], CLIENT, w), 0, w.errors);
-    assert.deepEqual(w.slept, [5000, 5000, 10000, 10000], "interval 5 s, plus 5 s after slow_down");
+    assert.deepEqual(w.slept, [5000, 5000, 10000, 30000, 30000], "interval 5 s, plus 5 s after slow_down, Retry-After after a 429");
     assert.match(w.output, new RegExp(`${platform.url}/device\\?user_code=WXYZ2345`));
     assert.match(w.output, /Code: WXYZ2345/);
     assert.match(w.output, /Signed in as Ada <ada@example\.com>, workspace Acme \(@acme\)/);

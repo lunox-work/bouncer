@@ -153,6 +153,13 @@ async function pollForSession(base, code, { client, cli, pkg, version, deps }) {
         interval += 5000;
         continue;
       }
+      // The platform's rate limiter answers a plain 429 while the code is
+      // still good; ending here threw away a sign-in the person was about to
+      // approve. Back off as for slow_down, or as long as Retry-After asks.
+      if (error.status === 429) {
+        interval = Math.max(interval + 5000, (Number(error.retryAfter) || 0) * 1000);
+        continue;
+      }
       if (error.code === "expired_token") throw new PlatformError("The code expired before it was approved. Run login again.");
       if (error.code === "access_denied") throw new PlatformError("The sign-in was denied in the browser. Nothing was saved.");
       if (error.code === "invalid_grant") throw new PlatformError("The code is no longer valid (already used, or unknown). Run login again.");
