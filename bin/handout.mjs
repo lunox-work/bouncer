@@ -71,7 +71,7 @@ const committed = commit();
 stage(dir, slug, { skeleton: true, publicTests: true });
 writeFileSync(join(dir, "BRIEF.md"), `${prompt(AGENT.prompt, toolchainOf(slug))}${commitmentNote(committed)}`);
 writeJson(join(dir, "handout.json"), { at: new Date().toISOString(), slug, ...committed });
-console.log(`${slug}: handout in ${dir}. Give the agent BRIEF.md; then node bin/judge.mjs ${slug} ${join(dir, "src")}.`);
+console.log(`${slug}: handout in ${dir}. Give the agent BRIEF.md; then bouncer judge ${slug} ${join(dir, "src")}.`);
 
 /**
  * The commitment the handout shows: refused when the hidden suite changed
@@ -161,7 +161,7 @@ function repoHandout(checkoutPath, remove) {
   for (const file of files) copy(file.from, join(root, file.path));
   copy(join(spec, "spec.md"), join(out, "spec.md"));
   const brief = `${prompt(AGENT.prompt, { ...chain, specPath: join(out, "spec.md") })}
-Run this skill's commands as you need them, but never open \`specs/${slug}/\` beyond \`spec.md\`, \`runs/${slug}/\` beyond \`handout/\`, or a judge's staged tree: \`node bin/judge.mjs ${slug} --repo --audit\` scans this session's transcript for any attempt and reports it with the verdict.
+Run this skill's commands as you need them, but never open \`specs/${slug}/\` beyond \`spec.md\`, \`runs/${slug}/\` beyond \`handout/\`, or a judge's staged tree: \`bouncer judge ${slug} --repo --audit\` scans this session's transcript for any attempt and reports it with the verdict.
 ${commitmentNote(committed)}`;
   writeFileSync(join(out, "BRIEF.md"), brief);
   writeJson(join(out, "handout.json"), {
@@ -173,5 +173,5 @@ ${commitmentNote(committed)}`;
   });
   console.log(brief);
   console.log(`${slug}: stub and public suite written into ${root} (${files.length} file(s), uncommitted); brief in ${join(out, "BRIEF.md")}.`);
-  console.log(`Then: node bin/judge.mjs ${slug} --repo ${root === chain.repo ? "" : root} --audit`.replace(/  +/g, " "));
+  console.log(`Then: bouncer judge ${slug} --repo ${root === chain.repo ? "" : root} --audit`.replace(/  +/g, " "));
 }

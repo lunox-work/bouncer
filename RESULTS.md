@@ -440,10 +440,16 @@ No model session.
 | toolchain installed on first use (npm 10.9.2)    |                                     yes |                        yes |
 | `judge` the handout's skeleton                   |                `incomplete`, 0/22, 0/39 |   `incomplete`, 0/22, 0/39 |
 | `judge` the reference                            |              **`passed`, 22/22, 39/39** | **`passed`, 22/22, 39/39** |
-| the clone URL and `npx @lunox-work/bouncer` line |                                 pending |                    pending |
+| the clone URL and `npx @lunox-work/bouncer` line |                    works (below, 0.8.0) |       works (below, 0.8.0) |
 
-The last row waits on the repository being pushed and the package published;
-neither exists yet.
+The last row, run 2026-11-20 after 0.8.0 was published: in a fresh `node:22`
+container (Node 22.23.5, the `node` user, `--memory=2g`),
+`npx -y @lunox-work/bouncer@0.8.0` installed the toolchain on first use,
+`handout` wrote the folder, `judge` read the skeleton `incomplete` (0/22,
+0/39) and the packaged reference `passed` (22/22, 39/39), and
+`git clone https://github.com/lunox-work/bouncer` gave a checkout whose
+`node bin/cli.mjs --version` prints 0.8.0. The handout's hint named
+`node bin/judge.mjs`, which only a clone has; it says `bouncer judge` now.
 
 ## Commitment hash
 
