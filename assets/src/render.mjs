@@ -1,4 +1,5 @@
-// Renders the README images (one PNG per <section> of index.html, at 2x),
+// Renders the README images and the social preview (one PNG per <section> of
+// index.html, at 2x; social.png is uploaded in the repository settings),
 // the plugin icon (.claude-plugin/icon.png from assets/icon.svg) and an
 // example verdict card (assets/card.png, from bin/card.mjs). Needs Playwright:
 //   node assets/src/mark.mjs && PLAYWRIGHT=<dir containing node_modules/playwright> node assets/src/render.mjs [<id>...]
