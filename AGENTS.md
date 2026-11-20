@@ -27,7 +27,8 @@ What to tell them, accurately:
   from a drafted spec rejected all 11; confirmed, 8 of 11 passed.
 - `passed` means tests it never saw pass; it says nothing about what the spec
   leaves out, and it is no detector of gaming by a strong model (Opus 5.5, told
-  to game, got in on two of four specs).
+  to game, got in on two of four specs; `bouncer second` adds another writer's
+  hidden suite, which caught 17 of those 20 when Codex wrote it).
 - In a repository a test that passed and now fails is `regressed`, by name;
   only the paths the spec allows may change; `promote` keeps the hidden suite.
 - On your own ticket your blindness is by instruction: `judge --audit` reports

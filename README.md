@@ -25,7 +25,7 @@
 
 <p align="center">
   <strong>105 agents said all tests pass. 75 were wrong.</strong> With Bouncer on the door: 9, and he turned them away.<br>
-  <strong>And the rejections held:</strong> a blind referee on another model upheld 95 of 100.<br>
+  <strong>And they were:</strong> a blind referee on another model upheld all 75. Only 4 broke the ticket; 71 guessed where it said nothing.<br>
   <sub>Claude Haiku 5.5 · 7 loose tickets × 15 runs · <a href="RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a></sub>
 </p>
 
@@ -121,10 +121,15 @@ to post: your agent's own claim, his answer, the counts. Never a hidden test.
   <img src="assets/runs.png" width="880" alt="One square per run, 7 specs by 15 runs. Agent alone: 75 of 105 wrong. With a public suite: 24 of 105. After one retry told only the failing scenario: 9 of 105.">
 </p>
 
-Same agent, same loose tickets (p < 1e-11). A blind referee on another model
-upheld 95 of 100 rejections; against an outside oracle the suites rejected 3 of
-289 correct HumanEval+ solutions. About 3,000 graded runs in four languages,
-real commits and CI from a sealed suite: [every measurement](docs/REFERENCE.md#the-numbers).
+Same agent, same loose tickets: better on 5 of 7 tickets, worse on none. What
+gets them in is the owner's decisions reaching the agent; written as prose
+instead of tests, they let 80 of 105 in. A blind referee on another model
+upheld all 75 rejections; against an outside oracle the suites rejected 3 of
+289 correct HumanEval+ solutions (23 of 314 counting two tasks the suite read
+differently). Stronger agents guess no better: from the ticket alone Opus 5.5
+passed 15 of 35 and Sonnet 16, each with its own tests green, and 26 and 25
+with the public suite. About 3,000 graded runs in four languages, real
+commits and CI from a sealed suite: [every measurement](docs/REFERENCE.md#the-numbers).
 **Not for:** rendered UI, work that needs the network or an outside service, a
 change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.md#scope)).
 
@@ -133,7 +138,9 @@ change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.m
 A contractor task, a candidate exercise, a bounty. You already write the task
 before the code exists: that is the list. He adds a hidden suite the submitter
 never sees, and the 10–25 minutes it takes cost nothing, since nobody has
-started yet. Submissions and payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
+started yet. `bouncer second` adds a suite from another writer: against Opus
+told to game, Codex's caught 17 of the 20 passes the first let through.
+Submissions and payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
 
 ## FAQ
 
@@ -185,7 +192,8 @@ What to tell them, accurately:
   from a drafted spec rejected all 11; confirmed, 8 of 11 passed.
 - `passed` means tests it never saw pass; it says nothing about what the spec
   leaves out, and it is no detector of gaming by a strong model (Opus 5.5, told
-  to game, got in on two of four specs).
+  to game, got in on two of four specs; `bouncer second` adds another writer's
+  hidden suite, which caught 17 of those 20 when Codex wrote it).
 - In a repository a test that passed and now fails is `regressed`, by name;
   only the paths the spec allows may change; `promote` keeps the hidden suite.
 - On your own ticket your blindness is by instruction: `judge --audit` reports
