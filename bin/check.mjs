@@ -470,7 +470,8 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   try {
     process.exit(await main());
   } catch (error) {
-    console.error(error.message);
+    // Say it is check that stopped, and where, so it is not read as the agent's error.
+    console.error(`bouncer check stopped: ${error.message}${process.env.BOUNCER_DEBUG ? `\n${error.stack}` : " (BOUNCER_DEBUG=1 shows where)"}`);
     process.exit(1);
   }
 }

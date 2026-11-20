@@ -352,7 +352,7 @@ function confirmationLine() {
     unchecked: "no session to check for a person's answer",
     none: "no answer from a person was found",
   }[record.answered?.how] ?? "recorded before answers were checked";
-  return `Spec confirmed by ${record.by}${typeof record.minutes === "number" ? ` in ${record.minutes} min` : ""}${changed === null ? "" : `, ${changed} of ${(record.decided ?? []).length} decisions changed from the draft`}; ${how}.`;
+  return `Spec confirmed by ${record.by}${typeof record.minutes === "number" ? ` in ${record.minutes} min` : ""}${changed === null ? "" : `, ${changed} of ${(record.decided ?? []).length} decisions changed since they were first listed`}; ${how}.`;
 }
 
 function hashLine() {
