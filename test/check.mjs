@@ -221,6 +221,8 @@ try {
     assert.equal(drafted.status, 3, drafted.stdout + drafted.stderr);
     assert.match(drafted.stdout, /What is b\?/);
     assert.match(readFileSync(join(spec, "spec.md"), "utf8"), /Decided:\n- b is 1\./);
+    assert.match(drafted.stdout, /Decided, the kinds drafts get wrong most often first:[\s\S]*b is 1\./, "the stop lists spec.md's decisions");
+    assert.ok(existsSync(join(spec, "confirming.json")), "and starts the person's clock");
     ok("the draft: the ID check, then spec.md drafted from the ticket, the list and the diff, then the confirmation stop");
   } finally {
     rmSync(state, { recursive: true, force: true });

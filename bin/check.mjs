@@ -441,12 +441,17 @@ async function main() {
   const confirmed = confirmation(slug);
   if (!confirmed.ok) {
     say("unconfirmed", { options });
+    // The listing starts the person's clock (bin/confirm.mjs). Printed here, so
+    // the decisions a session puts to the person are the ones --by checks an
+    // answer against: in the 2026-11-20 after-the-fact gate a session asked
+    // from the ID list alone, listed only after the answer, and --by refused.
+    step("confirm.mjs", [slug]);
     console.log(
       [
         `${slug}: ${confirmed.reason}.`,
-        `The list above is what the ticket never said and what the agent picked; spec.md makes each pick a Decided: item.`,
+        `Above: what the ticket never said and what the agent picked, then spec.md's Decided: items, which make each pick a rule. The person's clock started with that listing.`,
         `Keeping every pick makes the hidden tests say what the code already does: the verdict is independent where the ticket states a rule and where the person changes a pick.`,
-        `1. bouncer confirm ${slug}            lists each decision: keep the agent's pick or take the other, and edit ${specPath}`,
+        `1. Put each decision to the person now: keep the agent's pick or take the other; edit ${specPath} with their answers`,
         `2. bouncer confirm ${slug} --by "<name>"   only after the person said yes to the spec as it stands`,
         `3. bouncer check${typeof options.slug === "string" ? ` --slug ${slug}` : ""}                prepares the suites (about $1-7 of Opus, 10-25 minutes) and judges`,
       ].join("\n"),

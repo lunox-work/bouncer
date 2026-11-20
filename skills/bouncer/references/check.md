@@ -10,9 +10,10 @@ confirmation.
 in the checkout runs steps 1 to 4 below in order, picks the base, the
 package and the seam from the change (`--base`, `--package`, `--seam`
 override), drafts `spec.md` from the ticket and the list, and stops with
-exit 3 for step 3's confirmation. Put the decisions to the person as step 3
-says, record `--by`, then run `bouncer check` again: it prepares and
-judges. The steps below are what it runs, for when one needs doing by hand.
+exit 3 for step 3's confirmation, having listed the `Decided:` items (the
+person's clock starts there). Put those decisions to the person in that
+same turn, as step 3 says, record `--by`, then run `bouncer check` again: it
+prepares and judges. The steps below are what it runs, for when one needs doing by hand.
 
 Run again in the same checkout and branch, it resumes the newest check there
 and says which (base, seam, ticket). For a second task on the same branch use

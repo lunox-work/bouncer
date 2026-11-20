@@ -75,7 +75,7 @@ function answerCheck(slug, started, at, options) {
     message:
       `${slug}: not recorded. No answer from a person appears in this session since the decisions were listed${since ? ` (${since})` : ""}` +
       `${seen.questionsUnanswered > 0 ? `; ${seen.questionsUnanswered} question(s) came back unanswered` : ""}. ` +
-      "Put the decisions to the person and record --by after they say yes. If they reviewed them somewhere else, say where: --answered-elsewhere \"<where>\".",
+      "Put the decisions to the person and record --by after they say yes. An answer given in this session before the listing is not elsewhere: show them the listing and ask for a yes. Only if they reviewed the decisions outside this session (a pull request, a call), say where: --answered-elsewhere \"<where>\".",
   };
 }
 

@@ -100,8 +100,10 @@ Hosted mode is the `bouncer-hosted` skill; this one needs no sign-in.
    record a confirmation on your own judgment, nor for a spec that changed
    after they said yes. `prepare` refuses a spec not confirmed as it stands.
    `--by` exits 3 if this session has no answer from them since the listing
-   (a yes given before they saw it is none); reviewed in a pull request:
-   `--answered-elsewhere "<where>"`. Nobody to answer: stop here.
+   (a yes given before they saw it is none: show the listing and ask again);
+   reviewed outside this session, such as in a pull request:
+   `--answered-elsewhere "<where>"`, never for an answer given here. Nobody
+   to answer: stop here.
 
 ## 3. Prepare the suites
 
