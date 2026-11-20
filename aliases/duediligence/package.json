@@ -1,6 +1,6 @@
 {
   "name": "duediligence",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Renamed to @lunox-work/bouncer: hidden, calibrated test suites for AI coding agents. This package runs bouncer.",
   "keywords": [
     "bouncer",
@@ -36,7 +36,7 @@
     "api.mjs"
   ],
   "dependencies": {
-    "@lunox-work/bouncer": "^0.8.1"
+    "@lunox-work/bouncer": "^0.8.2"
   },
   "engines": {
     "node": "^20.19.0 || >=22.0.0"
