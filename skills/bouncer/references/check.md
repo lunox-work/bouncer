@@ -44,8 +44,11 @@ his voice. Then go on.
 
 ## 2. Fit and point the spec at the change
 
-- The package the diff touches: `bouncer fit --repo . --package <dir>`. Stop
-  on `unsupported` and say why.
+- The package the diff touches: `bouncer fit --repo . --package <dir>`. On
+  `unsupported`, or a change spanning packages, no hidden suite can be
+  prepared: say why, then still run step 3's `bouncer id` on the whole change
+  and put its list to the person (`bouncer check` with a ticket does this
+  and exits 2).
 - The base is the commit before the agent's change (`git log`; ask the person
   when it is not clear). The seam is the files the change implements.
   `bouncer repo <slug> --repo . --package <dir> --seam <file>[,<file>] --base <base>`.

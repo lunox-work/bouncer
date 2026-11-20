@@ -18,7 +18,8 @@
 //    is the changed source files that are not tests. --package and --seam
 //    override.
 // 3. bin/repo.mjs points one slug at that package (fit at base); unsupported
-//    stops with exit 2.
+//    stops with exit 2; with a ticket, the ID check (step 5) runs on the
+//    whole change first, as it does for a change spanning packages.
 // 4. The ticket: --from (bin/confirm.mjs --from), --ticket, or one already
 //    in specs/<slug>/ticket.md.
 // 5. The ID check (bin/id.mjs) on the working tree against base.
@@ -50,7 +51,7 @@
 // prepare's open questions (answer them in spec.md, or --accept-open).
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { basename, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { confirmation } from "./confirm.mjs";
@@ -250,6 +251,33 @@ function checks() {
     .filter(({ record }) => record !== null);
 }
 
+/**
+ * Out of scope for a hidden suite (a change spanning packages, `fit`
+ * unsupported) is not out of scope for the list: the ID check needs a
+ * ticket and a diff, no runner and no package. With a ticket, list what it
+ * never said and what the whole change picked, then stop with exit 2 as
+ * before. With none, say how to get the list. No record is kept, so a later
+ * run starts afresh.
+ */
+function listOnly({ slug, out, ticketPath, root, base, options, givenTicket }) {
+  if (!existsSync(ticketPath)) {
+    if (typeof options.from === "string") {
+      if (step("confirm.mjs", [slug, "--from", options.from]) !== 0) return 2;
+    } else if (givenTicket !== undefined) {
+      mkdirSync(out, { recursive: true });
+      writeFileSync(ticketPath, givenTicket);
+    } else {
+      console.error("No hidden suite here. With --from <issue> or --ticket <file>, bouncer check still lists what the ticket never said and what the agent picked (bouncer id).");
+      return 2;
+    }
+  }
+  console.log("No hidden suite here, so nothing will be prepared or judged. The ID check reads the whole change:");
+  const status = step("id.mjs", [slug, "--repo", root, "--base", base]);
+  if (status !== 0) return status;
+  console.log("Questions, not bugs: put each to the person. A pick they would change is work the agent is not done with.");
+  return 2;
+}
+
 const headingOf = (file) => (existsSync(file) ? (/^#\s+(.+)$/m.exec(readFileSync(file, "utf8"))?.[1] ?? readFileSync(file, "utf8").split("\n").find((line) => line.trim() !== "") ?? "").trim() : "");
 
 async function main() {
@@ -341,8 +369,8 @@ async function main() {
         return 2;
       }
       if (found.spans) {
-        console.error(`The change spans packages (${found.spans.join(", ")}): out of scope. Pass --package <dir> to judge one of them.`);
-        return 2;
+        console.error(`The change spans packages (${found.spans.join(", ")}): out of scope for a hidden suite. Pass --package <dir> to judge one of them.`);
+        return listOnly({ slug, out, ticketPath, root, base, options, givenTicket });
       }
       pkg = found.pkg;
     }
@@ -358,6 +386,7 @@ async function main() {
   // 3. Point the slug at the package.
   if (!existsSync(join(out, "toolchain.json"))) {
     const status = step("repo.mjs", [slug, "--repo", record.checkout, "--package", record.package, "--seam", record.seam.join(","), "--base", record.base]);
+    if (status === 2) return listOnly({ slug, out, ticketPath, root, base: record.base, options, givenTicket });
     if (status !== 0) return status;
   }
   writeJson(recordPath, record);

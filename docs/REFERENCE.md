@@ -48,7 +48,7 @@ guessed.
   checkout and branch and says which; `--new` starts another, and a flag
   that differs from the resumed check is refused. Exit: the judge's code once
   judged; before that 1 nothing to check or a step failed, 2 out of scope or
-  `fit` unsupported, 3 the person must confirm, 4 `prepare`'s open questions. The steps by hand are
+  `fit` unsupported (with a ticket, after the ID list of the whole change), 3 the person must confirm, 4 `prepare`'s open questions. The steps by hand are
   [skills/bouncer/references/check.md](../skills/bouncer/references/check.md).
 
 ## The numbers

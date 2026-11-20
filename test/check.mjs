@@ -118,6 +118,37 @@ try {
   assert.match(cli.stdout, /seam src\/a\.ts, src\/b\.ts/);
   ok("the CLI picks the change and stops before any session (fit refuses a repo with no runner)");
 
+  // Out of scope for a hidden suite, with a ticket: the ID check still runs on the whole change, exit 2.
+  const listHome = mkdtempSync(join(tmpdir(), "bouncer-check-home-"));
+  try {
+    writeFileSync(join(listHome, "ticket.md"), "# Add b\n");
+    const answer = '[{"question":"What is b?","ticket":"silent","chose":"b is 1","where":"src/b.ts:1","instead":"b is 0"}]';
+    const listed = (...argv) =>
+      spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "check.mjs"), "--repo", repo, "--no-door", "--ticket", join(listHome, "ticket.md"), ...argv], {
+        encoding: "utf8",
+        env: { ...process.env, BOUNCER_HOME: listHome, BOUNCER_BACKEND: "exec", BOUNCER_EXEC: `cat > /dev/null; printf '%s\\n' '\`\`\`json' '${answer}' '\`\`\`'`, BOUNCER_SPECS: "" },
+        timeout: 120_000,
+      });
+    const unfit = listed("--package", ".");
+    assert.equal(unfit.status, 2, unfit.stdout + unfit.stderr);
+    assert.match(unfit.stdout, /No hidden suite here, so nothing will be prepared or judged\./);
+    assert.match(unfit.stdout, /1 thing your ticket never said\. Your agent picked for you:[\s\S]*What is b\?/);
+    assert.match(unfit.stdout, /Questions, not bugs/);
+    assert.equal(readdirSync(join(listHome, "specs")).some((slug) => existsSync(join(listHome, "specs", slug, "check.json"))), false, "no record to resume");
+
+    mkdirSync(join(repo, "web", "src"), { recursive: true });
+    writeFileSync(join(repo, "web", "package.json"), "{}\n");
+    writeFileSync(join(repo, "web", "src", "c.ts"), "export const c = 1;\n");
+    const spans = listed("--new");
+    assert.equal(spans.status, 2, spans.stdout + spans.stderr);
+    assert.match(spans.stderr, /The change spans packages \(\., web\): out of scope for a hidden suite/);
+    assert.match(spans.stdout, /What is b\?/);
+    rmSync(join(repo, "web"), { recursive: true, force: true });
+  } finally {
+    rmSync(listHome, { recursive: true, force: true });
+  }
+  ok("out of scope with a ticket: fit unsupported or spanning packages still lists what the agent picked, exit 2");
+
   // A rerun. The check is seeded as an earlier run left it at the confirmation
   // stop: pointed (toolchain.json), with its ticket, list and drafted spec.
   const state = mkdtempSync(join(tmpdir(), "bouncer-check-home-"));
