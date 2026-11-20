@@ -107,7 +107,7 @@ Strengthening pass, 2026-11-20 afternoon (commits 36e7986..0ddb31c, local):
 - **Needs you:** person-timed confirmations, and more tickets with specs their
   owner writes (do both at once: 13 real tickets, you confirm each spec).
 
-Evening pass, 2026-11-20 (commits 10efe60..2c4e27d, local):
+Evening pass, 2026-11-20 (commits 10efe60..HEAD, local):
 
 - **Passes, checked** (RESULTS.md "When he says yes"): Codex's suites and the
   referee find a stated rule missed in 51 of 386 public-suite passes, 48 on
@@ -128,6 +128,15 @@ Evening pass, 2026-11-20 (commits 10efe60..2c4e27d, local):
   (`--answered-elsewhere` used for an answer given in the session), run 3
   holds: `incomplete`, answer found in the session, 0 audit findings. One
   case, passed after fixes it surfaced.
+- **Runs 1 and 2 revisited** (d81203f..f7dae6e): steps' `Next:` lines named
+  `node bin/…` and a relative spec path (now `bouncer <command>`, full paths,
+  quiet under `check`); the door read the session asking, not the one that
+  edited (now the newest editing session, or it says none here did; judge
+  audits both); `check --help` ran a check (every command takes `--help`);
+  `--answered-elsewhere` is refused for an answer given in the session
+  (replayed on run 2: refused). Run 4 on all of it holds.
+- **Outside evidence** cited in REFERENCE and the README FAQ: METR,
+  arXiv 2606.28430, the NeurIPS 2026 "Silent Regressions" workshop paper.
 - **Needs you:** a 0.8.1 release for the drafter fix (passkey), then push.
 
 Not built: overlapping the reference session with the suite writers (phase 3's

@@ -15,6 +15,11 @@ person's clock starts there). Put those decisions to the person in that
 same turn, as step 3 says, record `--by`, then run `bouncer check` again: it
 prepares and judges. The steps below are what it runs, for when one needs doing by hand.
 
+It takes a few minutes before that stop (`fit` installs and runs the
+existing suite, then the ID and drafting sessions) and 10–25 more after it
+(prepare and judge): run it in the background or with a long timeout, and
+wait for it to exit instead of polling.
+
 Run again in the same checkout and branch, it resumes the newest check there
 and says which (base, seam, ticket). For a second task on the same branch use
 `bouncer check --new`: a flag that differs from the resumed check is refused,
