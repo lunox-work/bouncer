@@ -43,3 +43,6 @@ evidence/languages-ticket/bundled.json
 evidence/stronger/specs/
 evidence/stronger/bundled.json
 evidence/stronger/template/
+evidence/red-team/backends/
+evidence/second-codex/specs/gherkin-parse/
+evidence/second-codex/specs/reverse-diff/

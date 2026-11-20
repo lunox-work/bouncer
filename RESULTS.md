@@ -934,6 +934,17 @@ names each shortcut with an input it gets wrong
   model. Its cost on honest work is the HumanEval+ row: requiring both the
   Claude and the Codex suite rejects 6 of 289 right solutions, against 3 and
   5 for either alone, and accepts 32 of 889 wrong ones against 43 and 34.
+- **The command's own Codex path** (2026-11-20, `bouncer second` with no
+  `--backend`, so Codex on the person's login, gpt-6.1-sol;
+  [evidence/second-codex.json](evidence/second-codex.json),
+  `evidence/second-codex.mjs`). The figures above came from Codex suites the
+  evidence scripts wrote in October. Written through the command: 42 of 43
+  and 38 of 38 hidden tests kept; it rejects 16 of the 20 Opus gaming passes
+  (October's suites 17; together 17), 11 of the 13 honest passes that miss a
+  stated rule ([When he says yes](#when-he-says-yes); October's 13, Sonnet's
+  0), and none of the 4 honest passes that do not. A second Codex suite is
+  not the same suite twice: each run of the writer misses something the
+  other caught.
 
 ## Black-box seams
 

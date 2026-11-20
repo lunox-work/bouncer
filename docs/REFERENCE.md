@@ -462,7 +462,9 @@ output, and the workflow has not run on a real runner yet.
   then needs both. The writer is Codex; without it `second` refuses unless
   `--backend` names a Claude one. Against Opus told to game, Codex's second
   suite caught 17 of the 20 passes the first let through and a Sonnet-written
-  one 10; of 13 honest passes missing a stated rule, 13 and 0. Requiring two
+  one 10; of 13 honest passes missing a stated rule, 13 and 0. Written
+  through `bouncer second` itself, Codex's suites caught 16 of 20 and 11 of
+  13 and rejected none of 4 correct passes. Requiring two
   suites doubles false rejects on HumanEval+ (6 of 289 against 3), so it is
   opt-in; a referee on the disagreements upheld all 14 and did not lower that
   ([second-referee.md](../evidence/second-referee.md)).

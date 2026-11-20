@@ -13,9 +13,10 @@
 
 **Grading someone else's work** (a contractor, a candidate, a bounty): after
 `0`, offer `bouncer second <slug>`, a second hidden suite from another writer
-(Codex; one more session, cents to a dollar). Without Codex it refuses: a
-Claude-written second suite caught 0 of 13 passes missing a stated rule that
-Codex's caught, so `--backend claude-cli` only if the person accepts that.
+(Codex on the person's Codex login; one more session of several minutes,
+billed to their Codex plan). Without a Codex login it refuses: a
+Claude-written second suite caught 0 of 13 passes missing a stated rule,
+Codex's 11 to 13, so `--backend claude-cli` only if the person accepts that.
 `judge` then needs both. Against Opus told to game, Codex's second suite
 caught 17 of the 20 passes the first let through, a Sonnet one 10; it about
 doubles false rejects (HumanEval+: 6 of 289 against 3), so it is the

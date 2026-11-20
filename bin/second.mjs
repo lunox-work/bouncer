@@ -130,7 +130,9 @@ if (isMain) {
     process.exit(1);
   }
   const record = calibrateOnReference(secondOf(slug));
-  writeJson(join(to, "calibration.json"), { ...record, writer: { backend, model: model ?? null }, of: slug });
+  // The model the session ran on: without --model, Codex takes the person's own setting.
+  const ran = readJson(join(to, "generation.json"), null)?.private?.sessions?.at(-1)?.model ?? null;
+  writeJson(join(to, "calibration.json"), { ...record, writer: { backend, model: model ?? ran }, of: slug });
   if (record.status !== "ok") {
     console.error(`${secondOf(slug)}: ${record.reason}`);
     process.exit(1);
