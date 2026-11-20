@@ -1,6 +1,6 @@
 # bouncer-hosted
 
-Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server, after sign-in, works with the person's workspace (bounties, sandboxes and verdicts from hidden tests kept on the platform), with the lunox-contribute skill for invited contributors. The local skill, with no sign-in, is the bouncer-skill plugin.
+Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server, after sign-in, works with the person's workspace (bounties, sandboxes and verdicts from hidden tests kept on the platform), with the lunox-contribute skill for invited contributors. The local skill, with no sign-in, is the bouncer-verify plugin.
 
 ## Skills
 
@@ -15,7 +15,7 @@ claude plugin marketplace add lunox-work/bouncer
 claude plugin install bouncer-hosted@bouncer
 ```
 
-The same marketplace has `bouncer-skill`: Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.
+The same marketplace has `bouncer-verify`: Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.
 
 ## Requirements
 
@@ -39,7 +39,7 @@ same URL as a remote HTTP server.
 ## Data
 
 - **Which plugin reaches the platform:** two plugins, installed separately.
-  `bouncer-skill` bundles no MCP server and its skill runs the CLI on the machine;
+  `bouncer-verify` bundles no MCP server and its skill runs the CLI on the machine;
   installing it asks for no sign-in, and it reaches Lunox's platform only if
   the person runs `bouncer login`, `push` or `ci --platform` themselves
   (below). `bouncer-hosted` bundles the `lunox` MCP server and the
@@ -98,5 +98,5 @@ same URL as a remote HTTP server.
 
 ## Source
 
-This branch holds only the plugins' files: `bouncer-skill` in bouncer-skill/, `bouncer-hosted` in bouncer-hosted/. The CLI, its documentation and the
+This branch holds only the plugins' files: `bouncer-verify` in bouncer-verify/, `bouncer-hosted` in bouncer-hosted/. The CLI, its documentation and the
 skills' source are on the main branch of https://github.com/lunox-work/bouncer. License: MIT.

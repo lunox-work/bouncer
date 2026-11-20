@@ -1,4 +1,4 @@
-# bouncer-skill
+# bouncer-verify
 
 Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in. Hosted mode is the separate bouncer-hosted plugin.
 
@@ -10,7 +10,7 @@ Your agent says it's on the list. He checks. Verify your coding agent's work wit
 
 ```sh
 claude plugin marketplace add lunox-work/bouncer
-claude plugin install bouncer-skill@bouncer
+claude plugin install bouncer-verify@bouncer
 ```
 
 The same marketplace has `bouncer-hosted`: Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server that signs in on first use, and the lunox-contribute skill for invited contributors.
@@ -32,7 +32,7 @@ The plugin bundles no MCP server: installing it asks for no sign-in, and its ski
 ## Data
 
 - **Which plugin reaches the platform:** two plugins, installed separately.
-  `bouncer-skill` bundles no MCP server and its skill runs the CLI on the machine;
+  `bouncer-verify` bundles no MCP server and its skill runs the CLI on the machine;
   installing it asks for no sign-in, and it reaches Lunox's platform only if
   the person runs `bouncer login`, `push` or `ci --platform` themselves
   (below). `bouncer-hosted` bundles the `lunox` MCP server and the
@@ -91,5 +91,5 @@ The plugin bundles no MCP server: installing it asks for no sign-in, and its ski
 
 ## Source
 
-This branch holds only the plugins' files: `bouncer-skill` in bouncer-skill/, `bouncer-hosted` in bouncer-hosted/. The CLI, its documentation and the
+This branch holds only the plugins' files: `bouncer-verify` in bouncer-verify/, `bouncer-hosted` in bouncer-hosted/. The CLI, its documentation and the
 skills' source are on the main branch of https://github.com/lunox-work/bouncer. License: MIT.
