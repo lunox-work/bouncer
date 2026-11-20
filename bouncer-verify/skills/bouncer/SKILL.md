@@ -14,7 +14,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.1 CLI from npm, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.2 CLI from npm, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -25,9 +25,9 @@ Bouncer holds the list and never shows it: from a spec the person confirms, he
 writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
-`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.1`. If `bouncer
+`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.2`. If `bouncer
 --version` prints another version or nothing, ask before installing it (`npm i
--g @lunox-work/bouncer@0.8.1`), or use `npx @lunox-work/bouncer@0.8.1` (in a
+-g @lunox-work/bouncer@0.8.2`), or use `npx @lunox-work/bouncer@0.8.2` (in a
 clone, `node bin/cli.mjs`). `specs/` and `runs/` are in `~/.bouncer/`.
 
 **A new module** is built on its own: TypeScript by default; Python, Go, Rust,
