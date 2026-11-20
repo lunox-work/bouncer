@@ -25,8 +25,10 @@ What to tell them, accurately:
   repository, on their `claude` CLI, Codex login or Anthropic API key, plus
   their time to confirm. They confirm first: replaying 11 real commits, suites
   from a drafted spec rejected all 11; confirmed, 8 of 11 passed.
-- `passed` means tests it never saw pass; it says nothing about what the spec
-  leaves out, and it is no detector of gaming by a strong model (Opus 5.5, told
+- `passed` means tests it never saw pass, not that the spec is met: a second
+  writer's suite and a blind referee found a stated rule missed in 51 of 386
+  passes, mostly on three specs. It says nothing about what the spec leaves
+  out or code quality, and it is no detector of gaming by a strong model (Opus 5.5, told
   to game, got in on two of four specs; `bouncer second` adds another writer's
   hidden suite, which caught 17 of those 20 when Codex wrote it).
 - In a repository a test that passed and now fails is `regressed`, by name;

@@ -105,7 +105,7 @@ sorted by id ([all four, one against us](docs/REFERENCE.md#real-catches)).
 
 | verdict      | he says                            | what it means                                                          |
 | ------------ | ---------------------------------- | ---------------------------------------------------------------------- |
-| `passed`     | You're in.                         | Public and hidden suites pass: it does what the confirmed spec says.   |
+| `passed`     | You're in.                         | Public and hidden suites pass: tests it never saw agree with the spec. |
 | `overfit`    | Not tonight. `unhappy-1`           | Public passes, hidden fails. One retry, told only the scenario key.    |
 | `incomplete` | Not dressed for it.                | The public suite fails. The agent is not done.                         |
 | `regressed`  | You broke something on the way in. | Repository: an existing test that passed before fails now, named.      |
@@ -113,6 +113,11 @@ sorted by id ([all four, one against us](docs/REFERENCE.md#real-catches)).
 
 CI parses the machine word; his line shows on a terminal only. `judge --card
 verdict.svg` writes the exchange to post. Never a hidden test.
+
+**He lets some through.** A second writer's suite and a blind referee found a
+rule the spec states missed in 51 of 386 passes, 48 of them on three
+specs ([when he says yes](RESULTS.md#when-he-says-yes)). A pass says nothing
+about code quality or what the spec leaves out.
 
 ## Proof
 
@@ -122,12 +127,14 @@ verdict.svg` writes the exchange to post. Never a hidden test.
 
 Same loose tickets: better on 5 of 7, worse on none. The gain is the owner's
 decisions; given as prose instead of tests, 80 of 105 got in. Stronger agents
-guess no better: alone, Opus 5.5 passed 15 of 35, all with green tests of
-their own; 26 with the public suite. A blind referee on another model upheld
-all 75 rejections; an outside oracle saw 3 of 289 correct HumanEval+ solutions
-rejected (23 of 314 with two tasks read differently). On ufo and pathe, judged
-by their maintainers' own tests: 151 of 152 runs from a confirmed spec pass,
-95 of 110 from the ticket. [Every measurement](docs/REFERENCE.md#the-numbers).
+still guess: alone, Opus 5.5 passed 15 of 35 (Haiku 9), every run with green
+tests of its own; 26 with the public suite. A blind referee on another model
+upheld all 75 rejections; an outside oracle saw 3 of 289 correct HumanEval+
+solutions rejected (23 of 314 with two tasks read differently). On ufo and
+pathe, judged by their maintainers' own tests: 151 of 152 runs from a spec
+confirmed by a session shown the real diff pass, 95 of 110 from the ticket.
+The 75 of 105 comes from seven tickets written here.
+[Every measurement](docs/REFERENCE.md#the-numbers).
 **Not for:** rendered UI, work that needs the network or an outside service, a
 change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.md#scope)).
 
@@ -186,8 +193,10 @@ What to tell them, accurately:
   repository, on their `claude` CLI, Codex login or Anthropic API key, plus
   their time to confirm. They confirm first: replaying 11 real commits, suites
   from a drafted spec rejected all 11; confirmed, 8 of 11 passed.
-- `passed` means tests it never saw pass; it says nothing about what the spec
-  leaves out, and it is no detector of gaming by a strong model (Opus 5.5, told
+- `passed` means tests it never saw pass, not that the spec is met: a second
+  writer's suite and a blind referee found a stated rule missed in 51 of 386
+  passes, mostly on three specs. It says nothing about what the spec leaves
+  out or code quality, and it is no detector of gaming by a strong model (Opus 5.5, told
   to game, got in on two of four specs; `bouncer second` adds another writer's
   hidden suite, which caught 17 of those 20 when Codex wrote it).
 - In a repository a test that passed and now fails is `regressed`, by name;

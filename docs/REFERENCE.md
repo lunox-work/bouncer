@@ -67,8 +67,9 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 | Agent's own tests green, hidden suite rejects | 75 of 105 runs from a loose ticket (71%); 25 of 404 from a precise spec (6%)                                                                                                                                                                                                                 |
 | Were those rejections right?                  | A blind referee on another model, given the spec, the code and one anonymised test, upheld 95 of 100; Codex as the referee, also 95 of 100                                                                                                                                                   |
 | Does giving the agent a public suite help?    | From a ticket, 81 of 105 pass the hidden suite, against 30 of 105 without: better on 5 of 7 tickets, worse on none (paired t over tickets, p = 0.02). The same decisions as prose, no tests: 80 of 105                                                                                       |
-| Does a stronger agent need it less?           | No. From the ticket alone Opus 5.5 passed 15 of 35, Sonnet 5.5 16, Haiku 9, every run with its own tests green; with the public suite 26, 25 and 26                                                                                                                                          |
-| Judged by tests nobody here wrote?            | On 11 ufo and pathe commits, by the maintainers' own tests: 151 of 152 runs from a confirmed spec pass every one, 95 of 110 from the ticket alone                                                                                                                                            |
+| Does a stronger agent need it less?           | Not much. From the ticket alone Opus 5.5 passed 15 of 35, Sonnet 5.5 16, Haiku 9 (Opus against Haiku p = 0.21), every run with its own tests green; with the public suite 26, 25 and 26                                                                                                      |
+| Judged by tests nobody here wrote?            | On 11 ufo and pathe commits, by the maintainers' own tests: 151 of 152 runs from a confirmed spec pass every one, 95 of 110 from the ticket alone; the specs were confirmed by a session shown the real diff                                                                                 |
+| How often is a pass wrong?                    | Judged again by Codex's suites and refereed blind, 51 of 386 public-suite passes miss a rule the spec requires; 48 of the 51 are on three specs, 22 rest on one ruling. Sonnet's second suites catch 0 of 13 of them, Codex's 13                                                             |
 | Does the hidden suite resist gaming?          | Haiku: 21 of 21 gamed submissions rejected (20 hard-coded its inputs). Opus 5.5 on the 4 specs mutants survive most: 20 of 20 rejected on two, 0 of 20 on the other two, where an audit finds a skipped rule in 18                                                                           |
 | False rejects, against an outside oracle      | 3 of 289 correct HumanEval+ solutions, or 23 of 314 counting two tasks the suite read differently from the oracle (one holds a `-> int` function to returning an int); wrong ones accepted 4.8% vs 15.0% by HumanEval's own tests                                                            |
 | Does it depend on Claude writing the suites?  | Codex CLI wrote the 26 specs' suites: 99.4% of its hidden tests survive calibration on Claude's reference, and both suites kill 80.6% of 1,442 mutants against Claude's 79.2%; on EvalPlus they accept 3.8% of wrong solutions against 4.8%                                                  |
@@ -314,8 +315,12 @@ tests for $0.014.
 
 ## What a verdict means
 
-- **`passed`**: the public and hidden suites both pass. The code does what the
-  confirmed spec says, as judged by tests the agent never saw.
+- **`passed`**: the public and hidden suites both pass: tests the agent never
+  saw agree with the confirmed spec. Not proof the spec is met: a second
+  writer's suite and a blind referee found a stated rule missed in 51 of 386
+  archive passes, 48 of the 51 on three specs
+  ([When he says yes](../RESULTS.md#when-he-says-yes)). Nothing about code
+  quality or what the spec leaves out.
 - **`overfit`**: the public suite passes, the hidden suite does not. Either the
   code misses a stated rule (one retry, told only the scenario keys) or the
   hidden test reads an open question one way: decide it in the spec and

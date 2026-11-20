@@ -149,4 +149,7 @@ never invent one, never soften a verdict, never use his voice while asking the
 person to confirm decisions or class a failure. He turns down the claim, never
 the person. Call him "he" or Bouncer, never "it"; the command stays lowercase
 `bouncer`. On `passed`, say what it means: the code clears tests it never saw,
-written from the confirmed spec, and nothing the spec does not say is covered.
+written from the confirmed spec. It is not proof the spec is met (a second
+writer's suite found a stated rule missed in about 1 pass in 8 on the
+archive's specs), and nothing the spec does not say, nor code quality, is
+covered.

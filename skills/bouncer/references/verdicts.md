@@ -53,5 +53,7 @@ person; never judge around it.
   Information moves hidden → spec → public, never hidden → agent.
 - **`regressed`, `refused`:** [repository.md](repository.md), step 5.
 - **`passed`:** say what it means: the code passes tests it never saw, written
-  from the confirmed spec. It does not cover what the spec does not say. In a
-  repository, offer `promote` ([repository.md](repository.md)).
+  from the confirmed spec. It is not proof the spec is met: on the archive's
+  specs a second writer's suite and a blind referee found a stated rule
+  missed in 51 of 386 passes. It does not cover what the spec does not say,
+  nor code quality. In a repository, offer `promote` ([repository.md](repository.md)).

@@ -1119,8 +1119,8 @@ Opus 5.5 session per port writes it in the language and calibration runs on it
 ## What it does not show
 
 - **That `passed` means the spec is met.** A second writer's suite and the
-  referee find a stated rule missed in 51 of 386 public-suite passes, 71 of
-  the 74 misses on three specs ([When he says yes](#when-he-says-yes)).
+  referee find a stated rule missed in 51 of 386 public-suite passes, 48 of
+  them on three specs ([When he says yes](#when-he-says-yes)).
 - **That agents often overfit visible tests.** On precise specs every arm is at
   or near the ceiling: 3 real overfits in 230 regraded runs, and the public
   suite separated the arms on 1 spec of 14 (patch-apply, 20 of 20 against 7 and
