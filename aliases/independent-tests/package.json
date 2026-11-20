@@ -1,8 +1,9 @@
 {
   "name": "independent-tests",
-  "version": "0.3.1",
-  "description": "Renamed to duediligence: hidden, calibrated test suites for AI coding agents. This package runs duediligence.",
+  "version": "0.8.0",
+  "description": "Renamed to @lunox-work/bouncer: hidden, calibrated test suites for AI coding agents. This package runs bouncer.",
   "keywords": [
+    "bouncer",
     "duediligence",
     "ai-agents",
     "coding-agents",
@@ -10,13 +11,13 @@
     "test-generation",
     "evaluation"
   ],
-  "homepage": "https://github.com/lunox-work/duediligence#readme",
+  "homepage": "https://github.com/lunox-work/bouncer#readme",
   "bugs": {
-    "url": "https://github.com/lunox-work/duediligence/issues"
+    "url": "https://github.com/lunox-work/bouncer/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lunox-work/duediligence.git",
+    "url": "git+https://github.com/lunox-work/bouncer.git",
     "directory": "aliases/independent-tests"
   },
   "license": "MIT",
@@ -29,7 +30,7 @@
     "bin/"
   ],
   "dependencies": {
-    "duediligence": "^0.3.0"
+    "@lunox-work/bouncer": "^0.8.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.0.0"
