@@ -72,7 +72,10 @@ const REPO = "lunox-work/bouncer";
  * one's files, MCP server included.
  */
 const PLUGINS = [
-  { name: NAME, dir: NAME, manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
+  // `bouncer-skill`, not `bouncer`: the Claude plugin directory holds the name
+  // "bouncer" for an existing publisher of that name (validation, 2026-11-20).
+  // The skill inside is still `bouncer`, and displayName reads "bouncer".
+  { name: `${NAME}-skill`, dir: `${NAME}-skill`, manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
   {
     name: `${NAME}-hosted`,
     dir: `${NAME}-hosted`,

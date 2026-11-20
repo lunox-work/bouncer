@@ -216,7 +216,7 @@ In Claude Code, the repository is also a plugin marketplace:
 
 ```
 /plugin marketplace add lunox-work/bouncer
-/plugin install bouncer@bouncer
+/plugin install bouncer-skill@bouncer
 ```
 
 The local plugin has no MCP server and asks for no sign-in. Lunox's hosted
