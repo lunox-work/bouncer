@@ -1,7 +1,7 @@
 {
   "name": "bouncer-hosted",
   "displayName": "bouncer hosted",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server, after sign-in, works with the person's workspace (bounties, sandboxes and verdicts from hidden tests kept on the platform), with the lunox-contribute skill for invited contributors. The local skill, with no sign-in, is the bouncer plugin.",
   "author": {
     "name": "Charlie Angriawan",

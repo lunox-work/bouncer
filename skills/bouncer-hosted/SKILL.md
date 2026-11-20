@@ -14,7 +14,7 @@ license: MIT
 compatibility: >-
   Needs the lunox MCP server (bundled by the bouncer-hosted Claude Code plugin)
   signed in through /mcp. Posting a spec from a terminal runs the
-  @lunox-work/bouncer@0.8.0 CLI from npm (Node 20.19 or later).
+  @lunox-work/bouncer@0.8.1 CLI from npm (Node 20.19 or later).
 ---
 
 # bouncer-hosted
@@ -24,7 +24,7 @@ Claude Code plugin bundles the server; `/mcp` signs in), they work on the
 person's workspace on the Lunox platform. Local mode, the `bouncer` skill, is
 the default and needs no sign-in; this skill does not change it.
 
-`bouncer <command>` below is the CLI, `@lunox-work/bouncer@0.8.0`; the
+`bouncer <command>` below is the CLI, `@lunox-work/bouncer@0.8.1`; the
 `bouncer` skill says how to install it.
 
 ## Tools
