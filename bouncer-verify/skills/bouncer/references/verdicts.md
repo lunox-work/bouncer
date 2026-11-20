@@ -13,11 +13,12 @@
 
 **Grading someone else's work** (a contractor, a candidate, a bounty): after
 `0`, offer `bouncer second <slug>`, a second hidden suite from another writer
-(Codex; one more session, cents to a dollar). Without Codex it refuses: a
-Claude-written second suite caught 0 of 13 passes missing a stated rule that
-Codex's caught, so `--backend claude-cli` only if the person accepts that.
+(Codex on the person's Codex login; one more session of several minutes,
+billed to their Codex plan). Without a Codex login it refuses: a
+Claude-written second suite caught 0 of 13 passes missing a stated rule,
+Codex's 11 to 13, so `--backend claude-cli` only if the person accepts that.
 `judge` then needs both. Against Opus told to game, Codex's second suite
-caught 17 of the 20 passes the first let through, a Sonnet one 10; it about
+caught 16 to 17 of the 20 passes the first let through, a Sonnet one 10; it about
 doubles false rejects (HumanEval+: 6 of 289 against 3), so it is the
 person's choice, and only for new modules.
 
@@ -27,12 +28,12 @@ It prints the verdict, the counts, the failing scenario keys (such as
 `unhappy-2`) and the hidden suite's sha256, the one the handout's brief
 showed.
 
-| exit | verdict                                              |
-| ---- | ---------------------------------------------------- |
-| 0    | `passed`                                             |
+| exit | verdict                                                     |
+| ---- | ----------------------------------------------------------- |
+| 0    | `passed`                                                    |
 | 2    | `overfit`: the public suite is green, the hidden one is not |
-| 3    | `regressed` (repository only)                        |
-| 1    | `incomplete` (public fails), `refused`, or not judged |
+| 3    | `regressed` (repository only)                               |
+| 1    | `incomplete` (public fails), `refused`, or not judged       |
 
 **Hidden suite changed.** If the hidden suite changed since it was committed,
 the judge refuses (exit 1, `hidden suite changed since <at>`). Tell the
@@ -53,9 +54,10 @@ person; never judge around it.
     it in `spec.md` and go back to step 2.
 
   Information moves hidden → spec → public, never hidden → agent.
+
 - **`regressed`, `refused`:** [repository.md](repository.md), step 5.
 - **`passed`:** say what it means: the code passes tests it never saw, written
   from the confirmed spec. It is not proof the spec is met: on the archive's
-  specs a second writer's suite and a blind referee found a stated rule
-  missed in 51 of 386 passes. It does not cover what the spec does not say,
+  specs a second writer's suite and two blind referees found a stated rule
+  missed in 50 of 386 passes. It does not cover what the spec does not say,
   nor code quality. In a repository, offer `promote` ([repository.md](repository.md)).
