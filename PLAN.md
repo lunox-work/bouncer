@@ -87,6 +87,26 @@ a real run of the ID-comment workflow and of `prepare --hosted` against the
 live platform, and the launch posts (drafts in ../../bouncer-launch.md, outside
 the repository).
 
+Strengthening pass, 2026-11-20 afternoon (commits 36e7986..0ddb31c, local):
+
+- **Claims.** The referee now covers the 75 loose-ticket rejections: all
+  upheld, 4 broke the ticket, 71 guessed where it was silent. The public
+  suite's gain is quoted by ticket (5 of 7 better, none worse); HumanEval+
+  false rejects as 3 of 289 and 23 of 314; the npx and clone row is filled.
+- **Stronger agents** (evidence/stronger/): from the ticket alone Haiku 9,
+  Sonnet 16, Opus 15 of 35, every run's own tests green; with the public
+  suite 26, 25, 26.
+- **Maintainers' tests** (ufo, pathe): 151 of 152 confirmed-spec runs pass
+  them; 95 of 110 from the ticket alone.
+- **Skill.** `confirm --by` refuses with no answer from the person since the
+  listing (two-turn and no-person gates hold); `confirm` lists the kinds
+  drafts miss most first; `bouncer second` adds another writer's hidden suite
+  (Sonnet's caught 10 of 20 gaming passes, Codex's 17).
+- **Failed its bar, not shipped:** executed picks in `bouncer id` (55 of 75
+  against 57, 3 false alarms; evidence/ID.md).
+- **Needs you:** person-timed confirmations, and more tickets with specs their
+  owner writes (do both at once: 13 real tickets, you confirm each spec).
+
 Not built: overlapping the reference session with the suite writers (phase 3's
 "cut the wait"). The reference reads both suites today; writing it alongside
 them changes what calibrates the hidden suite and needs its own gate.
