@@ -8,38 +8,88 @@ Sources: this repository at a69ab1d (0.7.0), RESULTS.md, and Roshan's Notion
 note "Look through duediligence readme" (V1 keywords and About box, V2
 teardown, V3 the bouncer persona).
 
-## Progress (2026-11-19, local commits on main, not pushed or published)
+## Progress (2026-11-20, local commits on main, not pushed or published)
 
-Landed: the persona's lines (bin/voice.mjs: judge, prepare, CI title), the
-mark and every README image redrawn (assets/src/), `judge --card`, the README
-in his voice with docs/REFERENCE.md, the skill split (SKILL.md 149 lines,
-references/, `bouncer-hosted` as its own plugin), `bouncer door`, `bouncer id`,
-the after-the-fact flow (skills/bouncer/references/check.md), the CLI help
-tidy-up.
+Landed 2026-11-19: the persona's lines (bin/voice.mjs: judge, prepare, CI
+title), the mark and every README image redrawn twice (assets/src/; the first
+try, a floating visor and a dot chart, had no character), `judge --card`, the
+skill split (`bouncer-hosted` as its own plugin), `bouncer door`,
+`bouncer id`, the CLI help tidy-up.
 
-A second pass the same day: the mark and the hero were redrawn (the first try,
-a floating visor and a dot chart, had no character; see [The look](#the-look)),
-and `door`, `id` and `--card` were fixed for long transcripts, large diffs
-and Windows.
+Landed 2026-11-20:
+
+- **The repository.** README at 200 lines, the grading section, real catches,
+  comparison and full FAQ moved to docs/REFERENCE.md; the agent section shorter
+  and still verbatim with AGENTS.md; one tagline in package.json, plugin.json,
+  marketplace.json and the About box; the About box topics from Roshan's V1
+  list (`due-diligence` dropped); SECURITY.md, CONTRIBUTING.md and private
+  vulnerability reporting; `experiments/` (3,914 files, 131 MB) moved to
+  [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence), tracked
+  files 6,604 to 2,690.
+- **Phase 2 reach, the pull-request form:** `bouncer id-comment` and
+  .github/workflows/id-comment.yml. On the 11 replayed commits: one comment per
+  pull request, 0 of 671 hidden test names, no check or status call. Its lists
+  there are stand-ins, and it has not run on a real runner.
+- **Phase 3, `bouncer check`:** door, base and package from the change, fit,
+  the ID check, a drafted spec; exit 3 until the person confirms; a rerun
+  prepares and judges, and refuses to judge another task's change.
+- **Phase 4:** the badge (docs/REFERENCE.md "In CI").
+- **Phase 5:** fit's discovery fixes (vitest includes, `__tests__`, workspace
+  globs, a byte-order mark, vitest from scripts or the root config, pytest
+  testpaths and python_files, a root tsconfig) and installs without a lockfile
+  resolved as of the commit's date.
+- **Carried over:** `prepare --hosted` and `judge --platform`, tested against
+  a fake of the platform's routes only.
 
 Measured, and what it changed:
 
 - **Phase 0 failed its gate** (evidence/DOOR.md): any rule fired on 8.7% of
-  127 real sessions that claimed done, and a model-judged check upheld 1 of 50
-  firings. Per the kill rule the door is not the hero, and it ships as a report
-  only: no Stop hook, no voice on its findings, never blocks.
-- **Phase 2 (the ID check) is the hero**: on a 10-run sample, a failing
-  decision was in the list for 10 of 10 rejected runs (25 of 28 scenarios),
-  16 s median, $0.07 a run (over the $0.05 bar), model-judged
-  (evidence/ID.md). A blind full pass over the 75 rejected runs is next, then
-  its reach steps (other languages, a pull-request comment).
+  127 real sessions; a model-judged check upheld 1 of 50 firings. The door
+  ships as a report only.
+- **Phase 2 passes as registered on coverage, and the claim is pointing**
+  (evidence/ID.md): on all 75 rejected runs, judged blind to the outcome, a
+  failing scenario is matched in 74; passing ones are matched as often (88%
+  against 86%), so coverage says little alone. A pick the judge called wrong
+  had failed its scenario 70 of 70 times, no false alarm in 306, and a wrong
+  pick is named in 57 of 75 runs. 17 s median; $0.061 a list, **over the $0.05
+  bar**. Person time not measured.
+- **Phase 2 reach, other languages, holds** (evidence/ID.md): duration-parse
+  in Python, Go and Rust, 45 loose-ticket Haiku runs, all rejected; a failing
+  scenario in the list for 44 of 45 (kill rule at 90% does not fire), wrong
+  picks 103 of 103 on failures and 0 of 227 on passes, named in 35 of 45 runs
+  (Go 5 of 15). One spec only.
+- **Phase 3's gate fails on time; verdicts agree on 20 of 23** (RESULTS.md
+  "In an existing repository"): `check`'s path passes 8 of 11 replayed
+  commits, as the confirmed arm, and 12 of 12 on ufo and pathe; commit by
+  commit 20 of 23 agree. jira-spec's draft first named a private helper and
+  did not compile (drafter fixed in 9423811, rerun). Median 11.0 minutes
+  from the list to a prepared spec (15.8 on sandbox-factory), against 8.
+- **Phase 4's gate holds** (evidence/card.json): no hidden test title in a card
+  built from any of the 22 stored CI verdicts, nor in their logs and checks
+  (1,278 titles); `--json` and piped output byte-identical to 0.7.0.
+- **Phase 5** (RESULTS.md "Which repositories fit"): static checks on 50
+  popular libraries, 27 supported before the fixes, 43 after (+32 points);
+  65% of 549 recent source commits land in one supported package.
+  Installed and run: 28 of the 42 measured (TypeScript 7 of 17, Python 21 of
+  25); 8 TypeScript monorepos passed this machine's 1 GB process cap and are
+  not counted. Three `fit` install bugs found and fixed on the way.
+- **The skill's gates hold:** a router run of the 40-prompt trigger set, 19 of
+  20 and 20 of 20 (evidence/skill-triggers.json); a fresh agent with only the
+  skill folder took duration-parse from confirmation to `passed` with 0 audit
+  findings (evidence/skill-gate.json); `claude plugin validate` passes both
+  plugins of the claude-plugin layout with nothing to report.
 
-Not done, each needing a decision or an outside action: push and publish
-(npm 0.8.0 needs the passkey; the plugin branch rebuilds on push); the About
-box topics and the social preview (hero.png); phase 3's gate (same verdicts on
-the 11 replayed commits, run through check.md); phase 5's fit funnel, which
-runs 50 third-party test suites on this machine; the evidence move to a
-separate repository; `prepare --hosted` and `judge --platform`.
+Not done, each needing you: publish npm 0.8.0 (passkey), push `main` (the
+plugin branch rebuilds on push), the social preview (Settings, hero.png; this
+browser is not signed in to GitHub), the plugin directory's icon (filed
+2026-11-12 with the old icon), person minutes (needs people confirming specs),
+a real run of the ID-comment workflow and of `prepare --hosted` against the
+live platform, and the launch posts (drafts in ../../bouncer-launch.md, outside
+the repository).
+
+Not built: overlapping the reference session with the suite writers (phase 3's
+"cut the wait"). The reference reads both suites today; writing it alongside
+them changes what calibrates the hidden suite and needs its own gate.
 
 ## Where it stands
 

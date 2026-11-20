@@ -261,6 +261,37 @@ none was.
   step-holds run, broken by hand, was graded `incomplete`; one retry told only
   its three scenario keys passed it.
 
+**`bouncer check`'s path on the same commits** (2026-11-20, phase 3's gate).
+A third arm takes the path `check` takes: `bouncer id` on the commit's diff,
+a draft from the ticket and that list (bin/check.mjs `DRAFT_ADDENDUM`), the
+same developer session confirming it, then `prepare` and the real commit.
+Run on these 11 commits and on the 12 ufo and pathe commits below.
+
+| the real commit, judged by suites written from         | sandbox-factory: passed | hidden tests passed | ufo and pathe: passed | hidden tests passed |
+| ------------------------------------------------------ | ----------------------: | ------------------: | --------------------: | ------------------: |
+| the spec confirmed by its developer                    |                  8 / 11 |           659 / 665 |               12 / 12 |           472 / 472 |
+| `check`'s path, as registered                          |              **8 / 11** |           629 / 734 |                     - |                   - |
+| `check`'s path, the drafter given the change (9423811) |              **8 / 11** |           722 / 728 |           **12 / 12** |           614 / 614 |
+
+- **Same count, not the same commits.** As registered, 9 of the 11
+  verdicts agree, one by accident: jira-spec's `incomplete` was a compile
+  failure. Its draft named `adfToText`, which the commit keeps private, as
+  part of the interface, and the developer session confirmed it; the
+  drafting session never saw the diff. It now gets the change, to read the
+  interface from, and jira-spec's rerun compiles and is `overfit` on one
+  hidden test (the confirmed arm: `incomplete`). Either way ticket-content
+  passed where the confirmed arm found an overfit, and context-sources was
+  overfit (one hidden test) where it passed. So 8 of 11 agree after the fix,
+  and 12 of 12 on ufo and pathe, run with the fix: 20 of 23.
+- **Time misses the bar.** From the list to a prepared spec took 11.0
+  minutes at the median over the 23 (6.6 to 26.3) against 8: 15.8 on
+  sandbox-factory, 9.5 on ufo, 8.3 on pathe. Preparing the suites is most of
+  it. The developer here is a model session, so person time is not in it.
+  Median cost $3.01, $1.89 and $2.07 a commit.
+- ufo-join-relative's reference broke 13 existing `joinURL` tests; the real
+  commit changed that behaviour on purpose and edited the same tests, so the
+  judge excused them, as on the confirmed arm.
+
 ## In repositories not written here
 
 The same arm on two public repositories, 2026-10-26: unjs/ufo (URL utilities)
