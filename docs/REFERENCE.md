@@ -351,8 +351,8 @@ tests for $0.014.
 
 - **`passed`**: the public and hidden suites both pass: tests the agent never
   saw agree with the confirmed spec. Not proof the spec is met: a second
-  writer's suite and a blind referee found a stated rule missed in 51 of 386
-  archive passes, 48 of the 51 on three specs
+  writer's suite and two blind referees (Fable, Codex) found a stated rule
+  missed in 50 of 386 archive passes, most on three specs
   ([When he says yes](../RESULTS.md#when-he-says-yes)). Nothing about code
   quality or what the spec leaves out.
 - **`overfit`**: the public suite passes, the hidden suite does not. Either the
