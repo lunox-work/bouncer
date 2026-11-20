@@ -18,11 +18,12 @@ session.
 
 ## House rules
 
-- **Measured numbers only.** Every number in the README, RESULTS.md or the
-  skill comes from a run recorded in `evidence/` or the archive,
-  [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence) (`sh scripts/fetch-evidence.sh`
-  clones it as `experiments/`). Say which
-  run, and state the caveat beside the number (model, spec count, runs).
+- **Measured numbers only.** Every number in the README, docs/RESULTS.md or
+  the skill comes from a run recorded in
+  [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence)
+  (`sh scripts/fetch-evidence.sh` clones it as `evidence/`; new runs are
+  committed there, not here). Say which run, and state the caveat beside the
+  number (model, spec count, runs).
 - **The skill and its version pins move together.** After changing
   `skills/bouncer/SKILL.md`, run `npm run skill:sync`, then
   `npm run skill:check`.

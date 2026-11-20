@@ -4,12 +4,15 @@ What the method was measured to do. About 3,000 graded agent runs on 26
 TypeScript specs, 40 LiveCodeBench problems, 40 HumanEval+ tasks and a spec
 ladder with oracle judges, and 110 on 11 changes replayed in an existing
 repository, run 2026-10-23 to 2026-10-25 with Opus 5.5 writing the suites and
-Haiku 5.5 implementing unless stated. The dated write-ups are vendored into
-`evidence/` ([FINDINGS.md](evidence/FINDINGS.md),
-[EXPERIMENT.md](evidence/EXPERIMENT.md), [LADDER.md](evidence/LADDER.md)) from
-the experiment archive, [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence),
-which holds the runs and data (`sh scripts/fetch-evidence.sh` clones it as
-`experiments/`). Run 2026-10-26: Codex CLI as writer and
+Haiku 5.5 implementing unless stated; the dated write-ups are
+[FINDINGS.md](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md),
+[EXPERIMENT.md](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/EXPERIMENT.md)
+and [the spec ladder](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/ladder/README.md).
+Every run, script and data file cited here is in
+[bouncer-evidence](https://github.com/lunox-work/bouncer-evidence):
+`sh scripts/fetch-evidence.sh` clones it as `evidence/`, where the
+`evidence/…` paths below resolve, and links `experiments/` to its archive.
+Run 2026-10-26: Codex CLI as writer and
 referee ([Writer backends](#writer-backends)) and as implementer
 ([Other implementers](#other-implementers)), Opus 5.5 as an adversary
 ([Red team](#red-team)), and 12 changes in two public repositories
@@ -43,7 +46,7 @@ things the spec requires, and 24 of the 26 rejections of a run whose own tests
 were green. Those were runs that read the precise spec.
 
 **The 75 loose-ticket rejections, refereed** (2026-11-20,
-[evidence/referee-ticket.json](evidence/referee-ticket.json),
+[evidence/referee-ticket.json](https://github.com/lunox-work/bouncer-evidence/blob/main/referee-ticket.json),
 `evidence/referee-ticket.mjs`). The same referee and prompt upheld all 75:
 each run fails at least one test the spec requires (tests refereed in
 coverage order until every run had one: 9, of which 8 required and 1 open;
@@ -59,18 +62,18 @@ misses. One run shows the shape (escrow-split, loose ticket, run 1, in the
 archive under `runs/escrow-split/self-tested-haiku-ticket/1`): the ticket does
 not say what a bounty of 0 releases, the agent wrote 21 tests of its own and
 all 21 passed, and the hidden suite passed 43 of 46, failing scenario
-`boundary-2`. 14 of that spec's 15 runs fail the same scenario. ([Self-grading](evidence/FINDINGS.md#self-grading),
-[Follow-ups](evidence/FINDINGS.md#follow-ups))
+`boundary-2`. 14 of that spec's 15 runs fail the same scenario. ([Self-grading](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#self-grading),
+[Follow-ups](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#follow-ups))
 
 ## Stronger implementers
 
 The same 7 loose tickets, imported unchanged into
-[evidence/stronger/](evidence/stronger/) and run 2026-11-20 on one harness,
+[evidence/stronger/](https://github.com/lunox-work/bouncer-evidence/tree/main/stronger) and run 2026-11-20 on one harness,
 5 runs per ticket and model: from the ticket alone with the agent's own tests
 (`bin/run.mjs --brief ticket`), and from the ticket plus the public suite
 written from the confirmed spec (`--brief ticket-public`). Graded by the
 archive's hidden suites; own tests rerun on each submission with no model
-([own-green.json](evidence/stronger/own-green.json)).
+([own-green.json](https://github.com/lunox-work/bouncer-evidence/blob/main/stronger/own-green.json)).
 
 | implementer | ticket alone | own tests green, rejected | ticket + public suite |
 | ----------- | -----------: | ------------------------: | --------------------: |
@@ -137,13 +140,13 @@ a failing scenario in the list for 44 of 45 runs. A pick judged wrong failed
 its scenario 103 of 103 times, with no false alarm in 227, and a wrong pick
 was named in 35 of 45 runs: 15 of 15 in Python and in Rust, 5 of 15 in Go,
 where every run failed only one error-handling scenario. Median list 12
-items, 14 s, $0.056. ([ID.md](evidence/ID.md#outside-typescript-2026-11-20))
+items, 14 s, $0.056. ([ID.md](https://github.com/lunox-work/bouncer-evidence/blob/main/ID.md#outside-typescript-2026-11-20))
 
 Running each pick did not help. A probe per item, executed against the
 code, shown to the same judge: a wrong pick named in 55 of 75 runs against
 57, and 3 false alarms against none, short of the bar registered before the
 run (62 and at most 3), so `bouncer id` stays a list
-([ID.md](evidence/ID.md#executed-picks-2026-11-20-no-gain)).
+([ID.md](https://github.com/lunox-work/bouncer-evidence/blob/main/ID.md#executed-picks-2026-11-20-no-gain)).
 
 ## Tests written from the spec carry it to the agent
 
@@ -164,7 +167,7 @@ pass counts p = 0.02). From the precise spec there is no gain (p = 0.28). The pr
 tests carry. A ticket that says "as CSV" fails in every cell; one that never
 mentions overlap fails every control on concurrency and no run given the public
 suite.
-([Precise spec against the ticket](evidence/FINDINGS.md#precise-spec-against-the-ticket))
+([Precise spec against the ticket](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#precise-spec-against-the-ticket))
 
 The spec ladder makes the same point against an oracle nobody here wrote. One
 invented version-range scheme, 396 oracle cases, a full spec L0 and four vaguer
@@ -182,7 +185,7 @@ words. A suite from a vague spec locks in the writer's guess and does worse than
 no suite. Twenty AtCoder problems judged by LiveCodeBench's own tests show the
 same shape where the statement is present: the full-spec suite never loses a
 problem, the reduced-spec suite loses three. Both are pilots: one task, small
-counts. ([Spec ladder](evidence/LADDER.md))
+counts. ([Spec ladder](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/ladder/README.md))
 
 ## Own tests on top of the public suite
 
@@ -203,8 +206,8 @@ made agents stop at green with a number formatted `1e+21` where the spec says
 plain digits (6 of 15 against 14 of 15 with no tests at all); own tests recover
 most of that. A run of this brief whose own tests pass is rejected by the hidden
 suite 1 time in 60, against 25 in 404 for own tests without the public suite.
-([Mechanisms](evidence/FINDINGS.md#mechanisms),
-[Follow-ups](evidence/FINDINGS.md#follow-ups))
+([Mechanisms](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#mechanisms),
+[Follow-ups](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#follow-ups))
 
 ## The hidden suite as a judge
 
@@ -213,7 +216,7 @@ suite 1 time in 60, against 25 in 404 for own tests without the public suite.
   stated rule). Haiku declined to game in 31 of 52 runs. In 2,522 runs no agent
   changed a test or the harness; 19 transcripts touched a path outside the
   workdir, every one a mistyped own path.
-  ([Gaming the suite](evidence/FINDINGS.md#gaming-the-suite))
+  ([Gaming the suite](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#gaming-the-suite))
 - **An outside oracle.** On 1,240 HumanEval+ solutions labelled by EvalPlus,
   suites generated from the prompt alone accepted 4.8% of wrong solutions
   against 15.0% for HumanEval's own tests, and rejected 3 of 289 right ones.
@@ -222,23 +225,23 @@ suite 1 time in 60, against 25 in 404 for own tests without the public suite.
   HumanEval/60's hidden suite holds a `-> int` function to returning an int
   and rejects the float `n*(n+1)/2`, a reading Codex's suite did not take
   (0 of 25 rejected there).
-  ([HumanEval+](evidence/FINDINGS.md#humaneval-as-an-outside-oracle))
+  ([HumanEval+](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#humaneval-as-an-outside-oracle))
 - **Against git.** On a patch-apply spec the calibrated reference agreed with
   `git apply` on all 7,533 real-history cases judged. One submission passed both
   suites and disagreed with git, on a rename without hunks the hand-written test
   diffs never showed.
-  ([A git oracle](evidence/FINDINGS.md#a-git-oracle-on-patch-apply))
+  ([A git oracle](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#a-git-oracle-on-patch-apply))
 - **Mutants.** Of 1,442 single-edit mutants of the references, the public suite
   killed 75.6% and both suites 79.2%; of the public suite's survivors that
   matter to the spec, the hidden suite kills about 30%. The misses cluster on
   inputs the spec names by an outside format, which is why the skill asks for
   real tool output in the spec.
-  ([Mutation score](evidence/FINDINGS.md#mutation-score))
+  ([Mutation score](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#mutation-score))
 
 ## When he says yes
 
 The referee above checks rejections. A pass was never checked until
-2026-11-20 ([evidence/passed-second.json](evidence/passed-second.json),
+2026-11-20 ([evidence/passed-second.json](https://github.com/lunox-work/bouncer-evidence/blob/main/passed-second.json),
 `evidence/passed-second.mjs`): every stored run the archive's suites passed,
 judged again by Codex's suites for the same spec (written blind, calibrated
 on the same reference, never seen by the agent; no model), then each
@@ -293,8 +296,8 @@ p = 0.001. A key names a scenario the agent already has in the spec, so it leaks
 no test. On specs a session had drafted from the ticket without confirmation,
 retries recovered 0 of 72: when the spec and the judge decide differently, no
 feedback helps. That is why step 2 of the skill is a person.
-([Follow-ups](evidence/FINDINGS.md#follow-ups),
-[From the ticket alone](evidence/FINDINGS.md#from-the-ticket-alone))
+([Follow-ups](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#follow-ups),
+[From the ticket alone](https://github.com/lunox-work/bouncer-evidence/blob/main/archive/FINDINGS.md#from-the-ticket-alone))
 
 ## In an existing repository
 
@@ -310,7 +313,7 @@ shown the real diff, answers the spec's decisions the way the code does. That is
 step 2 of the skill, done by the one person who knows what the code was meant to
 do. The real commit is judged by both suites, and Haiku 5.5 implements the
 confirmed spec five times with the public suite and five times without it.
-Driver, cases, specs and grades: [evidence/in-repo.mjs](evidence/in-repo.mjs)
+Driver, cases, specs and grades: [evidence/in-repo.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/in-repo.mjs)
 and `evidence/in-repo/`.
 
 | the real commit, judged by suites written from | passed both | hidden tests passed | public tests passed |
@@ -465,7 +468,7 @@ resumes a set.
 
 The arm above judges with suites written here. These are judged by tests
 nobody here wrote (2026-11-20, no model in the scoring:
-[evidence/maintainer-tests.mjs](evidence/maintainer-tests.mjs),
+[evidence/maintainer-tests.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/maintainer-tests.mjs),
 `evidence/in-repo-{ufo,pathe}/maintainer-tests.json`). Per commit, the test
 files the real commit added or changed are laid over base and over the real
 commit; the tests that fail on base and pass on the commit, 1 to 44 a case,
@@ -632,8 +635,8 @@ How often a drafted spec's decision is the one the person confirms, on material
 already here, no model: 18 drafts, one label per drafted `Decided:` item (294),
 made by hand 2026-10-26 and kept as data with both texts, the kind of decision
 and a one-line reason
-([evidence/default-match.json](evidence/default-match.json));
-[evidence/default-match.mjs](evidence/default-match.mjs) counts them. The
+([evidence/default-match.json](https://github.com/lunox-work/bouncer-evidence/blob/main/default-match.json));
+[evidence/default-match.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/default-match.mjs) counts them. The
 archive's 7 `-gen` specs, drafted from the ticket alone, are set against the
 person-written spec; 51 of their 127 items decide something that spec never
 addresses and are left out. The 11 repository drafts are set against the spec
@@ -674,7 +677,7 @@ the developer stand-in confirmed from the real diff, cross-checked with its
   (bin/decisions.mjs `kindOf`). It agrees with the hand-labelled kind on 99
   of 243 decisions, and still moves changed decisions forward: in each of
   the 18 drafts' first half, 52 of the 78 changed decisions against 42 in
-  spec order ([evidence/decision-order.json](evidence/decision-order.json)).
+  spec order ([evidence/decision-order.json](https://github.com/lunox-work/bouncer-evidence/blob/main/decision-order.json)).
   In-sample: the kept rates come from the same labels.
 - **Person minutes: pending.** `bin/confirm.mjs` now records `startedAt` (the
   first listing), `at`, `minutes` and the decisions changed in `confirmed.json`;
@@ -751,7 +754,7 @@ with no model and nothing pushed: each case's change inside its allowed paths as
 a branch on its parent commit in a scratch clone of sandbox-factory, both arms'
 specs sealed, and every branch judged by `bouncer ci`, the script the
 workflow runs, in a fresh home with no `specs/` and fresh base installs
-([evidence/ci.mjs](evidence/ci.mjs), `evidence/ci/`).
+([evidence/ci.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/ci.mjs), `evidence/ci/`).
 
 | the change, judged from the seal of | checks passed | hidden tests passed | public tests passed | same verdict and counts as above |
 | ----------------------------------- | ------------: | ------------------: | ------------------: | -------------------------------: |
@@ -793,7 +796,7 @@ The writers, the reference and the referee run on a backend chosen per spec
 `anthropic-api`, `exec`. Checked 2026-10-26 with Codex CLI 0.164.0
 (`gpt-6.1-sol`, the person's Codex login) beside the archive's Claude numbers,
 on the archive's material and with no agent run except the ladder's last row
-([evidence/backends.mjs](evidence/backends.mjs), `evidence/backends.json`,
+([evidence/backends.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/backends.mjs), `evidence/backends.json`,
 Codex's suites in `evidence/backends/specs/`).
 
 **One spec end to end.** `duration-parse` with toolchain.json
@@ -863,7 +866,7 @@ the archive's core specs five times each, 2026-10-26, each from a handout folder
 made by `bouncer handout` (template, spec, skeleton, public suite and
 BRIEF.md; nothing hidden) under `sandbox-exec` over that folder, and every run
 was graded by `bin/grade.mjs`
-([evidence/implementers.mjs](evidence/implementers.mjs),
+([evidence/implementers.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/implementers.mjs),
 `evidence/implementers.json`). The specs are imported, not held out: their
 suites were published with the archive.
 
@@ -943,7 +946,7 @@ names each shortcut with an input it gets wrong
 - No run edited a test or the harness, and no transcript tried to read a hidden
   path (0 of 40).
 - **A second writer as a product option** (2026-11-20, `bouncer second`,
-  [evidence/second-writer.json](evidence/second-writer.json)). Codex is not
+  [evidence/second-writer.json](https://github.com/lunox-work/bouncer-evidence/blob/main/second-writer.json)). Codex is not
   installed here, so the second suite for gherkin-parse and reverse-diff was
   written by Sonnet 5.5 ($0.21 each, calibrated on the same reference with no
   session) and the 20 Opus passes judged again: it rejects 10, every
@@ -955,7 +958,7 @@ names each shortcut with an input it gets wrong
   5 for either alone, and accepts 32 of 889 wrong ones against 43 and 34.
 - **The command's own Codex path** (2026-11-20, `bouncer second` with no
   `--backend`, so Codex on the person's login, gpt-6.1-sol;
-  [evidence/second-codex.json](evidence/second-codex.json),
+  [evidence/second-codex.json](https://github.com/lunox-work/bouncer-evidence/blob/main/second-codex.json),
   `evidence/second-codex.mjs`). The figures above came from Codex suites the
   evidence scripts wrote in October. Written through the command: 42 of 43
   and 38 of 38 hidden tests kept; it rejects 16 of the 20 Opus gaming passes
@@ -971,7 +974,7 @@ A spec checked at a boundary a test can call instead of its exports: a command
 the suites run with `child_process`, or an HTTP service they `fetch`, started by
 the judge for each suite under the memory caps and killed with its process group
 after (toolchain `exec`, `bin/runners/boundary.mjs`). Checked 2026-10-27 on the
-archive's material with no model ([evidence/seams.mjs](evidence/seams.mjs),
+archive's material with no model ([evidence/seams.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/seams.mjs),
 `evidence/seams.json`).
 
 **patch-apply as a command.** `import-archive patch-apply --seam exec` converts
@@ -1049,7 +1052,7 @@ Rust 1.99.1 from Homebrew): duration-parse ported by hand to each, confirmed by
 the phase's agent, not a person (`--by "phase-7 agent (not a person)"`),
 prepared on Opus 5.5, three blind Haiku 5.5 runs each
 (`evidence/languages/specs/`, `evidence/languages/results.jsonl`;
-[evidence/languages.mjs](evidence/languages.mjs),
+[evidence/languages.mjs](https://github.com/lunox-work/bouncer-evidence/blob/main/languages.mjs),
 `evidence/languages/queue.sh modules`).
 
 | spec                                  | prepare (Opus 5.5) | public | hidden kept | Haiku 5.5 blind runs        |

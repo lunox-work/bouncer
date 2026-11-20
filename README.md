@@ -26,7 +26,7 @@
 <p align="center">
   <strong>105 agents said all tests pass. 75 were wrong.</strong> With Bouncer on the door: 9, and he turned them away.<br>
   <strong>And they were:</strong> a blind referee on another model upheld all 75. Only 4 broke the ticket; 71 guessed where it said nothing.<br>
-  <sub>Claude Haiku 5.5 · 7 loose tickets × 15 runs · <a href="RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a></sub>
+  <sub>Claude Haiku 5.5 · 7 loose tickets × 15 runs · <a href="docs/RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a></sub>
 </p>
 
 ---
@@ -75,7 +75,7 @@ $ bouncer id --ticket ticket.md --repo .
 
 17 seconds, $0.06. On 75 wrong "all tests pass" runs, a blind reader with the
 list and the spec found the bad pick in 57 and never flagged a right one (35
-of 45 in Python, Go and Rust; [how](RESULTS.md#the-id-check-after-the-fact)).
+of 45 in Python, Go and Rust; [how](docs/RESULTS.md#the-id-check-after-the-fact)).
 
 ## Before / After
 
@@ -95,7 +95,7 @@ runs made the same guess. The author's tests test the author's guesses.
 
 None of them cheated: no agent touched a test in 2,522 sandboxed runs. Locking
 tests away stops reward hacking, not a wrong guess. Some nights the smooth one
-gets in ([when](RESULTS.md#red-team)). **Real catches**, each past every test
+gets in ([when](docs/RESULTS.md#red-team)). **Real catches**, each past every test
 it could see: `constructor` ranked as a function in a real commit, `["open"]`
 taken for `"open"`, records 0.1 ms apart sorted by id ([all four, one against us](docs/REFERENCE.md#real-catches)).
 
@@ -112,7 +112,7 @@ taken for `"open"`, records 0.1 ms apart sorted by id ([all four, one against us
 CI parses the machine word; `judge --card verdict.svg` writes the exchange to
 post, never a hidden test. **He lets some through:** a second writer's suite
 and two blind referees found a stated rule missed in 50 of 386 passes, most on
-three specs ([when he says yes](RESULTS.md#when-he-says-yes)). A pass says
+three specs ([when he says yes](docs/RESULTS.md#when-he-says-yes)). A pass says
 nothing about code quality or what the spec leaves out.
 
 ## Proof
@@ -205,5 +205,5 @@ What to tell them, accurately:
 
 <p align="center">
   <strong>Caught a green run that was wrong? A ⭐ helps the next person find him.</strong><br>
-  <sub><a href="docs/REFERENCE.md">Reference</a> · <a href="RESULTS.md">RESULTS.md</a> · <a href="AGENTS.md">AGENTS.md</a> · <a href="https://github.com/lunox-work/bouncer/issues">Issues</a></sub>
+  <sub><a href="docs/REFERENCE.md">Reference</a> · <a href="docs/RESULTS.md">RESULTS.md</a> · <a href="AGENTS.md">AGENTS.md</a> · <a href="https://github.com/lunox-work/bouncer/issues">Issues</a></sub>
 </p>

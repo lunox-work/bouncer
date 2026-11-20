@@ -33,7 +33,7 @@ guessed.
   wrote, a TODO in code, harness or config edited. It reports and never
   blocks: on 127 real sessions that claimed done any rule fired on 8.7%,
   under the 10% its gate asked for, and a model-judged check upheld 1 of 50
-  firings ([DOOR.md](../evidence/DOOR.md)).
+  firings ([DOOR.md](https://github.com/lunox-work/bouncer-evidence/blob/main/DOOR.md)).
 - `bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo <dir> --base <ref>]`
   (the ticket is `--ticket`, else `specs/<slug>/ticket.md`):
   one Sonnet 5.5 session, a median $0.06 and 17 s. What the ticket never said and
@@ -60,7 +60,7 @@ commits replayed inside their repository and 12 more in two public repositories
 stated; Codex CLI as the writer and the referee is in RESULTS.md "Writer
 backends", as an implementer in "Other implementers", and Opus 5.5 as an
 adversary in "Red team". Every table, with Fisher's exact p-values, is in
-[RESULTS.md](../RESULTS.md).
+[RESULTS.md](RESULTS.md).
 
 | question                                      | measured                                                                                                                                                                                                                                                                                     |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -93,14 +93,14 @@ Every one of these passed every test it could see. None was on the list.
 - **Shipped code, in a real commit.** A priority named `constructor` ranked as
   a function instead of `"high"`; `categories` looks names up in a plain
   object. The confirmed spec said otherwise
-  ([In an existing repository](../RESULTS.md#in-an-existing-repository)).
+  ([In an existing repository](RESULTS.md#in-an-existing-repository)).
 - **An HTTP service.** Three of five blind runs accepted a status sent as
   `["open"]`: `Object.hasOwn(labels, status)` turns the array into the string
   `"open"`. Told only the scenario key, the first retry passed 48/48
-  ([Black-box seams](../RESULTS.md#black-box-seams)).
+  ([Black-box seams](RESULTS.md#black-box-seams)).
 - **A Rust port.** Creation times cut to whole milliseconds, so two records
   0.1 ms apart sorted by id
-  ([Commands and services in other languages](../RESULTS.md#commands-and-services-in-other-languages)).
+  ([Commands and services in other languages](RESULTS.md#commands-and-services-in-other-languages)).
 - **And one against us.** A Go run read `1e400` as the integer 10^400, which
   the spec allows; the hidden test expected JavaScript's reading. The overfit
   was the judge's, and RESULTS.md says so.
@@ -154,7 +154,7 @@ pages state them, read 2026-11-20.
   wrong; `regressed` is the repository verdict for exactly this.
 
 None of them measures a hidden suite written from a confirmed spec; that
-part is ours, in [RESULTS.md](../RESULTS.md).
+part is ours, in [RESULTS.md](RESULTS.md).
 
 ## FAQ
 
@@ -174,7 +174,7 @@ question the spec left open, you decide it in the spec and regenerate.
 **Can my agent talk its way in?** It never sees the list, and the sandbox keeps
 it off the tests and the harness. A shortcut is the real risk: all 21 gamed
 Haiku submissions were turned away; Opus 5.5, told to game, got in on two of
-four specs ([Red team](../RESULTS.md#red-team)).
+four specs ([Red team](RESULTS.md#red-team)).
 
 **Does he ever say yes?** Most nights. With the public suite, 81 of 105 runs
 from a loose ticket got in first time and 15 more after one retry.
@@ -353,7 +353,7 @@ tests for $0.014.
   saw agree with the confirmed spec. Not proof the spec is met: a second
   writer's suite and two blind referees (Fable, Codex) found a stated rule
   missed in 50 of 386 archive passes, most on three specs
-  ([When he says yes](../RESULTS.md#when-he-says-yes)). Nothing about code
+  ([When he says yes](RESULTS.md#when-he-says-yes)). Nothing about code
   quality or what the spec leaves out.
 - **`overfit`**: the public suite passes, the hidden suite does not. Either the
   code misses a stated rule (one retry, told only the scenario keys) or the
@@ -473,7 +473,7 @@ run cited diff lines).
   13 and rejected none of 4 correct passes. Requiring two
   suites doubles false rejects on HumanEval+ (6 of 289 against 3), so it is
   opt-in; a referee on the disagreements upheld all 14 and did not lower that
-  ([second-referee.md](../evidence/second-referee.md)).
+  ([second-referee.md](https://github.com/lunox-work/bouncer-evidence/blob/main/second-referee.md)).
 
 ## Scope
 
@@ -509,10 +509,9 @@ run cited diff lines).
   so they are no longer held out. Prepare your own spec for any use where that
   matters.
 - `specs/` ships one example, `duration-parse`. The other 25 specs and their
-  suites are in the experiment archive,
-  [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence)
-  (`sh scripts/fetch-evidence.sh` clones it as `experiments/`); its write-ups
-  are in `evidence/`. The repository
+  suites are in [bouncer-evidence](https://github.com/lunox-work/bouncer-evidence)
+  (`sh scripts/fetch-evidence.sh` clones it as `evidence/`), under
+  `archive/specs/`. The repository
   specs measured in RESULTS.md are in `evidence/in-repo/specs/`, against
   [sandbox-factory](https://github.com/lunox-work/sandbox-factory) checked out
   beside this folder, and in `evidence/in-repo-ufo/specs/` and
@@ -531,7 +530,7 @@ skills/             bouncer/ (SKILL.md and references/: the steps it runs, after
 .claude-plugin/     the Claude Code marketplace and its plugin: bouncer-verify (local, no MCP server)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
 AGENTS.md           this README's section for coding agents, verbatim
-RESULTS.md          what the method was measured to do
+docs/RESULTS.md     what the method was measured to do, citing bouncer-evidence
 package.json        the npm package: `bouncer` → bin/cli.mjs; `@lunox-work/bouncer/api` → bin/api.mjs
 bin/api.mjs         the library entry: decisionItems, scenarios, diffDecisions, hiddenManifest, hiddenSha256,
                     calibrate({ skeleton, reference }), verdict(outcomes), promptPath(name); no process, home or
@@ -587,22 +586,8 @@ template/           the Node toolchain every new-module session and judge runs i
 template-python/    pytest toolchain (pinned in requirements.txt), its reporter plugin, the LCB checker
 template-go/, template-rust/  the Go and Rust toolchains: standard library only
 test/               no-model tests, run by npm test: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
-evidence/           the experiment's write-ups behind RESULTS.md, vendored, and the repository arm (in-repo.mjs, in-repo/; any repository with --cases)
-evidence/default-match.mjs  drafted defaults against confirmed decisions, from default-match.json
-evidence/evalplus.mjs  the HumanEval+ oracle row, re-judged on the pytest runner (evalplus.json)
-evidence/runners/   the Python and Jest end-to-end specs (RESULTS.md "Runners")
-evidence/ci.mjs     CI mode on the 11 repository cases, locally (evidence/ci/: checks, logs, ledger, fork script)
-evidence/backends.mjs  the writer-backend table: sandbox test, mock API test, scripted calibration, ladder, report
-evidence/mutation.mjs  mutants of a spec's reference judged by its suites (evidence/backends/: Codex suites, queue.sh)
-evidence/implementers.mjs  non-Claude agents (Codex CLI; Aider, Cursor adapters) on handouts, graded (evidence/implementers/: queue.sh)
-evidence/red-team/  the Haiku and Opus red-team runs' audits and logs (RESULTS.md "Red team")
-evidence/in-repo-ufo/, evidence/in-repo-pathe/  the repository arm on unjs/ufo and unjs/pathe (in-repo.mjs --cases; in-repo-queue.sh)
-evidence/seams.mjs  black-box seams: patch-apply as a command against git apply, the HTTP spec, selftests (evidence/seams/)
-evidence/languages.mjs  Go and Rust modules end to end; commands and services in Python, Go and Rust: selftest, ports, git oracle (evidence/languages/)
-evidence/door.mjs   the door's rules on local sessions (door.json, DOOR.md)
-evidence/ID.md      the ID check on 10 rejected runs (id.json)
-evidence/fit-funnel.mjs, fit-funnel-commits.mjs  which repositories fit, per repository and per commit, static (RESULTS.md "Which repositories fit")
-evidence/skill-triggers.json  prompts that should and should not load the skill
+evidence/           not in this repository: `sh scripts/fetch-evidence.sh` clones lunox-work/bouncer-evidence here,
+                    the scripts, runs and data behind docs/RESULTS.md; experiments links to its archive/
 assets/src/         the README images: index.html, mark.mjs, render.mjs; docs/REFERENCE.md, this file
 
 ~/.bouncer/   BOUNCER_HOME (BOUNCER_SPECS, _RESULTS move those)

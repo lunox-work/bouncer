@@ -60,7 +60,7 @@
     "!specs/duration-parse/confirming.json",
     "AGENTS.md",
     "README.md",
-    "RESULTS.md",
+    "docs/RESULTS.md",
     "skills/"
   ],
   "scripts": {
