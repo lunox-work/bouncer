@@ -1,12 +1,10 @@
 # bouncer
 
-Independent, hidden test suites written from the spec for AI coding agents: the agent works against a public suite, a calibrated hidden suite it never sees judges the result. Optional hosted mode: after sign-in, a bundled MCP server works with the person's workspace on the Lunox platform (platform.lunox.work).
+Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in. Hosted mode is the separate bouncer-hosted plugin.
 
 ## Skills
 
-- **bouncer**: Turn a ticket or spec for one module (TypeScript, Python, Go or Rust), or for a change to one package of an existing TypeScript or Python repository, into a public test suite for the implementing agent and a calibrated hidden suite that judges its work, with the spec's decisions confirmed by a person before any test is written. Use when someone wants agent-written code accepted by tests the agent never saw, wants to grade an agent's submission against a spec, or wants to stop trusting an agent's own green test run.
-
-- **lunox-contribute**: Work on a task you were invited to on the Lunox platform as an outside contributor: fetch the version's public project, implement it within its editable paths, preview and submit the changed files, and read the verdict from hidden tests you never see. Use when someone has a Lunox contribution or claim link, mentions lnxc_ tokens or the /mcp/contribute server, or asks to submit work to a Lunox sandbox they do not own.
+- **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket. Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
 
 ## Install
 
@@ -15,21 +13,31 @@ claude plugin marketplace add lunox-work/bouncer
 claude plugin install bouncer@bouncer
 ```
 
+The same marketplace has `bouncer-hosted`: Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server that signs in on first use, and the lunox-contribute skill for invited contributors.
+
 ## Requirements
 
-- **bouncer**: Node 20.19 or later. Runs the @lunox-work/bouncer@0.7.0 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
+- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.0 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
 
-- **lunox-contribute**: Needs the Lunox contributor MCP server (https://platform.lunox.work/mcp/contribute) signed in as a contributor, or an lnxc_ contributor token for HTTP clients, and Node to run the project.
+## No sign-in
 
-## Hosted mode
+The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.
 
-The plugin bundles the `lunox` MCP server, Lunox's hosted platform at https://platform.lunox.work/mcp/duediligence.
-Claude Code signs in to it on first use (`/mcp`); signed out, the skill runs locally as before.
-Without the plugin: `claude mcp add --transport http lunox https://platform.lunox.work/mcp/duediligence`; other MCP clients take the
-same URL as a remote HTTP server.
+## Links
+
+- [Privacy](https://github.com/lunox-work/bouncer/blob/main/PRIVACY.md)
+- [Documentation](https://github.com/lunox-work/bouncer#readme)
+- [Support](https://github.com/lunox-work/bouncer/issues)
 
 ## Data
 
+- **Which plugin reaches the platform:** two plugins, installed separately.
+  `bouncer` bundles no MCP server and its skill runs the CLI on the machine;
+  installing it asks for no sign-in, and it reaches Lunox's platform only if
+  the person runs `bouncer login`, `push` or `ci --platform` themselves
+  (below). `bouncer-hosted` bundles the `lunox` MCP server and the
+  `bouncer-hosted` and `lunox-contribute` skills; it talks to
+  platform.lunox.work once the person signs in through `/mcp`.
 - **Sent off the machine:** the spec, the ticket it came from and the code
   being judged go to the model backend the person chooses, on their own
   account: a Claude Code session, the Codex CLI, or the Anthropic API with
@@ -54,40 +62,34 @@ same URL as a remote HTTP server.
   the run's GitHub OIDC token (no saved token) to be judged against a
   published version's hidden suite, and reads back the verdict. No other
   spec, ticket, suite or code is uploaded.
-- **The bundled `lunox` MCP server:** in Claude Code it talks to
-  platform.lunox.work only once the person signs in to it through `/mcp`.
-  Its read tools (`list_*`, `get_*`) read the account and the workspace, with
-  its bounties, repositories, sandboxes and runs. Its write tools run only
-  when the person asks for that action: a bounty posted (title and spec text,
-  with the person's confirmation when the spec was confirmed here) or
-  imported from a GitHub or Jira issue, a spec changed, a sandbox version
-  built, an implementation's changed files submitted for a verdict or graded
-  again, a contributor invited to a published version, and a passing
+- **The `lunox` MCP server, in the `bouncer-hosted` plugin only:** in Claude
+  Code it talks to platform.lunox.work only once the person signs in to it
+  through `/mcp`. Its read tools (`list_*`, `get_*`) read the account and the
+  workspace, with its bounties, repositories, sandboxes and runs. Its write
+  tools run only when the person asks for that action: a bounty posted (title
+  and spec text, with the person's confirmation when the spec was confirmed
+  here) or imported from a GitHub or Jira issue, a spec changed, a sandbox
+  version built, an implementation's changed files submitted for a verdict or
+  graded again, a contributor invited to a published version, and a passing
   submission's files taken back. `size_bounty`, `respec`, `prepare` and
-  `retry` start model runs on the platform that count against the
-  workspace's monthly token limit. Hidden tests are written and kept on the
-  platform and never sent to the session. Confirming a priced spec's
-  decisions, approving a price, publishing and merging back happen in the
-  platform's web app, not through the plugin. The platform's privacy policy
-  is at https://platform.lunox.work/privacy.
-- **The `lunox-contribute` skill:** for a person invited to contribute, it
-  talks to platform.lunox.work only through the contributor MCP server they
-  add and sign in to themselves (`/mcp/contribute`), or their own `lnxc_`
-  token: it reads the version they were invited to and submits the files they
-  changed for a verdict.
+  `retry` start model runs on the platform that count against the workspace's
+  monthly token limit. Hidden tests are written and kept on the platform and
+  never sent to the session. Confirming a priced spec's decisions, approving a
+  price, publishing and merging back happen in the platform's web app, not
+  through the plugin. The platform's privacy policy is at
+  https://platform.lunox.work/privacy.
+- **The `lunox-contribute` skill, in the `bouncer-hosted` plugin:** for a
+  person invited to contribute, it talks to platform.lunox.work only through
+  the contributor MCP server they add and sign in to themselves
+  (`/mcp/contribute`), or their own `lnxc_` token: it reads the version they
+  were invited to and submits the files they changed for a verdict.
 - **Personal data:** a ticket can name people; it is stored with the spec
   under `~/.bouncer/specs/` on the same machine.
 - **Retention:** bouncer itself runs no service. What the model backends
   keep is governed by the person's own agreement with that provider, and what
   the platform keeps of what is sent to it by its privacy policy.
 
-## Links
-
-- [Privacy](https://github.com/lunox-work/bouncer/blob/main/PRIVACY.md)
-- [Documentation](https://github.com/lunox-work/bouncer#readme)
-- [Support](https://github.com/lunox-work/bouncer/issues)
-
 ## Source
 
-This branch holds only the plugin's files. The CLI, its documentation and the
+This branch holds only the plugins' files: `bouncer` at its root, `bouncer-hosted` in bouncer-hosted/. The CLI, its documentation and the
 skills' source are on the main branch of https://github.com/lunox-work/bouncer. License: MIT.

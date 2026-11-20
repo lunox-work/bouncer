@@ -1,8 +1,8 @@
 {
   "name": "bouncer",
   "displayName": "bouncer",
-  "version": "0.7.0",
-  "description": "Independent, hidden test suites written from the spec for AI coding agents: the agent works against a public suite, a calibrated hidden suite it never sees judges the result. Optional hosted mode: after sign-in, a bundled MCP server works with the person's workspace on the Lunox platform (platform.lunox.work).",
+  "version": "0.8.0",
+  "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in. Hosted mode is the separate bouncer-hosted plugin.",
   "author": {
     "name": "Charlie Angriawan",
     "url": "https://github.com/lunox-work"
@@ -16,6 +16,9 @@
     "coding-agents",
     "acceptance-tests",
     "evaluation",
-    "test-generation"
+    "test-generation",
+    "reward-hacking",
+    "tdd",
+    "verification"
   ]
 }
