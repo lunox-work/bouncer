@@ -11,8 +11,8 @@
 // The spec must be confirmed and calibrated. A sibling spec,
 // specs/<slug>-second/, gets the same spec.md, confirmation, toolchain,
 // skeleton, public suite and reference; generate.mjs then writes only its
-// hidden suite, in a session on --backend (default codex-cli; without the
-// `codex` CLI it refuses unless --backend is given) and --model (default, on
+// hidden suite, in a session on --backend (default codex-cli; without a
+// Codex login it refuses unless --backend is given) and --model (default, on
 // claude-cli, claude-sonnet-5-5: a different model from the first writer).
 // Another model family matters: on the 20 Opus gaming passes Codex's suite
 // rejected 17, a Sonnet-written one 10 (evidence/second-writer.json); on 13
@@ -31,8 +31,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recordCommitment } from "./commitment.mjs";
 import { confirmation } from "./confirm.mjs";
-import { args, count, discard, judge, log, readJson, runSuite, specDir, stage, testsOf, toolchainOf, workdir, writeJson } from "./lib.mjs";
-import { which } from "./platform.mjs";
+import { args, codexSignedIn, count, discard, judge, log, readJson, runSuite, specDir, stage, testsOf, toolchainOf, workdir, writeJson } from "./lib.mjs";
 
 const BIN = dirname(fileURLToPath(import.meta.url));
 
@@ -105,12 +104,15 @@ if (isMain) {
   // second suite caught 0 of 13 honest misses Codex's caught all of, and 10
   // of 20 gaming passes against 17 (evidence/passed-second.json,
   // evidence/second-writer.json).
-  if (typeof options.backend !== "string" && which("codex") === null) {
+  // The codex-cli backend installs its own pinned CLI (bin/backends.mjs); what
+  // it needs is the person's Codex login, not a `codex` on PATH (the ChatGPT
+  // app and the VS Code extension ship one that is not on PATH).
+  if (typeof options.backend !== "string" && !codexSignedIn()) {
     console.error(
       [
-        `${slug}: no Codex CLI here, and the second writer should be another model family.`,
+        `${slug}: no Codex login here (~/.codex/auth.json, or OPENAI_API_KEY), and the second writer should be another model family.`,
         "A second suite written by Sonnet 5.5 caught 0 of the 13 passes that missed a stated rule which Codex's suite caught, and 10 of 20 gaming passes against Codex's 17.",
-        "Install Codex and sign in (codex login), or pass --backend claude-cli to accept a Claude writer anyway.",
+        "Sign in to Codex (codex login, or the ChatGPT app), or pass --backend claude-cli to accept a Claude writer anyway.",
       ].join("\n"),
     );
     process.exit(1);

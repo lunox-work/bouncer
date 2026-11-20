@@ -1533,7 +1533,7 @@ export function backendOf({ backend, kind, chain } = {}) {
   return chosen;
 }
 /** Whether the person has a Codex login (CODEX_HOME or ~/.codex) or an OpenAI key for it. */
-const codexSignedIn = () =>
+export const codexSignedIn = () =>
   existsSync(join(process.env.CODEX_HOME ?? join(homedir(), ".codex"), "auth.json")) ||
   Boolean(process.env.OPENAI_API_KEY || process.env.CODEX_API_KEY);
 let defaultChosen;

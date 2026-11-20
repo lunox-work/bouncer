@@ -23,16 +23,16 @@ try {
   // Passes the reference: kept. And one the reference cannot satisfy: dropped by calibration.
   writeFileSync(join(second, "tests", "private", file), `${source}\ntest("[happy-1] the second writer's own case", () => { assert.equal(parseDuration("13m"), 780000); });\ntest("[happy-1] a case the reference fails", () => { assert.equal(parseDuration("1s"), 999); });\n`);
 
-  // No Codex on PATH and no --backend: refused before any session, not a silent Claude writer.
+  // No Codex login and no --backend: refused before any session, not a silent Claude writer.
+  // A `codex` on PATH or not makes no difference: the backend installs its own CLI.
   writeFileSync(join(first, "imported.json"), "{}\n");
-  const noCodex = spawnSync(process.execPath, [join(ROOT, "bin", "second.mjs"), "duration-parse"], {
-    cwd: ROOT,
-    env: { ...env, PATH: `${join(process.execPath, "..")}:/usr/bin:/bin` },
-    encoding: "utf8",
-  });
+  const noLogin = { ...env, CODEX_HOME: join(home, "no-codex-login") };
+  delete noLogin.OPENAI_API_KEY;
+  delete noLogin.CODEX_API_KEY;
+  const noCodex = spawnSync(process.execPath, [join(ROOT, "bin", "second.mjs"), "duration-parse"], { cwd: ROOT, env: noLogin, encoding: "utf8" });
   rmSync(join(first, "imported.json"));
   assert.equal(noCodex.status, 1, noCodex.stdout + noCodex.stderr);
-  assert.match(noCodex.stderr, /no Codex CLI here, and the second writer should be another model family/);
+  assert.match(noCodex.stderr, /no Codex login here .*, and the second writer should be another model family/);
   assert.match(noCodex.stderr, /--backend claude-cli to accept a Claude writer anyway/);
   console.log("ok - second refuses a same-family writer unless --backend names one");
 
