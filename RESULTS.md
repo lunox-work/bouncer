@@ -39,7 +39,20 @@ suite then rejected:
 A blind referee on another model (Fable 5.1), given only the spec, the failing
 code and one anonymised test, upheld 95 of the 100 rejections it was shown as
 things the spec requires, and 24 of the 26 rejections of a run whose own tests
-were green. Of 74 agent-written tests that fail the calibrated reference, 66
+were green. Those were runs that read the precise spec.
+
+**The 75 loose-ticket rejections, refereed** (2026-11-20,
+[evidence/referee-ticket.json](evidence/referee-ticket.json),
+`evidence/referee-ticket.mjs`). The same referee and prompt upheld all 75:
+each run fails at least one test the spec requires (tests refereed in
+coverage order until every run had one: 9, of which 8 required and 1 open;
+$2.61). A second question put each of the 117 distinct failing tests to the
+same model against the ticket the agent read, never the spec, the code or
+the grades: 4 runs broke something the ticket states (all invite-codes, a
+code for one task granting access to another), and 71 failed only on what
+the ticket left open (108 of the 117 tests). So these runs are not careless:
+they guessed where the ticket was silent, and the owner meant something
+else. No better agent fixes that; a confirmed decision does. Of 74 agent-written tests that fail the calibrated reference, 66
 assert a reading the spec leaves open, 5 are wrong, 3 are rules the reference
 misses. One run shows the shape (escrow-split, loose ticket, run 1, in the
 archive under `runs/escrow-split/self-tested-haiku-ticket/1`): the ticket does
@@ -92,8 +105,11 @@ only thing that changes is what the agent reads.
 | the ticket plus the public suite as prose |              76 / 101 |           |           |
 | the precise spec                          |              95 / 105 | 100 / 105 |  98 / 105 |
 
-From the ticket the gain is p < 1e-11; from the precise spec there is none (p =
-0.28). The prose row shows what the gain is: the spec's decisions, which the
+From the ticket the gain is p < 1e-11 over runs, but runs of one ticket are
+not independent: three tickets fail all 15 runs without the suite and one
+passes all 15 either way. Over the 7 tickets the suite is better on 5,
+level on 2 and worse on none (sign test p = 0.06, paired t on per-ticket
+pass counts p = 0.02). From the precise spec there is no gain (p = 0.28). The prose row shows what the gain is: the spec's decisions, which the
 tests carry. A ticket that says "as CSV" fails in every cell; one that never
 mentions overlap fails every control on concurrency and no run given the public
 suite.
@@ -149,9 +165,12 @@ suite 1 time in 60, against 25 in 404 for own tests without the public suite.
   ([Gaming the suite](evidence/FINDINGS.md#gaming-the-suite))
 - **An outside oracle.** On 1,240 HumanEval+ solutions labelled by EvalPlus,
   suites generated from the prompt alone accepted 4.8% of wrong solutions
-  against 15.0% for HumanEval's own tests, and rejected 3 of 289 right ones (two
-  tasks the suite and the oracle read differently excluded; all 40 tasks: 7.7%
-  against 17.5%, 23 of 314).
+  against 15.0% for HumanEval's own tests, and rejected 3 of 289 right ones.
+  That leaves out two tasks the suite and the oracle read differently; with
+  them, 7.7% against 17.5% and 23 of 314. 20 of those 23 are one task:
+  HumanEval/60's hidden suite holds a `-> int` function to returning an int
+  and rejects the float `n*(n+1)/2`, a reading Codex's suite did not take
+  (0 of 25 rejected there).
   ([HumanEval+](evidence/FINDINGS.md#humaneval-as-an-outside-oracle))
 - **Against git.** On a patch-apply spec the calibrated reference agreed with
   `git apply` on all 7,533 real-history cases judged. One submission passed both

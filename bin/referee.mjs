@@ -23,7 +23,7 @@
 // run, rejected rightly when any suite test it fails is one the spec
 // requires. --compare <jsonl> adds per-case agreement with another file.
 //
-//   node bin/referee.mjs [slug...] [--cases <jsonl>] [--kinds suite,own] [--backend codex-cli] [--model <id>] [--out <jsonl>] [--concurrency 2] [--dry]
+//   node bin/referee.mjs [slug...] [--cases <jsonl>] [--only <ids>] [--kinds suite,own] [--backend codex-cli] [--model <id>] [--out <jsonl>] [--concurrency 2] [--dry]
 //   node bin/referee.mjs --report [--out <jsonl>] [--compare <jsonl>]
 //
 // Exit 2 when the backend's usage limit halted the batch; rerun the same
@@ -259,7 +259,10 @@ const model = typeof options.model === "string" ? options.model : backend === "c
 const kinds = (typeof options.kinds === "string" ? options.kinds : "suite,own").split(",");
 const archive = resolve(typeof options.archive === "string" ? options.archive : join(ROOT, "experiments"));
 const all = typeof options.cases === "string" ? fileCases(resolve(options.cases), archive, kinds) : homeCases(rest);
-const cases = all.filter((item) => rest.length === 0 || rest.includes(item.spec));
+// --only <file>: one case id per line; the rest are left for another call
+// (evidence/referee-ticket.mjs referees in rounds this way).
+const only = typeof options.only === "string" ? new Set(readFileSync(resolve(options.only), "utf8").split("\n").filter(Boolean)) : null;
+const cases = all.filter((item) => (rest.length === 0 || rest.includes(item.spec)) && (only === null || only.has(item.id)));
 const done = new Set(readLines(out).map((line) => line.id));
 const todo = cases.filter((item) => !done.has(item.id));
 log(`${cases.length} case(s), ${todo.length} to referee on ${backend}${model ? ` (${model})` : ""}; out ${out}`);
