@@ -2025,8 +2025,20 @@ export function confirmingTranscript(folder, slug, since) {
   const all = since && existsSync(TRANSCRIPTS) ? readdirSync(TRANSCRIPTS).map((name) => join(TRANSCRIPTS, name)).filter((path) => !near.includes(path)) : [];
   return confirmingIn(near, slug, since) ?? confirmingIn(all, slug, since);
 }
+/**
+ * Whether a shell command runs `confirm` on `slug`: `bouncer confirm <slug>`,
+ * flags first, or the slug in a variable set in the same command
+ * (`S=<slug>; bouncer confirm $S`, which a session wrote in the 2026-11-20
+ * after-the-fact gate and which a literal `confirm <slug>` match missed).
+ */
+export function namesConfirm(command, slug) {
+  const text = String(command ?? "");
+  const word = new RegExp(`(^|[^a-z0-9-])${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9-]|$)`);
+  return /\bconfirm(\.mjs)?\b/.test(text) && word.test(text);
+}
+
 function confirmingIn(folders, slug, since) {
-  const call = new RegExp(`\\bconfirm(\\.mjs)?\\s+${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+  const call = { test: (command) => namesConfirm(command, slug) };
   const found = folders
     .filter((path) => existsSync(path))
     .flatMap((path) => readdirSync(path).filter((name) => name.endsWith(".jsonl")).map((name) => join(path, name)))

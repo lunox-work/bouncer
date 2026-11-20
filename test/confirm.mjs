@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { personAnswers } from "../bin/lib.mjs";
+import { namesConfirm, personAnswers } from "../bin/lib.mjs";
 import { byMissRate, kindOf } from "../bin/decisions.mjs";
 
 const ok = (what) => console.log(`ok - ${what}`);
@@ -59,6 +59,14 @@ try {
   assert.deepEqual(personAnswers(answered, t(1), t(9)), { personTurns: 1, questionsAnswered: 1, questionsUnanswered: 0 });
   assert.deepEqual(personAnswers(join(scratch, "missing.jsonl"), t(1), t(9)), { personTurns: 0, questionsAnswered: 0, questionsUnanswered: 0 });
   ok("personAnswers: a person's turns and answered questions, not tool results, harness text or errors");
+
+  assert.equal(namesConfirm("bouncer confirm tiny", "tiny"), true);
+  assert.equal(namesConfirm("node bin/confirm.mjs tiny --by x", "tiny"), true);
+  assert.equal(namesConfirm('bouncer confirm --by "x" tiny', "tiny"), true, "flags first");
+  assert.equal(namesConfirm('S=tiny; bouncer confirm $S 2>&1 | tail; bouncer confirm $S --by "x"', "tiny"), true, "the slug in a variable");
+  assert.equal(namesConfirm("bouncer confirm tiny-2", "tiny"), false, "another slug that starts the same");
+  assert.equal(namesConfirm("bouncer judge tiny", "tiny"), false);
+  ok("namesConfirm: confirm on the slug, however the command spells it");
 
   // The CLI, in a scratch home with a one-decision spec.
   const home = join(scratch, "home");

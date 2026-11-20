@@ -432,7 +432,7 @@ async function main() {
 
   // 6. spec.md from the ticket and the list.
   if (!existsSync(specPath) || moved === "redo") {
-    await draftSpec(slug, out, capDiff(diffOf(record.checkout, record.base).diff));
+    await draftSpec(slug, out, capDiff(diffOf(record.checkout, record.base).diff).diff);
     record.draftSha256 = sha256(readFileSync(specPath, "utf8"));
     writeJson(recordPath, record);
   }

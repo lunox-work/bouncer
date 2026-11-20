@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { baseOf, changedFiles, freeSlug, isTest, newestCheck, packageOf, resumeConflicts, seamDrift, seamOf, slugFor, staleness } from "../bin/check.mjs";
@@ -201,6 +201,27 @@ try {
     assert.equal(existsSync(join(state, "specs", `${slug}-2`, "check.json")), false, "a check fit refused leaves no record to resume");
     assert.deepEqual(readdirSync(join(state, "runs")), [slug], "no session ran");
     ok("a rerun: resumed and said, differing flags refused, a moved change named, --new counts up");
+
+    // The draft (crashed in 0.8.0: capDiff's object went to the drafter as the diff). No list and no
+    // spec.md: the ID check and the drafter run, as exec stand-ins told apart by id.md, then exit 3.
+    rmSync(join(spec, "spec.md"));
+    rmSync(join(state, "runs", slug, "id.json"));
+    const answer = '[{"question":"What is b?","ticket":"silent","chose":"b is 1","where":"src/b.ts:1","instead":"b is 0"}]';
+    const drafted = spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "check.mjs"), "--repo", repo, "--no-door", "--slug", slug], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        BOUNCER_HOME: state,
+        BOUNCER_BACKEND: "exec",
+        BOUNCER_SPECS: "",
+        BOUNCER_EXEC: `cat > /dev/null; if [ -f id.md ] && [ -f change.diff ]; then printf '# Add b\\n\\nDecided:\\n- b is 1.\\n' > spec.md; else printf '%s\\n' '\`\`\`json' '${answer}' '\`\`\`'; fi`,
+      },
+      timeout: 120_000,
+    });
+    assert.equal(drafted.status, 3, drafted.stdout + drafted.stderr);
+    assert.match(drafted.stdout, /What is b\?/);
+    assert.match(readFileSync(join(spec, "spec.md"), "utf8"), /Decided:\n- b is 1\./);
+    ok("the draft: the ID check, then spec.md drafted from the ticket, the list and the diff, then the confirmation stop");
   } finally {
     rmSync(state, { recursive: true, force: true });
   }
