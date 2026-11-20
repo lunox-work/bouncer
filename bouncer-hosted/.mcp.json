@@ -2,7 +2,7 @@
   "mcpServers": {
     "lunox": {
       "type": "http",
-      "url": "https://platform.lunox.work/mcp/duediligence"
+      "url": "https://platform.lunox.work/mcp/bouncer"
     }
   }
 }

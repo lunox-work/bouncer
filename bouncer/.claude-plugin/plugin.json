@@ -9,6 +9,9 @@
   },
   "homepage": "https://github.com/lunox-work/bouncer#readme",
   "repository": "https://github.com/lunox-work/bouncer",
+  "documentationUrl": "https://github.com/lunox-work/bouncer#readme",
+  "supportUrl": "https://github.com/lunox-work/bouncer/issues",
+  "privacyPolicyUrl": "https://lunox.work/privacy/platform",
   "license": "MIT",
   "keywords": [
     "hidden-tests",
