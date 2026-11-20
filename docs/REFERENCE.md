@@ -434,8 +434,10 @@ Measured by replaying the 11 commits as pull requests with two pushes each:
 one comment per pull request, 0 of 671 hidden test names in a comment, no call
 to a check or status endpoint. In that replay the lists stand in for model
 output. On a real runner (a private pull request, 2026-11-20) the caller above
-runs and, with no key, warns and stays green with no comment; a run with a key
-has not been made yet.
+runs: with no key it warns and stays green with no comment; with a key one
+session (16 seconds) posted one comment of 9 questions. Its `file:line` places
+are lines of the file, not of the diff (`fileLine` in bin/id.mjs, since that
+run cited diff lines).
 
 ## How the hidden suite is kept honest
 

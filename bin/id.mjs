@@ -74,6 +74,45 @@ export function itemsOf(text) {
     }));
 }
 
+/**
+ * A `where` as the file's own line. prompts/id.md asks for "the line in the
+ * diff", and the session counts lines of diff.patch: on a real pull request
+ * `src/slug.js:22` was the 22nd line of the diff, the file's line 5. A line
+ * inside one of `path`'s hunks becomes its line in the new file (a removed
+ * line, where it stood); anything else (another file's section, a header, past
+ * the end, no line) is left as written. `a:12-15` maps both ends.
+ */
+export function fileLine(diff, where) {
+  const match = /^(.+?):(\d+)(?:-(\d+))?$/.exec(where ?? "");
+  if (!match || typeof diff !== "string") return where ?? "";
+  const lines = diff.split("\n");
+  const at = (n) => {
+    if (n < 1 || n > lines.length) return null;
+    let line = null;
+    let file = null;
+    for (let i = 0; i < n; i++) {
+      const text = lines[i];
+      if (text.startsWith("diff --git ")) [file, line] = [null, null];
+      else if (text.startsWith("+++ ") && line === null) file = text.slice(4).replace(/^b\//, "");
+      else if (text.startsWith("@@")) {
+        const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(text);
+        line = hunk ? Number(hunk[1]) : null;
+        if (i === n - 1) return null;
+      } else if (line !== null && i < n - 1 && !text.startsWith("-") && !text.startsWith("\\")) line += 1;
+    }
+    const text = lines[n - 1];
+    if (line === null || file === null || text.startsWith("diff --git ") || text.startsWith("\\")) return null;
+    const named = match[1].replace(/^b\//, "");
+    if (!(file === named || file.endsWith(`/${named}`) || named.endsWith(`/${file}`))) return null;
+    return line;
+  };
+  const from = at(Number(match[2]));
+  if (from === null) return where;
+  if (match[3] === undefined) return `${match[1]}:${from}`;
+  const to = at(Number(match[3]));
+  return to === null || to < from ? `${match[1]}:${from}` : `${match[1]}:${from}-${to}`;
+}
+
 /** The list as a person reads it. */
 export function render(items) {
   if (items.length === 0) return "Your ticket left nothing open that this change answers.";
@@ -142,7 +181,8 @@ export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", 
   } finally {
     discard(dir);
   }
-  return { items: itemsOf(result.finalText), costUsd: result.costUsd ?? null, subtype: result.subtype ?? null, apiError: result.apiError ?? null };
+  const items = itemsOf(result.finalText)?.map((item) => ({ ...item, where: fileLine(diff, item.where) })) ?? null;
+  return { items, costUsd: result.costUsd ?? null, subtype: result.subtype ?? null, apiError: result.apiError ?? null };
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
