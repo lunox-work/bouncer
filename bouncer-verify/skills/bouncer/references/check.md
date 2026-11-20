@@ -10,9 +10,15 @@ confirmation.
 in the checkout runs steps 1 to 4 below in order, picks the base, the
 package and the seam from the change (`--base`, `--package`, `--seam`
 override), drafts `spec.md` from the ticket and the list, and stops with
-exit 3 for step 3's confirmation. Put the decisions to the person as step 3
-says, record `--by`, then run `bouncer check` again: it prepares and
-judges. The steps below are what it runs, for when one needs doing by hand.
+exit 3 for step 3's confirmation, having listed the `Decided:` items (the
+person's clock starts there). Put those decisions to the person in that
+same turn, as step 3 says, record `--by`, then run `bouncer check` again: it
+prepares and judges. The steps below are what it runs, for when one needs doing by hand.
+
+It takes a few minutes before that stop (`fit` installs and runs the
+existing suite, then the ID and drafting sessions) and 10–25 more after it
+(prepare and judge): run it in the background or with a long timeout, and
+wait for it to exit instead of polling.
 
 Run again in the same checkout and branch, it resumes the newest check there
 and says which (base, seam, ticket). For a second task on the same branch use
@@ -33,7 +39,9 @@ at most: a larger change has decisions that are not on it.
 ## 1. The door (no model, seconds)
 
 `bouncer door` in the checkout reads the agent's session transcript (the
-newest for this folder, or `--transcript <file>`) and, in a TypeScript
+newest for this folder that edited a file, or `--transcript <file>`; when
+no session here edited anything, the change came from elsewhere and it says
+so) and, in a TypeScript
 checkout with carveout installed, `carveout gate`. It lists what is worth a
 look: no test run after the last edit, tests skipped, weakened or deleted, the
 last test run red, only tests the agent wrote, a TODO left in code, harness or
@@ -44,8 +52,11 @@ his voice. Then go on.
 
 ## 2. Fit and point the spec at the change
 
-- The package the diff touches: `bouncer fit --repo . --package <dir>`. Stop
-  on `unsupported` and say why.
+- The package the diff touches: `bouncer fit --repo . --package <dir>`. On
+  `unsupported`, or a change spanning packages, no hidden suite can be
+  prepared: say why, then still run step 3's `bouncer id` on the whole change
+  and put its list to the person (`bouncer check` with a ticket does this
+  and exits 2).
 - The base is the commit before the agent's change (`git log`; ask the person
   when it is not clear). The seam is the files the change implements.
   `bouncer repo <slug> --repo . --package <dir> --seam <file>[,<file>] --base <base>`.
