@@ -141,8 +141,8 @@ your time to confirm the decisions. An agent run on Haiku 5.5 costs cents.
 
 **Does my code leave my machine?** The spec, the ticket and the code go to the
 model backend you choose, on your own account. No telemetry. The Lunox
-platform is used only by the separate `bouncer-hosted` plugin, after you sign
-in ([PRIVACY.md](../PRIVACY.md)).
+platform is used only when you sign in to it and run `push`, `prepare --hosted`
+or `ci --platform` ([PRIVACY.md](../PRIVACY.md)).
 
 **Why "Bouncer"?** Saying you're on the list doesn't get you in; someone who
 isn't you checks. It was called duediligence until 0.7.0, and that command
@@ -219,11 +219,9 @@ In Claude Code, the repository is also a plugin marketplace:
 /plugin install bouncer-verify@bouncer
 ```
 
-The local plugin has no MCP server and asks for no sign-in. Lunox's hosted
-platform ([below](#sign-in-to-the-lunox-platform-optional)) is a second
-plugin in the same marketplace, `/plugin install bouncer-hosted@bouncer`: it
-bundles the `lunox` MCP server, which Claude Code signs in to on first use
-(`/mcp`).
+The plugin has no MCP server and asks for no sign-in. Lunox's hosted
+platform ([below](#sign-in-to-the-lunox-platform-optional)) is reached only
+through the CLI, when you sign in.
 
 The skill is the folder [`skills/bouncer/`](../skills/bouncer/), which
 also installs by copying it into an agent's skills folder. It runs the CLI at
@@ -263,17 +261,13 @@ itself, so revoke it in the platform's web app to stop it before it expires.
 `bouncer push <slug>` then posts a spec confirmed here as a bounty, its
 decisions recorded as confirmed by you, so approving its price needs no second
 confirmation; an older token lacks that scope (`decisions:confirm`), and
-`push` says so: run `login` again. In Claude Code, the `bouncer-hosted` plugin's `lunox` MCP server
-(`.mcp.json`) signs in on its own, through `/mcp`. Invited to contribute to
-someone else's sandbox? The `lunox-contribute` skill works through the
-contributor server:
-`claude mcp add --transport http lunox-contribute https://platform.lunox.work/mcp/contribute`.
+`push` says so: run `login` again.
 
 Two commands work against a bounty already on the platform:
 
 - `bouncer prepare <slug> --hosted --version <sandbox version id> [--out <dir>] [--no-wait] [--platform <url>]`
-  builds the suites on the platform for a sandbox version cut in the web app
-  (or with the MCP tools), waits up to 90 minutes, and pulls the public
+  builds the suites on the platform for a sandbox version cut in the web app,
+  waits up to 90 minutes, and pulls the public
   project into `--out`, each file checked against its sha256. Only the
   hidden suite's count and commitment hash come back. It sends the version id
   and nothing else; the spec went up with `push`. The version id is required
@@ -464,9 +458,8 @@ output, and the workflow has not run on a real runner yet.
 <summary>Every file and folder, in the repository and in <code>~/.bouncer/</code></summary>
 
 ```
-skills/             bouncer/ (SKILL.md and references/: the steps it runs, after the fact in check.md); bouncer-hosted/ (the lunox MCP tools); lunox-contribute/ (an invited contributor's work on the platform)
-.claude-plugin/     the Claude Code marketplace and its two plugins: bouncer (local, no MCP server) and bouncer-hosted
-.mcp.json           bouncer-hosted's MCP server: lunox, the hosted platform (https://platform.lunox.work/mcp/duediligence)
+skills/             bouncer/ (SKILL.md and references/: the steps it runs, after the fact in check.md)
+.claude-plugin/     the Claude Code marketplace and its plugin: bouncer-verify (local, no MCP server)
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
 AGENTS.md           this README's section for coding agents, verbatim
 RESULTS.md          what the method was measured to do

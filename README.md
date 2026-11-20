@@ -133,7 +133,7 @@ change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.m
 A contractor task, a candidate exercise, a bounty. You already write the task
 before the code exists: that is the list. He adds a hidden suite the submitter
 never sees, and the 10–25 minutes it takes cost nothing, since nobody has
-started yet. Submissions and payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
+started yet.
 
 ## FAQ
 
