@@ -149,7 +149,13 @@ passes the first let through). Payouts: [`bouncer-hosted`](skills/bouncer-hosted
 ## FAQ
 
 **Isn't this just TDD?** TDD fixes the order; the tests are still the agent's
-reading. Here they come from other sessions and your spec. **Cost?** $1–4 of
+reading. Here they come from other sessions and your spec. **Is it only your
+numbers?** No: on 296 SWE-bench-passing PRs the tests' pass rate ran 24
+points above maintainers' merge decisions ([METR](https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/)),
+agents given the check build to it ([arXiv 2606.28430](https://arxiv.org/abs/2606.28430)),
+and outside tests cut silent regressions from 18.8% to 4.8% where a
+write-a-failing-test prompt did nothing ([NeurIPS 2026 workshop](https://neurips.cc/virtual/2026/171452);
+[all three](docs/REFERENCE.md#outside-evidence)). **Cost?** $1–4 of
 Opus 5.5 and 10–25 minutes a spec, plus your time. **Does my code leave my
 machine?** Only to your model backend; no telemetry ([PRIVACY.md](PRIVACY.md)).
 [More](docs/REFERENCE.md#faq), and how it compares to review and SWE-bench.

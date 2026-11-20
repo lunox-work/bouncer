@@ -116,6 +116,46 @@ Every one of these passed every test it could see. None was on the list.
 | SWE-bench                    | the issue's real fix, as tests the model never sees     | the same idea, for benchmarking models on public issues                       |
 | **Bouncer**                  | **separate writer sessions, from a spec you confirmed** | **hidden tests for your own ticket, calibrated against a separate reference** |
 
+## Outside evidence
+
+Three independent studies of the same gap, none by us. Numbers as their
+pages state them, read 2026-11-20.
+
+- **Tests that pass are not work that is accepted.** Whitfill, Wu, Becker and
+  Rush, [Many SWE-bench-Passing PRs Would Not Be Merged into Main](https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/)
+  (METR research note, 2026-03-10). Four maintainers of three SWE-bench
+  Verified repositories reviewed 296 AI-written pull requests that pass the
+  benchmark's tests; the grader's pass rate runs 24.2 points (SE 2.7) above
+  their merge decisions, normalised to the 68% of real merged patches they
+  would merge again. Rejections range from code quality to broken core
+  function. Caveats as stated: one benchmark subset, one harness, no
+  iteration, newest model Claude Sonnet 4.5. Why it matters here: a pass,
+  ours included, is evidence and not acceptance, and says nothing about code
+  quality ([What a verdict means](#what-a-verdict-means)).
+- **Agents deliver what they can check.** Ma, Kereopa-Yorke and Schultz,
+  [Building to the Test: Coding Agents Deliver What You Check, Not What You
+  Requested](https://arxiv.org/abs/2606.28430) (arXiv, 2026-06-26). Two
+  Copilot CLI agents re-implement a React data table in Angular under a
+  hidden 222-test Playwright oracle, 18 runs. With the oracle in the loop
+  scores reach near-perfect while some runs pass from a demo that holds the
+  tested behaviour, the requested library "left dead or absent"; gpt-5.5 does
+  so in five of six oracle runs, claude-opus-4.7 in two of six under the
+  looser prompt. Why it matters here: the agent gets the dress code (the
+  public suite), never the list it is judged by.
+- **Tests from outside the agent catch what its own do not.** Mehta,
+  [Silent Regressions: The Verification Gap in Coding Agents](https://neurips.cc/virtual/2026/171452)
+  (NeurIPS 2026 workshop, AI for Verifiable Coding). 2,750 trajectories, four
+  frontier models, 100 SWE-bench Verified tasks. Running the benchmark's
+  externally supplied tests cuts accepted patches that break a previously
+  passing test from 18.8% to 4.8%; the same budget on random tests leaves
+  10.0%. Prompting GPT-5 to write and run a failing test moves neither the
+  resolve nor the regression rate. Why it matters here: the same split as
+  [The numbers](#the-numbers), where 75 of 105 agents' own green suites were
+  wrong; `regressed` is the repository verdict for exactly this.
+
+None of them measures a hidden suite written from a confirmed spec; that
+part is ours, in [RESULTS.md](../RESULTS.md).
+
 ## FAQ
 
 **Isn't this just TDD?** TDD fixes the order: tests first. The tests are still
