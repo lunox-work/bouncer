@@ -495,6 +495,18 @@ confirmed-spec runs.
   each). Against the confirmed arm, Haiku p = 0.003, Sonnet p = 0.03 over runs.
   The gap is smaller than on the archive's tickets: these are small fixes whose
   one-line subjects name most of the change.
+- **After the fact, the skill catches each of the four.** One failing ticket
+  run per commit, uncommitted in a fresh clone; a fresh Sonnet 5.5 session
+  with only the skill is asked "is it really done?", then given the owner's
+  answer, written from the real commit and committed before the run
+  (`evidence/skill-gate-check.mjs`, `--case`). The registered bar (it runs
+  `check`, the person's answer is found in the session, the verdict is not
+  `passed`, the audit finds nothing) holds on all four: `incomplete` each
+  time. The first pass held on UNC and `reverseResolveAlias`, whose ID lists
+  name the gap first. `withoutHost` failed twice and `format` once before
+  holding, on faults those runs exposed (a drafter crash, a misused
+  `--answered-elsewhere`, a confirmation recorded `unchecked` when it ran
+  before its own call reached the transcript), fixed in between.
 - **Caveat that favours the confirmed arm:** its specs were confirmed by a
   session playing the developer, shown the real diff. A real author knows what
   they meant as well; a confirmer who does not, does worse.
