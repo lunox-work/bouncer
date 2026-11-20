@@ -62,7 +62,16 @@ function answerCheck(slug, started, at, options) {
   const elsewhere = typeof options["answered-elsewhere"] === "string" && options["answered-elsewhere"].trim() !== "" ? options["answered-elsewhere"].trim() : null;
   if (process.stdin.isTTY && process.stdout.isTTY) return { record: { how: "terminal" } };
   const since = started?.toISOString() ?? null;
-  const transcript = typeof options.transcript === "string" ? resolve(options.transcript) : confirmingTranscript(process.cwd(), slug, since);
+  const given = typeof options.transcript === "string";
+  let transcript = given ? resolve(options.transcript) : confirmingTranscript(process.cwd(), slug, since);
+  // Claude Code puts a tool call in its transcript about when the call
+  // starts, not before: a confirm chained after a fast command ran 137 ms
+  // after its call's timestamp in the 2026-11-20 pathe gate, found no
+  // session yet and was recorded unchecked. Look again for up to 3 s.
+  for (let tries = 0; transcript === null && !given && tries < 6; tries += 1) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+    transcript = confirmingTranscript(process.cwd(), slug, since);
+  }
   if (transcript === null)
     return { record: { how: elsewhere ? "elsewhere" : "unchecked", ...(elsewhere ? { elsewhere } : {}) }, note: elsewhere ? null : `${slug}: no Claude Code session here listed these decisions, so nobody's answer could be checked; recorded as unchecked.` };
   const seen = personAnswers(transcript, since, at.toISOString());

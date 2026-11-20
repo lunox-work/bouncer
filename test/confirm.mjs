@@ -2,8 +2,8 @@
 // `answerCheck`, lib.mjs `personAnswers`). No model, no network: hand-written
 // Claude Code transcripts and a scratch home.
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { namesConfirm, personAnswers } from "../bin/lib.mjs";
@@ -129,12 +129,32 @@ try {
   rmSync(join(spec, "confirmed.json"));
   writeFileSync(join(spec, "confirming.json"), JSON.stringify({ startedAt: started, drafted: ["Empty input is invalid."] }));
 
+  // The session's call reaches its transcript after confirm started (the
+  // 2026-11-20 pathe gate: 137 ms): confirm looks again and finds it.
+  const fakeHome = join(scratch, "user-home");
+  const folder = join(fakeHome, ".claude", "projects", realpathSync(cwd).replace(/[^a-zA-Z0-9]/g, "-"));
+  mkdirSync(folder, { recursive: true });
+  const late = await new Promise((done) => {
+    const child = spawn(process.execPath, [join(import.meta.dirname, "..", "bin", "confirm.mjs"), "tiny", "--by", "someone"], { cwd, env: { ...process.env, HOME: fakeHome, BOUNCER_HOME: home, BOUNCER_SPECS: "" }, stdio: ["pipe", "pipe", "pipe"] });
+    let stderr = "";
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    setTimeout(() => {
+      const lines = [user(later(5), "yes, all of them"), assistant(later(10), [bash("a", "bouncer confirm tiny --by someone")])];
+      writeFileSync(join(folder, "late.jsonl"), `${lines.join("\n")}\n`);
+    }, 1000);
+    child.on("close", (status) => done({ status, stderr }));
+  });
+  assert.equal(late.status, 0, late.stderr);
+  assert.equal(recorded().answered.how, "session", late.stderr);
+  rmSync(join(spec, "confirmed.json"));
+  writeFileSync(join(spec, "confirming.json"), JSON.stringify({ startedAt: started, drafted: ["Empty input is invalid."] }));
+
   // No Claude Code session listed it from this folder: recorded, as unchecked.
   const unchecked = confirm("--by", "someone");
   assert.equal(unchecked.status, 0, unchecked.stderr);
   assert.equal(recorded().answered.how, "unchecked");
   assert.match(unchecked.stderr, /recorded as unchecked/);
-  ok("confirm --by: refused with no answer, recorded with an answer, --answered-elsewhere, or unchecked with no session");
+  ok("confirm --by: refused with no answer, recorded with an answer, --answered-elsewhere, a session written late, or unchecked with no session");
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }
