@@ -411,6 +411,17 @@ output, and the workflow has not run on a real runner yet.
   service the suites call too. The judge refuses a suite that changed since
   (exit 1, `hidden suite changed since <at>`); a spec prepared before the hash
   gets its commitment at its first handout.
+- The confirmation is checked, not taken on trust: `confirm --by` reads the
+  session that listed the decisions and refuses (exit 3) when no answer from
+  the person appears after the listing, unless `--answered-elsewhere` names
+  where they reviewed it. `judge` prints how the spec was confirmed beside
+  every verdict.
+- For grading someone else's work, `bouncer second <slug>` adds a second
+  hidden suite from another writer (Codex when installed, else Sonnet 5.5),
+  calibrated on the same reference; `judge` then needs both. Against Opus
+  told to game, Codex's second suite caught 17 of the 20 passes the first let
+  through and a Sonnet-written one 10; requiring two suites doubles false
+  rejects on HumanEval+ (6 of 289 against 3), so it is opt-in.
 
 ## Scope
 

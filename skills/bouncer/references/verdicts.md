@@ -11,6 +11,14 @@
 - `1`: a step failed; its output says which. In a repository it can also mean
   the reference broke existing tests ([repository.md](repository.md), step 3).
 
+**Grading someone else's work** (a contractor, a candidate, a bounty): after
+`0`, offer `bouncer second <slug>`, a second hidden suite from another writer
+(Codex when installed, else Sonnet 5.5; one more session, cents to a dollar).
+`judge` then needs both. Against Opus told to game, Codex's second suite
+caught 17 of the 20 passes the first let through, a Sonnet one 10; it about
+doubles false rejects (HumanEval+: 6 of 289 against 3), so it is the
+person's choice, and only for new modules.
+
 ## `bouncer judge`
 
 It prints the verdict, the counts, the failing scenario keys (such as

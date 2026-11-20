@@ -25,11 +25,10 @@ Bouncer holds the list and never shows it: from a spec the person confirms, he
 writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
-`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.0`. When
-`bouncer --version` prints another version or nothing, ask the person before
-installing it (`npm i -g @lunox-work/bouncer@0.8.0`), or put
-`npx @lunox-work/bouncer@0.8.0` in place of `bouncer` (in a clone of the repository,
-`node bin/cli.mjs`). From any folder: `specs/` and `runs/` are in `~/.bouncer/` (`bouncer where`).
+`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.0`. If `bouncer
+--version` prints another version or nothing, ask before installing it (`npm i
+-g @lunox-work/bouncer@0.8.0`), or use `npx @lunox-work/bouncer@0.8.0` (in a
+clone, `node bin/cli.mjs`). `specs/` and `runs/` are in `~/.bouncer/`.
 
 **A new module** is built on its own: TypeScript by default; Python, Go, Rust,
 or a command or HTTP service checked at its boundary by
@@ -40,9 +39,8 @@ existing suite green: start at step 0 of
 **The agent already says it's done** ("check my agent's work", "is this
 really done"): `bouncer check [--from <issue>]` runs the door, `bouncer id`
 (what the ticket never said and what the agent picked) as the confirmation,
-then steps 3 and 5 on the working tree ([references/check.md](references/check.md)). Hosted mode (the
-`lunox` MCP tools) is the `bouncer-hosted` skill; this one is local and needs
-no sign-in.
+then steps 3 and 5 on the working tree ([references/check.md](references/check.md)).
+Hosted mode is the `bouncer-hosted` skill; this one needs no sign-in.
 
 ## Before you start
 
@@ -62,10 +60,9 @@ no sign-in.
   Never open it, `reference/`, `calibration.json`, or any `grade.json` or
   `judged.json` under `runs/`, nor list `specs/` or `runs/` recursively
   (`ls -R`, `find`, `grep -r`). On a new module, never implement the spec in
-  this session. In a repository you may implement it here after step 4's handout:
-  `judge --audit` scans this session's transcript for any attempt to open those
-  paths and reports it with the verdict. A blind session or another agent is the
-  only enforced blindness.
+  this session; in a repository you may, after step 4's handout: `judge
+  --audit` reports any attempt to open those paths. A blind session or another
+  agent is the only enforced blindness.
 
 ## 1. Spec: pick a kebab-case slug, write `specs/<slug>/spec.md`
 
@@ -111,7 +108,8 @@ no sign-in.
 `bouncer prepare <slug>` writes the skeleton and both suites in three blind
 sessions, then calibrates: every hidden test must fail on the skeleton, a
 reference from a fourth session must clear both. Exit 0: tell the person how
-many public and hidden tests were kept; 3, 4, 1: [references/verdicts.md](references/verdicts.md).
+many public and hidden tests were kept; 3, 4, 1, and a second writer's suite
+for grading someone else's work: [references/verdicts.md](references/verdicts.md).
 
 ## 4. Implement, as the person picks
 
