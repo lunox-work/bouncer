@@ -62,7 +62,7 @@ for (let i = 0; i < argv.length; i += 1) {
   else options[argv[i].slice(2)] = true;
 }
 if (typeof options.seal !== "string") {
-  console.error("usage: node bin/ci.mjs --seal <file|https-url> [--repo <checkout>] [--ref <rev>] [--src <dir>] [--name <check>] [--out <file>] [--record <file>] [--no-post] [--exit-zero]");
+  console.error("usage: bouncer ci --seal <file|https-url> [--repo <checkout>] [--ref <rev>] [--src <dir>] [--name <check>] [--out <file>] [--record <file>] [--no-post] [--exit-zero]");
   process.exit(1);
 }
 

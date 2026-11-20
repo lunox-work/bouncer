@@ -243,7 +243,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   const { args } = await import("./lib.mjs");
   const { options } = args();
   if (options.help !== undefined) {
-    console.error("usage: node bin/id-comment.mjs [--pr <n>] [--issue <n>] [--ticket <file>] [--diff <file>] [--items <file.json>] [--model <id>] [--dry-run] [--strict]");
+    console.error("usage: bouncer id-comment [--pr <n>] [--issue <n>] [--ticket <file>] [--diff <file>] [--items <file.json>] [--model <id>] [--dry-run] [--strict]");
     process.exit(0);
   }
   try {

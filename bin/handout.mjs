@@ -46,11 +46,11 @@ import {
 const { options, rest } = args();
 const [slug, target] = rest;
 if (slug === undefined || (target === undefined && options.repo === undefined)) {
-  console.error("usage: node bin/handout.mjs <slug> <dir> | <slug> --repo [<checkout>] [--remove]");
+  console.error("usage: bouncer handout <slug> <dir> | <slug> --repo [<checkout>] [--remove]");
   process.exit(1);
 }
 if (readJson(join(specDir(slug), "calibration.json"), null)?.status !== "ok") {
-  console.error(`${slug}: not calibrated; run node bin/prepare.mjs ${slug} first.`);
+  console.error(`${slug}: not calibrated; run bouncer prepare ${slug} first.`);
   process.exit(1);
 }
 if (options.repo !== undefined) {
@@ -80,7 +80,7 @@ console.log(`${slug}: handout in ${dir}. Give the agent BRIEF.md; then bouncer j
 function commit() {
   const found = commitment(slug);
   if (!found.ok) {
-    console.error(`${slug}: hidden suite changed since ${found.at} (sha256 ${found.current}, committed ${found.recorded}); rerun node bin/prepare.mjs ${slug} to commit to it as it is.`);
+    console.error(`${slug}: hidden suite changed since ${found.at} (sha256 ${found.current}, committed ${found.recorded}); rerun bouncer prepare ${slug} to commit to it as it is.`);
     process.exit(1);
   }
   if (found.recorded !== null) return { hiddenSha256: found.recorded, hiddenAt: found.at };
@@ -102,7 +102,7 @@ function repoHandout(checkoutPath, remove) {
     console.error(`${slug}: ${message}`);
     process.exit(1);
   };
-  if (chain.name !== "repo") fail("not a repository target; use node bin/handout.mjs <slug> <dir>");
+  if (chain.name !== "repo") fail("not a repository target; use bouncer handout <slug> <dir>");
   if (promotedOf(slug) !== null) fail("promoted: its hidden suite is in the repository now, so there is nothing left to hand out");
   const top = spawnSync("git", ["-C", resolve(checkoutPath ?? chain.repo), "rev-parse", "--show-toplevel"], { encoding: "utf8" });
   if (top.status !== 0) fail(`${checkoutPath ?? chain.repo} is not a git checkout`);

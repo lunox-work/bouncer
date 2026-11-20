@@ -594,7 +594,7 @@ const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileUR
 if (isMain) {
   const { options } = args();
   if (typeof options.repo !== "string") {
-    console.error('usage: node bin/fit.mjs --repo <path> [--package <dir>] [--base <ref>] [--no-run] [--seam exec --command "<argv>" | --seam http --start "<cmd>" [--healthcheck <path>]] [--boundary-build "<cmd>"]');
+    console.error('usage: bouncer fit --repo <path> [--package <dir>] [--base <ref>] [--no-run] [--seam exec --command "<argv>" | --seam http --start "<cmd>" [--healthcheck <path>]] [--boundary-build "<cmd>"]');
     process.exit(1);
   }
   let found;

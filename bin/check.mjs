@@ -218,7 +218,8 @@ export function changedFiles(checkout, base) {
   return [...new Set([...lines(tracked.stdout), ...lines(untracked.stdout)])].sort();
 }
 
-const step = (script, argv) => spawnSync(process.execPath, [join(ROOT, "bin", script), ...argv], { cwd: ROOT, stdio: "inherit" }).status ?? 1;
+// BOUNCER_UNDER_CHECK: the steps leave out their own "Next:" lines, since check decides what comes next.
+const step = (script, argv) => spawnSync(process.execPath, [join(ROOT, "bin", script), ...argv], { cwd: ROOT, stdio: "inherit", env: { ...process.env, BOUNCER_UNDER_CHECK: "1" } }).status ?? 1;
 
 async function draftSpec(slug, out, diff) {
   const chain = toolchainOf(slug);

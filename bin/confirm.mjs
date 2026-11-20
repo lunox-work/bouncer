@@ -335,7 +335,7 @@ if (isMain) {
   const [slug] = rest;
   if (slug === undefined) {
     console.error(
-      "usage: node bin/confirm.mjs <slug> [--by <name> [--started <iso>] [--answered-elsewhere <where>] | --export <file>|- | --from <issue url|owner/repo#n|jira key> [--comments] [--body <file>|-] [--force]]",
+      "usage: bouncer confirm <slug> [--by <name> [--started <iso>] [--answered-elsewhere <where>] | --export <file>|- | --from <issue url|owner/repo#n|jira key> [--comments] [--body <file>|-] [--force]]",
     );
     process.exit(1);
   }

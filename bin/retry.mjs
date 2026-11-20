@@ -59,7 +59,7 @@ const git = (dir, ...argv) =>
 const { options, rest } = args();
 const [slug, from] = rest;
 if (slug === undefined || from === undefined || from.includes("-retry-")) {
-  console.error("usage: node bin/retry.mjs <slug> <variant> [--feedback keyed|plain]; <variant> is a first attempt");
+  console.error("usage: bouncer retry <slug> <variant> [--feedback keyed|plain]; <variant> is a first attempt");
   process.exit(1);
 }
 specSlugs([slug]);
@@ -202,4 +202,4 @@ if (halted !== null) {
   console.log(`halted on the account's usage limit (${halted}); rerun the same command after it resets`);
   process.exit(2);
 }
-console.log(`${jobs.length} retr${jobs.length === 1 ? "y" : "ies"} finished; next: node bin/grade.mjs ${slug}`);
+console.log(`${jobs.length} retr${jobs.length === 1 ? "y" : "ies"} finished; next: bouncer grade ${slug}`);

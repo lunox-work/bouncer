@@ -150,7 +150,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   const [slug] = rest;
   const ticketFile = typeof options.ticket === "string" ? resolve(options.ticket) : slug ? join(specDir(slug), "ticket.md") : null;
   if (ticketFile === null || !existsSync(ticketFile)) {
-    console.error("usage: node bin/id.mjs [<slug>] [--ticket <file>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]\nNo ticket: pass --ticket <file>, or a slug whose specs/<slug>/ticket.md exists.");
+    console.error("usage: bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]\nNo ticket: pass --ticket <file>, or a slug whose specs/<slug>/ticket.md exists.");
     process.exit(1);
   }
   let diff;

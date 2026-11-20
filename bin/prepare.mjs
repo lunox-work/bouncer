@@ -44,7 +44,7 @@ if (process.argv.includes("--hosted")) {
 const { options, rest } = args();
 const [slug] = rest;
 if (slug === undefined) {
-  console.error("usage: node bin/prepare.mjs <slug> [--accept-open] [--force]");
+  console.error("usage: bouncer prepare <slug> [--accept-open] [--force]");
   process.exit(1);
 }
 const dir = specDir(slug);
@@ -58,7 +58,7 @@ const confirmed = confirmation(slug);
 if (!confirmed.ok) {
   say("unconfirmed", { options });
   console.log(
-    `${slug}: ${confirmed.reason}. Show the person its decisions (node bin/confirm.mjs ${slug}), then record their confirmation with --by.`,
+    `${slug}: ${confirmed.reason}. Show the person its decisions (bouncer confirm ${slug}), then record their confirmation with --by.`,
   );
   process.exit(3);
 }
@@ -118,8 +118,10 @@ console.log(
     : "(none dropped).",
 );
 console.log(`Hidden suite sha256 ${committed.hiddenSha256}: the handout shows it, and the judge refuses once it changes.`);
-console.log(
-  readJson(join(dir, "toolchain.json"), {}).name === "repo"
-    ? `Next: node bin/run.mjs ${slug}, or node bin/handout.mjs ${slug} --repo [<checkout>].`
-    : `Next: node bin/run.mjs ${slug}, or node bin/handout.mjs ${slug} <dir>.`,
-);
+// Under bouncer check the next step is check's own: it judges the working tree.
+if (!process.env.BOUNCER_UNDER_CHECK)
+  console.log(
+    readJson(join(dir, "toolchain.json"), {}).name === "repo"
+      ? `Next: bouncer handout ${slug} --repo [<checkout>] for an agent to work in the checkout, or bouncer judge ${slug} --repo [<checkout>] when the change is already there.`
+      : `Next: bouncer run ${slug}, or bouncer handout ${slug} <dir>.`,
+  );

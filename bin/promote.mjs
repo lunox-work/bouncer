@@ -35,7 +35,7 @@ import {
 const { rest } = args();
 const [slug] = rest;
 if (slug === undefined) {
-  console.error("usage: node bin/promote.mjs <slug>");
+  console.error("usage: bouncer promote <slug>");
   process.exit(1);
 }
 const fail = (message) => {
@@ -46,7 +46,7 @@ const chain = toolchainOf(slug);
 if (chain.name !== "repo") fail("not a repository target");
 if (promotedOf(slug) !== null) fail(`already promoted on ${promotedOf(slug).at}`);
 const judged = readJson(join(RUNS, slug, "judged.json"), null);
-if (judged?.verdict !== "passed") fail(`last judged ${judged?.verdict ?? "never"}; promote only after node bin/judge.mjs ${slug} --repo says passed`);
+if (judged?.verdict !== "passed") fail(`last judged ${judged?.verdict ?? "never"}; promote only after bouncer judge ${slug} --repo says passed`);
 if (judged.ref !== null) fail(`judged at ${judged.ref}, not a working tree; judge the checkout to promote into`);
 const found = checkoutChanges(chain, judged.checkout);
 const now = sha256(JSON.stringify(found.items.map((item) => [item.path, item.change, sha256(found.content(item.path) ?? "")])));

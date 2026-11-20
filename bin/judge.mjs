@@ -102,13 +102,13 @@ const { options, rest } = args();
 if (sealed !== null && rest[0] === sealed.slug) rest.shift();
 const [slug, src] = sealed === null ? rest : [sealed.slug, rest[0]];
 if (slug === undefined || (src === undefined && options.repo === undefined)) {
-  console.error("usage: node bin/judge.mjs <slug> <src-dir> [--detail] | <slug> --repo [<checkout>] [--ref <rev>] [--strict-scope] [--audit [<transcript>]] [--detail] | --seal <file> <src-dir> | --seal <file> --repo [<checkout>] [--ref <rev>] [--json <file>]");
+  console.error("usage: bouncer judge <slug> <src-dir> [--detail] | <slug> --repo [<checkout>] [--ref <rev>] [--strict-scope] [--audit [<transcript>]] [--detail] | --seal <file> <src-dir> | --seal <file> --repo [<checkout>] [--ref <rev>] [--json <file>]");
   process.exit(1);
 }
 if (sealed !== null) guardOutput();
 const calibration = readJson(join(specDir(slug), "calibration.json"), null);
 if (calibration?.status !== "ok") {
-  console.error(`${slug}: not calibrated; run node bin/prepare.mjs ${slug} first.`);
+  console.error(`${slug}: not calibrated; run bouncer prepare ${slug} first.`);
   process.exit(1);
 }
 if (promotedOf(slug) !== null) {

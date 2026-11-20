@@ -62,7 +62,7 @@ const archive = resolve(
   typeof options.archive === "string" ? options.archive : (process.env.BOUNCER_ARCHIVE ?? join(ROOT, "experiments")),
 );
 if (rest.length === 0) {
-  console.error("usage: node bin/import-archive.mjs <slug>... [--archive <dir>] [--force]");
+  console.error("usage: bouncer import-archive <slug>... [--archive <dir>] [--force]");
   process.exit(1);
 }
 if (!existsSync(join(archive, "specs"))) {
@@ -82,7 +82,7 @@ function toolchainOf(from) {
 
 const seam = options.seam ?? null;
 if (seam !== null && (seam !== "exec" || rest.length !== 1)) {
-  console.error("--seam takes `exec` and one slug: node bin/import-archive.mjs <slug> --seam exec [--as <new slug>]");
+  console.error("--seam takes `exec` and one slug: bouncer import-archive <slug> --seam exec [--as <new slug>]");
   process.exit(1);
 }
 

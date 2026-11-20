@@ -90,7 +90,7 @@ if (boundary !== null && list(options.allowed).length === 0) {
 }
 if (slug === undefined || typeof options.repo !== "string" || typeof options.package !== "string" || (seam.length === 0 && boundary === null)) {
   console.error(
-    "usage: node bin/repo.mjs <slug> --repo <path> --package <dir> --seam <file>[,<file>] | --seam exec --command <argv> | --seam http --start <cmd> [--healthcheck <path>] [--base <ref>] [--allowed <path>,...] [--hidden-dir <dir>] [--examples <file>,...]",
+    "usage: bouncer repo <slug> --repo <path> --package <dir> --seam <file>[,<file>] | --seam exec --command <argv> | --seam http --start <cmd> [--healthcheck <path>] [--base <ref>] [--allowed <path>,...] [--hidden-dir <dir>] [--examples <file>,...]",
   );
   process.exit(1);
 }
@@ -204,6 +204,6 @@ console.log(`Examples: ${toolchain.examples.join(", ") || "none"}`);
 console.log(
   `Existing suite on base: ${baseline.passing.length} passing, ${baseline.failing.length} failing, ${baseline.crashed.length} file(s) crashed, ${baseline.seconds} s${baseline.compiled ? "" : "; it did NOT build"}.`,
 );
-console.log(
-  `Next: specs/${slug}/spec.md, then node bin/confirm.mjs ${slug}: the seam and allowed paths are confirmed with the spec.`,
-);
+// Under bouncer check the next step is check's own (BOUNCER_UNDER_CHECK).
+if (!process.env.BOUNCER_UNDER_CHECK)
+  console.log(`Next: write ${join(specDir(slug), "spec.md")}, then bouncer confirm ${slug}: the seam and allowed paths are confirmed with the spec.`);

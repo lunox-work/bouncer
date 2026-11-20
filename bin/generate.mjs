@@ -193,7 +193,7 @@ async function generate(slug, force, only = null) {
   const skeletonFiles = repo ? chain.seam : [chain.skeleton[0]];
   const baselinePath = join(out, "baseline.json");
   const baseline = readJson(baselinePath, null);
-  if (repo && baseline === null) throw new Error(`${slug}: no baseline.json; run node bin/repo.mjs first.`);
+  if (repo && baseline === null) throw new Error(`${slug}: no baseline.json; run bouncer repo first.`);
   // The run on base, which a stub is checked against even after
   // baseline.json holds the run on an older stub.
   const onBase = baseline?.onBase ?? baseline;

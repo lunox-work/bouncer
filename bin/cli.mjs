@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // The `bouncer` command: one entry point over the bin scripts,
 // which it runs unchanged, in the caller's folder, with their own exit
-// codes. Paths the scripts print as `node bin/<script>.mjs` are these
-// subcommands. Specs, runs and results live under BOUNCER_HOME
+// codes. The scripts name their next steps as these subcommands
+// (`bouncer <command>`). Specs, runs and results live under BOUNCER_HOME
 // (default ~/.bouncer/, lib.mjs `HOME`); `where` prints them.
 //
 //   bouncer <command> [args...]

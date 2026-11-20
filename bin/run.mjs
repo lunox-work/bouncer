@@ -65,7 +65,7 @@ const git = (dir, ...argv) =>
 
 const { options, rest } = args();
 if (rest.length === 0) {
-  console.error("usage: node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket|ticket-public] [--force]");
+  console.error("usage: bouncer run <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket|ticket-public] [--force]");
   process.exit(1);
 }
 const runs = Number(options.runs ?? 1);
@@ -100,7 +100,7 @@ const variant = `${brief === null ? "" : `${brief}-`}${model === undefined ? bac
 const jobs = specSlugs(rest)
   .filter((slug) => {
     const ok = readJson(join(specDir(slug), "calibration.json"), null)?.status === "ok";
-    if (!ok) log(slug, "skipped: not calibrated (node bin/prepare.mjs first)");
+    if (!ok) log(slug, "skipped: not calibrated (bouncer prepare first)");
     if (ok && noPublic && toolchainOf(slug).name !== "repo") throw new Error(`${slug}: --no-public takes a repository target`);
     if (ok && brief !== null && brief !== "ticket" && toolchainOf(slug).name === "repo") throw new Error(`${slug}: --brief ${brief} takes a new-module spec`);
     return ok;
@@ -191,5 +191,5 @@ if (halted !== null) {
   process.exit(2);
 }
 console.log(
-  `${jobs.length} run(s) finished${jobs.length > 0 ? `; next: node bin/grade.mjs ${[...new Set(jobs.map((job) => job.slug))].join(" ")}` : ""}`,
+  `${jobs.length} run(s) finished${jobs.length > 0 ? `; next: bouncer grade ${[...new Set(jobs.map((job) => job.slug))].join(" ")}` : ""}`,
 );

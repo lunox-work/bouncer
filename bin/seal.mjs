@@ -90,13 +90,13 @@ async function main() {
   const { options, rest } = args();
   const [slug] = rest;
   if (slug === undefined) {
-    console.error("usage: node bin/seal.mjs <slug> [--out <file>]");
+    console.error("usage: bouncer seal <slug> [--out <file>]");
     process.exit(1);
   }
   const dir = specDir(slug);
   const calibration = readJson(join(dir, "calibration.json"), null);
   if (calibration?.status !== "ok") {
-    console.error(`${slug}: not calibrated; run node bin/prepare.mjs ${slug} first.`);
+    console.error(`${slug}: not calibrated; run bouncer prepare ${slug} first.`);
     process.exit(1);
   }
   const committed = commitment(slug);
@@ -116,7 +116,7 @@ async function main() {
   for (const folder of ["skeleton", "tests/public", "tests/private"])
     if (existsSync(join(dir, folder))) for (const rel of walk(join(dir, folder))) add(`${folder}/${rel}`, readFileSync(join(dir, folder, rel)));
   if (chain.name === "repo" && !files["baseline.json"]) {
-    console.error(`${slug}: a repository spec without baseline.json; run node bin/repo.mjs first.`);
+    console.error(`${slug}: a repository spec without baseline.json; run bouncer repo first.`);
     process.exit(1);
   }
   const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"), "utf8"));
