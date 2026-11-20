@@ -107,6 +107,29 @@ Strengthening pass, 2026-11-20 afternoon (commits 36e7986..0ddb31c, local):
 - **Needs you:** person-timed confirmations, and more tickets with specs their
   owner writes (do both at once: 13 real tickets, you confirm each spec).
 
+Evening pass, 2026-11-20 (commits 10efe60..2c4e27d, local):
+
+- **Passes, checked** (RESULTS.md "When he says yes"): Codex's suites and the
+  referee find a stated rule missed in 51 of 386 public-suite passes, 48 on
+  three specs. README, REFERENCE, the agent section and the skill no longer
+  say a pass means the spec is met.
+- **`bouncer second`** refuses a Claude writer unless `--backend` names one
+  (Sonnet's suite caught 0 of 13 of those misses, Codex's 13). A referee on
+  second-suite-only failures failed its registered gate (upheld 14 of 14;
+  evidence/second-referee.md): `judge` keeps requiring both suites.
+- **`bouncer check`** prints the ID list when out of scope for a hidden suite
+  (exit 2 as before), lists the decisions and starts the clock at its
+  confirmation stop, and drafts again: since 9423811 the drafter crashed on
+  every run (**in published 0.8.0**). `confirm --by` finds a session that
+  names the slug in a variable; an indented `- Ticket:` is a field.
+- **The after-the-fact gate** (evidence/skill-gate-check.mjs, registered
+  9f93f77): "is it really done?" on a ufo change the maintainers' tests
+  reject. Run 1 failed (drafter crash, confirmation unchecked), run 2 failed
+  (`--answered-elsewhere` used for an answer given in the session), run 3
+  holds: `incomplete`, answer found in the session, 0 audit findings. One
+  case, passed after fixes it surfaced.
+- **Needs you:** a 0.8.1 release for the drafter fix (passkey), then push.
+
 Not built: overlapping the reference session with the suite writers (phase 3's
 "cut the wait"). The reference reads both suites today; writing it alongside
 them changes what calibrates the hidden suite and needs its own gate.
