@@ -1,6 +1,6 @@
 // The ID check's pull-request comment (bin/id-comment.mjs) against a mocked
 // GitHub held in memory: no network, no session. The last part replays the
-// 11 commits of evidence/in-repo as pull requests (PLAN.md phase 2, reach
+// 11 commits of evidence/in-repo as pull requests (evidence/PLAN.md phase 2, reach
 // step 3) when that folder and its repository are on this machine.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";

@@ -1,4 +1,4 @@
-// The door's rules (PLAN.md "1. The door"): pure functions, no imports, no
+// The door's rules (evidence/PLAN.md "1. The door"): pure functions, no imports, no
 // I/O, no model. They read one finished agent session and name the obvious
 // reasons not to accept it as done. evidence/door.mjs measures them on
 // local transcripts (evidence/DOOR.md), where they failed the gate for a
