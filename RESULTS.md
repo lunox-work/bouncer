@@ -243,7 +243,8 @@ The referee above checks rejections. A pass was never checked until
 judged again by Codex's suites for the same spec (written blind, calibrated
 on the same reference, never seen by the agent; no model), then each
 distinct failing test put to the same blind referee (Fable 5.1, 12 sessions,
-$3.97). A pass is a miss when a test it fails is one the spec requires.
+$3.97), then to Codex as a second referee from another model family. A pass
+is a miss when a test it fails is one the spec requires.
 
 | arm, Haiku 5.5                                    | passes | miss a rule the spec requires | fail only an open reading |
 | ------------------------------------------------- | -----: | ----------------------------: | ------------------------: |
@@ -255,10 +256,16 @@ $3.97). A pass is a miss when a test it fails is one the spec requires.
   and 13 of 19: a deletion with no hunks of a non-empty file, a hunk's offset
   from the moved line) and tool-versions (22 of 42 and 10 of 50) hold 71 of
   the 74.
-- **One ruling carries 32.** Every tool-versions miss is go.mod's `toolchain`
-  and `go` lines read as two sources whose difference is a conflict. The
-  referee ruled that required on one test and open on a sibling test of the
-  same question. Without tool-versions: 42 of 394 passes.
+- **Two model families agree.** Codex, asked the same 12 questions blind,
+  rules required 8 of the 9 tests Fable did; both say required on 50 of the
+  386 passes (23 of the 100). The one split is an escrow-split test, 1 pass.
+  Codex is the stricter: it also rules required 3 tests Fable left open, 55
+  of 386 by Codex alone.
+- **One question carries 32.** Every tool-versions miss is go.mod's
+  `toolchain` and `go` lines read as two sources whose difference is a
+  conflict. Fable ruled that required on one test and open on a sibling test
+  of the same question; Codex rules both required. Without tool-versions: 42
+  of 394 passes.
 - **Mutant survival is a partial warning.** patch-apply and gherkin-parse are
   two of the three specs whose mutants survive most (45%, 36%); tool-versions
   is near the least (9%). Spearman 0.40 over the 26 specs.
