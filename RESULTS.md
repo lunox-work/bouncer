@@ -775,6 +775,17 @@ names each shortcut with an input it gets wrong
   appearance): bugs the hidden suite missed, not gaming it rewarded.
 - No run edited a test or the harness, and no transcript tried to read a hidden
   path (0 of 40).
+- **A second writer as a product option** (2026-11-20, `bouncer second`,
+  [evidence/second-writer.json](evidence/second-writer.json)). Codex is not
+  installed here, so the second suite for gherkin-parse and reverse-diff was
+  written by Sonnet 5.5 ($0.21 each, calibrated on the same reference with no
+  session) and the 20 Opus passes judged again: it rejects 10, every
+  reverse-diff run, on a rule the spec states (hunk line numbers unchanged),
+  and no gherkin-parse run. Codex's suite rejected 17 of the 20. A second
+  writer on another model family catches more than one on another Claude
+  model. Its cost on honest work is the HumanEval+ row: requiring both the
+  Claude and the Codex suite rejects 6 of 289 right solutions, against 3 and
+  5 for either alone, and accepts 32 of 889 wrong ones against 43 and 34.
 
 ## Black-box seams
 

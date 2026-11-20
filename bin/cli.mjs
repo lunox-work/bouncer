@@ -26,6 +26,7 @@ const COMMANDS = {
   handout: "what an outside agent may see, in a folder of your choice",
   judge: "a src/, or a checkout or commit -> passed | overfit | incomplete | regressed | refused; --card <file.svg>; --platform <submission id>",
   promote: "a passed repository spec's hidden suite into the repository",
+  second: "a second hidden suite from another writer, for grading someone else's work; judge then needs both",
   run: "a blind agent session",
   grade: "grade blind runs into results.jsonl",
   retry: "one retry of a blind run, told its failing scenarios",

@@ -147,12 +147,20 @@ if (!entries.some((path) => existsSync(join(src, path)))) {
 const judged = judge(slug, realpathSync(src));
 // The rule itself: rules.mjs `judgement`, which bin/api.mjs exports as `verdict`.
 const outcome = judgement({ public: judged.public, hidden: judged.hidden, publicIds: calibration.publicIds, kept: calibration.kept });
-const { verdict: result, public: publicCount, hidden: hiddenCount, failures, failedScenarios: scenarios } = outcome;
+const { public: publicCount, hidden: hiddenCount, failures } = outcome;
+let { verdict: result, failedScenarios: scenarios } = outcome;
+// A second writer's suite (bin/second.mjs): a pass needs both.
+const second = secondSuite(realpathSync(src));
+if (second !== null && second.outcome.failedScenarios.length > 0 && (result === "passed" || result === "overfit")) {
+  result = "overfit";
+  scenarios = [...new Set([...scenarios, ...second.outcome.failedScenarios])];
+}
 
 // His line, on a terminal only (bin/voice.mjs); a keyed retry's submission sits under <variant>-retry-keyed/.
 say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)) });
-console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}.`);
+console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}${second === null ? "" : `, second hidden ${second.outcome.hidden.passed}/${second.outcome.hidden.total}`}.`);
 console.log(hashLine());
+if (second !== null) console.log(`Second hidden suite by ${second.writer}, sha256 ${second.sha}${second.outcome.failedScenarios.length > 0 ? `; failing ${second.outcome.failedScenarios.join(", ")}` : ""}.`);
 const imported = readJson(join(specDir(slug), "imported.json"), null);
 if (imported !== null) console.log(`Imported from ${imported.from}: not held out (bin/import-archive.mjs).`);
 compileReport(judged);
@@ -170,6 +178,25 @@ writeRecord({
 });
 writeCard({ verdict: result, keys: scenarios, counts: { public: publicCount, hidden: hiddenCount }, retry: /-retry-keyed(\/|$)/.test(resolve(src)), transcript: null });
 process.exit(result === "passed" ? 0 : result === "overfit" ? 2 : 1);
+
+/**
+ * The second writer's hidden suite (bin/second.mjs, specs/<slug>-second/),
+ * judged on the same src/, or null when there is none or with a seal.
+ * Refuses, exit 1, when its hash moved since it was committed.
+ */
+function secondSuite(dir) {
+  const other = `${slug}-second`;
+  const recorded = sealed === null ? readJson(join(specDir(other), "calibration.json"), null) : null;
+  if (recorded?.status !== "ok") return null;
+  const held = commitment(other);
+  if (!held.ok) {
+    console.error(`${other}: hidden suite changed since ${held.at}; not judged.`);
+    process.exit(1);
+  }
+  const judgedAgain = judge(other, dir);
+  const writer = recorded.writer ? `${recorded.writer.backend}${recorded.writer.model ? ` (${recorded.writer.model})` : ""}` : "another writer";
+  return { outcome: judgement({ public: judgedAgain.public, hidden: judgedAgain.hidden, publicIds: recorded.publicIds, kept: recorded.kept }), writer, sha: held.current };
+}
 
 /** A repository target judged from a checkout; returns the exit code. */
 function judgeRepo() {
