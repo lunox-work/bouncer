@@ -6,6 +6,19 @@ Your agent says it's on the list. He checks. Verify your coding agent's work wit
 
 - **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket. Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
 
+## Examples
+
+- "My agent says the CSV import is done and its tests pass. Check its work
+  against the ticket." The skill drafts a spec from the ticket for you to
+  confirm, writes a hidden suite the agent never saw, and gives a verdict:
+  passed, overfit, incomplete, regressed or refused.
+- "Turn this ticket into a spec I confirm, then write tests for it that the
+  implementing agent can't see." The skill writes a public suite for the
+  agent and keeps a calibrated hidden suite for judging.
+- "Grade the candidate's submission in `./submission` against the
+  `duration-parse` spec." The skill judges the folder against the hidden
+  suite and explains the verdict.
+
 ## Install
 
 ```sh
@@ -24,6 +37,7 @@ The plugin bundles no MCP server: installing it asks for no sign-in, and its ski
 ## Links
 
 - [Privacy](https://lunox.work/privacy/platform)
+- [Terms](https://lunox.work/terms)
 - [Documentation](https://github.com/lunox-work/bouncer#readme)
 - [Support](https://github.com/lunox-work/bouncer/issues)
 
