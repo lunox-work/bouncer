@@ -50,7 +50,7 @@ npx skills add lunox-work/bouncer -g
 Then ask your agent: **_"write tests my agent can't see for this ticket"_**.
 Already done? Ask: **_"is this really done?"_** Works in Claude Code, Codex,
 Cursor and 20+ agents that load skills. In Claude Code it is also a plugin:
-`/plugin marketplace add lunox-work/bouncer`, then `/plugin install bouncer-skill@bouncer`
+`/plugin marketplace add lunox-work/bouncer`, then `/plugin install bouncer-verify@bouncer`
 ([everything else](docs/REFERENCE.md#install-in-full)).
 
 <p align="center">

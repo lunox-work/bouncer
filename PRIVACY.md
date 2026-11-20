@@ -5,7 +5,7 @@ needs no account and sends no telemetry, and nothing it handles reaches its
 authors unless you use Lunox's hosted platform, which is optional (below).
 
 - **Which plugin reaches the platform:** two plugins, installed separately.
-  `bouncer-skill` bundles no MCP server and its skill runs the CLI on the machine;
+  `bouncer-verify` bundles no MCP server and its skill runs the CLI on the machine;
   installing it asks for no sign-in, and it reaches Lunox's platform only if
   the person runs `bouncer login`, `push` or `ci --platform` themselves
   (below). `bouncer-hosted` bundles the `lunox` MCP server and the
