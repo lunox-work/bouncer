@@ -1,7 +1,7 @@
 {
   "name": "bouncer-verify",
   "displayName": "bouncer verify",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in.",
   "author": {
     "name": "Lunox",
