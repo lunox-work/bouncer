@@ -43,8 +43,8 @@
   monthly token limit. Hidden tests are written and kept on the platform and
   never sent to the session. Confirming a priced spec's decisions, approving a
   price, publishing and merging back happen in the platform's web app, not
-  through the plugin. The platform's privacy policy is at
-  https://platform.lunox.work/privacy.
+  through the plugin. The platform's privacy policy, which also covers these
+  plugins and the MCP server, is at https://lunox.work/privacy/platform.
 - **The `lunox-contribute` skill, in the `bouncer-hosted` plugin:** for a
   person invited to contribute, it talks to platform.lunox.work only through
   the contributor MCP server they add and sign in to themselves

@@ -67,10 +67,12 @@ const REPO = "lunox-work/bouncer";
 /**
  * The two plugins. `dir` is the plugin's folder on the plugin branch ("" for
  * its root), `manifest` its plugin.json on main, `mcp` whether it carries
- * .mcp.json.
+ * .mcp.json. Each has a folder of its own: the Claude plugin directory scans
+ * a submission's whole folder, so a plugin at the root would carry the other
+ * one's files, MCP server included.
  */
 const PLUGINS = [
-  { name: NAME, dir: "", manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
+  { name: NAME, dir: NAME, manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
   {
     name: `${NAME}-hosted`,
     dir: `${NAME}-hosted`,
@@ -100,10 +102,10 @@ const SCANNER_TRAPS = [
 ];
 /**
  * The plugin's one MCP server (plugin-root .mcp.json, as Claude Code plugins
- * declare them). The platform serves it under the package's name before the
- * rename (bin/identity.mjs `client`).
+ * declare them). The platform also still serves it at /mcp/duediligence, the
+ * package's name before the rename, for plugins installed then.
  */
-const MCP_URL = "https://platform.lunox.work/mcp/duediligence";
+const MCP_URL = "https://platform.lunox.work/mcp/bouncer";
 /**
  * The prompts this session reads itself (the spec-drafting rules), mirrored
  * into the skill's folder so the plugin carries every instruction it gives
@@ -327,9 +329,10 @@ function pack(offline) {
 
 /** Files every plugin carries from main, at the same path in its folder. `.mcp.json` only where `mcp`. */
 const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE"];
-// plugin.json fields only the directory's listing reads. Claude Code warns on
-// them as unknown keys, so the branch's plugin.json drops them and its README
-// carries them as links, which the directory also reads.
+// plugin.json fields the directory's listing reads. Claude Code accepts them
+// (2.1.329's `claude plugin validate` checks only that each is https:// or
+// mailto:), so the branch's plugin.json keeps them, and its README repeats
+// them as links for readers.
 const LISTING_LINKS = { privacyPolicyUrl: "Privacy", documentationUrl: "Documentation", supportUrl: "Support" };
 
 function git(args, env = {}) {
@@ -410,7 +413,6 @@ function pluginBranch(push, rev) {
       for (const path of files) addFromRev(env, rev, path, at(path));
       const manifest = JSON.parse(show(rev, plugin.manifest) ?? "null");
       if (!manifest) return [`${plugin.manifest}: not in ${rev}`];
-      for (const key of Object.keys(LISTING_LINKS)) delete manifest[key];
       addBlob(env, at(".claude-plugin/plugin.json"), `${JSON.stringify(manifest, null, 2)}\n`);
       addBlob(env, at("README.md"), pluginReadme(plugin, rev));
     }

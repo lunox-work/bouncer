@@ -11,8 +11,9 @@
     {
       "name": "bouncer",
       "source": {
-        "source": "github",
-        "repo": "lunox-work/bouncer",
+        "source": "git-subdir",
+        "url": "lunox-work/bouncer",
+        "path": "bouncer",
         "ref": "claude-plugin"
       },
       "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.",
