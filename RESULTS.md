@@ -94,6 +94,12 @@ was named in 35 of 45 runs: 15 of 15 in Python and in Rust, 5 of 15 in Go,
 where every run failed only one error-handling scenario. Median list 12
 items, 14 s, $0.056. ([ID.md](evidence/ID.md#outside-typescript-2026-11-20))
 
+Running each pick did not help. A probe per item, executed against the
+code, shown to the same judge: a wrong pick named in 55 of 75 runs against
+57, and 3 false alarms against none, short of the bar registered before the
+run (62 and at most 3), so `bouncer id` stays a list
+([ID.md](evidence/ID.md#executed-picks-2026-11-20-no-gain)).
+
 ## Tests written from the spec carry it to the agent
 
 The same seven specs, 15 runs per cell, graded by the same hidden suites. The
