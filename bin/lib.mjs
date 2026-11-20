@@ -1907,7 +1907,7 @@ export const promotedOf = (slug) => readJson(join(SPECS, slug, "promoted.json"),
  * TRANSCRIPTS in the project folder of the repository or of a folder above
  * it, where Claude Code keeps sessions started there.
  */
-export function newestTranscript(repo) {
+export function newestTranscript(repo, { edited = false } = {}) {
   const folders = [];
   for (let at = repo; ; at = dirname(at)) {
     folders.push(join(TRANSCRIPTS, at.replace(/[^a-zA-Z0-9]/g, "-")));
@@ -1922,7 +1922,27 @@ export function newestTranscript(repo) {
     )
     .map((path) => ({ path, mtime: lstatSync(path).mtimeMs }))
     .sort((a, b) => b.mtime - a.mtime);
-  return found[0]?.path ?? null;
+  if (!edited) return found[0]?.path ?? null;
+  return found.find(({ path }) => editedFiles(path))?.path ?? null;
+}
+
+/**
+ * Whether a Claude Code transcript edited a file (Edit, Write, MultiEdit,
+ * NotebookEdit). The door wants the session that made the change: in the
+ * 2026-11-20 after-the-fact gate the newest one was the session asking
+ * whether it was done, which had edited nothing.
+ */
+export function editedFiles(transcript) {
+  for (const line of readFileSync(transcript, "utf8").split("\n")) {
+    if (!line.includes('"tool_use"')) continue;
+    try {
+      const event = JSON.parse(line);
+      if ((event.message?.content ?? []).some?.((block) => block.type === "tool_use" && ["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(block.name))) return true;
+    } catch {
+      // A partial last line while the session is still writing.
+    }
+  }
+  return false;
 }
 
 /**

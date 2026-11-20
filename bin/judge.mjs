@@ -236,8 +236,15 @@ function judgeRepo() {
   const handout = readJson(join(RUNS, slug, "handout", "handout.json"), null);
   let peeks = null;
   if (options.audit !== undefined) {
-    const transcript = typeof options.audit === "string" ? resolve(options.audit) : newestTranscript(found.root);
-    peeks = { transcript, since: handout?.at ?? null, attempts: transcript === null ? [] : audit(transcript, chain, handout?.at) };
+    // Both the session judging (newest) and the one that made the change (the
+    // newest that edited a file) may have tried to open the hidden suite.
+    const given = typeof options.audit === "string" ? [resolve(options.audit)] : null;
+    const transcripts = given ?? [...new Set([newestTranscript(found.root), newestTranscript(found.root, { edited: true })].filter((path) => path !== null))];
+    peeks = {
+      transcript: transcripts.length === 0 ? null : transcripts.join(" and "),
+      since: handout?.at ?? null,
+      attempts: transcripts.flatMap((path) => audit(path, chain, handout?.at)),
+    };
   }
 
   const where = ref === undefined ? `${found.root} (working tree)` : `${found.root} at ${ref}`;
@@ -299,7 +306,8 @@ function judgeRepo() {
     keys: scenarios,
     counts: { public: publicCount, hidden: hiddenCount },
     retry: false,
-    transcript: peeks?.transcript ?? (sealed === null ? newestTranscript(found.root) : null),
+    // The agent's claim comes from the session that made the change, not the one asking.
+    transcript: typeof options.audit === "string" ? resolve(options.audit) : sealed === null ? newestTranscript(found.root, { edited: true }) : null,
   });
   return { passed: 0, overfit: 2, regressed: 3 }[result] ?? 1;
 }

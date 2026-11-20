@@ -34,7 +34,9 @@ at most: a larger change has decisions that are not on it.
 ## 1. The door (no model, seconds)
 
 `bouncer door` in the checkout reads the agent's session transcript (the
-newest for this folder, or `--transcript <file>`) and, in a TypeScript
+newest for this folder that edited a file, or `--transcript <file>`; when
+no session here edited anything, the change came from elsewhere and it says
+so) and, in a TypeScript
 checkout with carveout installed, `carveout gate`. It lists what is worth a
 look: no test run after the last edit, tests skipped, weakened or deleted, the
 last test run red, only tests the agent wrote, a TODO left in code, harness or

@@ -15,8 +15,10 @@
 //
 //   node bin/door.mjs [--transcript <file>] [--repo [<checkout>]] [--no-gate] [--json]
 //
-// The transcript: --transcript, else the newest Claude Code transcript for
-// the checkout's folder (default the current one). Exit 0 always; --json
+// The transcript: --transcript, else the newest Claude Code transcript that
+// edited a file, for the checkout's folder (default the current one); a
+// session that only asks whether the work is done is not the one that did
+// it. Exit 0 always; --json
 // prints { transcript, claimsDone, findings, gate }.
 
 import { spawnSync } from "node:child_process";
@@ -69,7 +71,10 @@ export function gateOf(checkout) {
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { options } = args();
   const checkout = resolve(typeof options.repo === "string" ? options.repo : ".");
-  const transcript = typeof options.transcript === "string" ? resolve(options.transcript) : newestTranscript(checkout);
+  // The session that made the change: the newest one that edited a file. The
+  // newest of all may be a session asking whether the work is done.
+  const newest = typeof options.transcript === "string" ? null : newestTranscript(checkout);
+  const transcript = typeof options.transcript === "string" ? resolve(options.transcript) : newestTranscript(checkout, { edited: true });
   const session = transcript !== null && existsSync(transcript) ? sessionOf(transcript) : null;
   const fired = session === null ? [] : doorRules(session);
   const claimsDone = fired.some((item) => item.rule === "claims-done");
@@ -80,10 +85,15 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     console.log(JSON.stringify({ transcript, claimsDone, findings, gate }, null, 2));
     process.exit(0);
   }
-  if (session === null) console.log(`No agent session found for ${checkout}; pass --transcript <file>.`);
+  if (session === null)
+    console.log(
+      newest !== null
+        ? `No Claude Code session that edited files here was found for ${checkout} (the newest one, ${newest}, edited none: likely this one). The change came from elsewhere; pass --transcript <file> for its session.`
+        : `No agent session found for ${checkout}; pass --transcript <file>.`,
+    );
   else {
     // The newest session may be one from a parent folder about other work: say which was read.
-    if (typeof options.transcript !== "string") console.error(`door: read ${transcript}`);
+    if (typeof options.transcript !== "string") console.error(`door: read ${transcript}${newest !== transcript ? ` (the newest session that edited files; ${newest} edited none)` : ""}`);
     const holds = gate?.refused ?? [];
     if (findings.length === 0 && holds.length === 0) {
       say("door-clean", { options });
