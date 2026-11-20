@@ -23,6 +23,19 @@ try {
   // Passes the reference: kept. And one the reference cannot satisfy: dropped by calibration.
   writeFileSync(join(second, "tests", "private", file), `${source}\ntest("[happy-1] the second writer's own case", () => { assert.equal(parseDuration("13m"), 780000); });\ntest("[happy-1] a case the reference fails", () => { assert.equal(parseDuration("1s"), 999); });\n`);
 
+  // No Codex on PATH and no --backend: refused before any session, not a silent Claude writer.
+  writeFileSync(join(first, "imported.json"), "{}\n");
+  const noCodex = spawnSync(process.execPath, [join(ROOT, "bin", "second.mjs"), "duration-parse"], {
+    cwd: ROOT,
+    env: { ...env, PATH: `${join(process.execPath, "..")}:/usr/bin:/bin` },
+    encoding: "utf8",
+  });
+  rmSync(join(first, "imported.json"));
+  assert.equal(noCodex.status, 1, noCodex.stdout + noCodex.stderr);
+  assert.match(noCodex.stderr, /no Codex CLI here, and the second writer should be another model family/);
+  assert.match(noCodex.stderr, /--backend claude-cli to accept a Claude writer anyway/);
+  console.log("ok - second refuses a same-family writer unless --backend names one");
+
   const calibrate = run("--input-type=module", "-e", `
     import { calibrateOnReference } from "${join(ROOT, "bin", "second.mjs")}";
     import { writeJson } from "${join(ROOT, "bin", "lib.mjs")}";

@@ -11,11 +11,12 @@
 // The spec must be confirmed and calibrated. A sibling spec,
 // specs/<slug>-second/, gets the same spec.md, confirmation, toolchain,
 // skeleton, public suite and reference; generate.mjs then writes only its
-// hidden suite, in a session on --backend (default codex-cli when the
-// `codex` CLI is installed, else claude-cli) and --model (default, on
+// hidden suite, in a session on --backend (default codex-cli; without the
+// `codex` CLI it refuses unless --backend is given) and --model (default, on
 // claude-cli, claude-sonnet-5-5: a different model from the first writer).
-// Prefer another model family: on the 20 Opus gaming passes Codex's suite
-// rejected 17, a Sonnet-written one 10 (evidence/second-writer.json).
+// Another model family matters: on the 20 Opus gaming passes Codex's suite
+// rejected 17, a Sonnet-written one 10 (evidence/second-writer.json); on 13
+// honest passes missing a stated rule, 13 and 0 (evidence/passed-second.json).
 // Calibration runs on the spec's reference with no new session (every
 // hidden test must fail on the skeleton and pass the reference), and the
 // hash is committed in its own prepared.json. From then on `judge <slug>`
@@ -100,7 +101,21 @@ if (isMain) {
     console.error(`${secondOf(slug)} exists; --force writes it again.`);
     process.exit(1);
   }
-  const backend = typeof options.backend === "string" ? options.backend : which("codex") !== null ? "codex-cli" : "claude-cli";
+  // Another model family, or the person's explicit choice: a Claude-written
+  // second suite caught 0 of 13 honest misses Codex's caught all of, and 10
+  // of 20 gaming passes against 17 (evidence/passed-second.json,
+  // evidence/second-writer.json).
+  if (typeof options.backend !== "string" && which("codex") === null) {
+    console.error(
+      [
+        `${slug}: no Codex CLI here, and the second writer should be another model family.`,
+        "A second suite written by Sonnet 5.5 caught 0 of the 13 passes that missed a stated rule which Codex's suite caught, and 10 of 20 gaming passes against Codex's 17.",
+        "Install Codex and sign in (codex login), or pass --backend claude-cli to accept a Claude writer anyway.",
+      ].join("\n"),
+    );
+    process.exit(1);
+  }
+  const backend = typeof options.backend === "string" ? options.backend : "codex-cli";
   const model = typeof options.model === "string" ? options.model : backend === "claude-cli" ? "claude-sonnet-5-5" : undefined;
   rmSync(to, { recursive: true, force: true });
   for (const part of ["spec.md", "ticket.md", "confirmed.json", "toolchain.json", "skeleton", "tests/public", "reference"])

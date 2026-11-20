@@ -424,11 +424,14 @@ output, and the workflow has not run on a real runner yet.
   where they reviewed it. `judge` prints how the spec was confirmed beside
   every verdict.
 - For grading someone else's work, `bouncer second <slug>` adds a second
-  hidden suite from another writer (Codex when installed, else Sonnet 5.5),
-  calibrated on the same reference; `judge` then needs both. Against Opus
-  told to game, Codex's second suite caught 17 of the 20 passes the first let
-  through and a Sonnet-written one 10; requiring two suites doubles false
-  rejects on HumanEval+ (6 of 289 against 3), so it is opt-in.
+  hidden suite from another writer, calibrated on the same reference; `judge`
+  then needs both. The writer is Codex; without it `second` refuses unless
+  `--backend` names a Claude one. Against Opus told to game, Codex's second
+  suite caught 17 of the 20 passes the first let through and a Sonnet-written
+  one 10; of 13 honest passes missing a stated rule, 13 and 0. Requiring two
+  suites doubles false rejects on HumanEval+ (6 of 289 against 3), so it is
+  opt-in; a referee on the disagreements upheld all 14 and did not lower that
+  ([second-referee.md](../evidence/second-referee.md)).
 
 ## Scope
 
