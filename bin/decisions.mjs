@@ -30,8 +30,11 @@ export function decisionItems(text) {
   for (const raw of text.slice(last.index + last[0].length).split("\n")) {
     const line = raw.trim();
     if (line === "") continue;
-    const item = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
-    const sub = items.length > 0 && !item ? line.match(FIELD) : null;
+    const bullet = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+    // `- Ticket: silent.` under an item is a field too: drafters write it that
+    // way (51 stored specs), and read as an item it lists three decisions for one.
+    const item = bullet && !(items.length > 0 && /^\s/.test(raw) && FIELD.test(bullet[1])) ? bullet : null;
+    const sub = items.length > 0 && !item ? (bullet ? bullet[1] : line).match(FIELD) : null;
     if (item) {
       items.push({ text: item[1].trim() });
       field = null;

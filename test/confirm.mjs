@@ -7,7 +7,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { namesConfirm, personAnswers } from "../bin/lib.mjs";
-import { byMissRate, kindOf } from "../bin/decisions.mjs";
+import { byMissRate, decisionItems, kindOf } from "../bin/decisions.mjs";
 
 const ok = (what) => console.log(`ok - ${what}`);
 const line = (event) => JSON.stringify(event);
@@ -26,6 +26,18 @@ assert.deepEqual(
   ["E", "S", "R"],
 );
 console.log("ok - kindOf and byMissRate: output text first, the rule itself before ordering");
+
+// The drafter's bulleted fields (the 2026-11-20 gate's spec, and 51 stored ones) are fields, not decisions.
+const bulleted = decisionItems("## Decided:\n\n1. Host-only returns /.\n   - Ticket: silent.\n   - Instead: return an empty string.\n2. Query gets /.\n   Ticket: silent.\n- Ticket: a top-level item\n");
+assert.deepEqual(
+  bulleted.map((item) => [item.text, item.ticket ?? null, item.instead ?? null]),
+  [
+    ["Host-only returns /.", "silent.", "return an empty string."],
+    ["Query gets /.", "silent.", null],
+    ["Ticket: a top-level item", null, null],
+  ],
+);
+console.log("ok - decisionItems: indented `- Ticket:` and `- Instead:` are fields of the item above");
 
 const scratch = mkdtempSync(join(tmpdir(), "bouncer-confirm-test-"));
 try {
