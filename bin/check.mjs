@@ -54,7 +54,7 @@ import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } fr
 import { basename, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { confirmation } from "./confirm.mjs";
-import { diffOf, render } from "./id.mjs";
+import { capDiff, diffOf, render } from "./id.mjs";
 import { ROOT, RUNS, SPECS, args, discard, log, prompt, readJson, session, sha256, specDir, stage, toolchainOf, workdir, writeJson } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
@@ -177,6 +177,12 @@ Make each one a \`Decided:\` item: the pick as the rule, its \`Ticket:\` line as
 listed, and the listed alternative as \`Instead:\`. The person keeps or
 changes each one before any test is written. Decide any other open question
 as above.
+
+\`change.diff\` is the change itself, already written. Read it for the
+interface only: name the functions, types and files the change exports, by
+its names and signatures. A helper it keeps private is not part of the
+interface, however useful it would be to test, and nothing it does not have
+is. The decisions come from \`id.md\` and the ticket, not from the code.
 `;
 
 const git = (checkout, ...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
@@ -213,13 +219,14 @@ export function changedFiles(checkout, base) {
 
 const step = (script, argv) => spawnSync(process.execPath, [join(ROOT, "bin", script), ...argv], { cwd: ROOT, stdio: "inherit" }).status ?? 1;
 
-async function draftSpec(slug, out) {
+async function draftSpec(slug, out, diff) {
   const chain = toolchainOf(slug);
   const listed = readJson(join(RUNS, slug, "id.json"), null);
   const dir = stage(workdir(`${slug}-draft`), slug, { spec: false });
   try {
     writeFileSync(join(dir, "ticket.md"), readFileSync(join(out, "ticket.md"), "utf8"));
     writeFileSync(join(dir, "id.md"), `${render(listed?.items ?? [])}\n`);
+    writeFileSync(join(dir, "change.diff"), diff);
     log(slug, "drafting spec.md from the ticket and the ID check");
     const result = await session({
       cwd: dir,
@@ -396,7 +403,7 @@ async function main() {
 
   // 6. spec.md from the ticket and the list.
   if (!existsSync(specPath) || moved === "redo") {
-    await draftSpec(slug, out);
+    await draftSpec(slug, out, capDiff(diffOf(record.checkout, record.base).diff));
     record.draftSha256 = sha256(readFileSync(specPath, "utf8"));
     writeJson(recordPath, record);
   }
