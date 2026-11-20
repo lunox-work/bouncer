@@ -40,7 +40,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { closestSentence, decisionItems, decisions, dependentScenarios, diffDecisions, scenarios, ticketSentences } from "./decisions.mjs";
+import { byMissRate, closestSentence, decisionItems, decisions, dependentScenarios, diffDecisions, scenarios, ticketSentences } from "./decisions.mjs";
 import { args, confirmingTranscript, personAnswers, readJson, sha256, specDir, writeJson } from "./lib.mjs";
 
 export { decisions };
@@ -141,6 +141,7 @@ export function decisionContext(slug) {
   }));
 }
 
+const isScope = (item) => /^(Seam|Allowed paths|Boundary)\b/.test(item.text);
 const isSilent = (sentence) => /^silent\.?$/i.test(sentence);
 const quote = (sentence) => (isSilent(sentence) ? "silent: decided here" : `"${sentence.replace(/^"|"$/g, "")}"`);
 const guessed = (item) => (item.ticketGiven || isSilent(item.ticket) ? "" : " (closest sentence)");
@@ -149,12 +150,18 @@ const ticketSource = (slug) =>
     ? (readFileSync(join(specDir(slug), "ticket.md"), "utf8").match(/^Source: (.+)$/m)?.[1] ?? null)
     : null;
 
-/** The decisions as the terminal shows them. */
+/**
+ * The decisions as the terminal shows them, the kinds drafts get wrong most
+ * often first (decisions.mjs `byMissRate`), each with its kind and how
+ * often a draft of that kind was kept. Scope lines stay last.
+ */
 function listing(context) {
-  return context
+  const ordered = [...byMissRate(context.filter((item) => item.scenarios !== undefined && !isScope(item))).map(({ item, kind }) => ({ ...item, kind })), ...context.filter(isScope)];
+  return ordered
     .map((item, i) =>
       [
         `${i + 1}. ${item.text}`,
+        ...(item.kind ? [`   kind:      ${item.kind.label} (drafts kept ${Math.round(item.kind.kept * 100)}%)`] : []),
         ...(item.ticket === null ? [] : [`   ticket:    ${quote(item.ticket)}${guessed(item)}`]),
         `   instead:   ${item.instead ?? "(not given: ask what else it could reasonably be)"}`,
         ...(item.scenarios.length === 0 ? [] : [`   scenarios: ${item.scenarios.map((s) => `${s.key} ${s.title}`).join("; ")}`]),
@@ -406,7 +413,7 @@ if (isMain) {
     );
     const source = ticketSource(slug);
     if (source !== null) console.log(`Ticket: ${source}`);
-    console.log(decided.length === 0 ? "No `Decided:` list in spec.md." : `Decided:\n${listing(decisionContext(slug))}`);
+    console.log(decided.length === 0 ? "No `Decided:` list in spec.md." : `Decided, the kinds drafts get wrong most often first:\n${listing(decisionContext(slug))}`);
     process.exit(state.ok ? 0 : 3);
   }
 }

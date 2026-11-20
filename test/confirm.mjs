@@ -7,6 +7,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { personAnswers } from "../bin/lib.mjs";
+import { byMissRate, kindOf } from "../bin/decisions.mjs";
 
 const ok = (what) => console.log(`ok - ${what}`);
 const line = (event) => JSON.stringify(event);
@@ -14,6 +15,17 @@ const user = (timestamp, content, extra = {}) => line({ type: "user", timestamp,
 const assistant = (timestamp, content) => line({ type: "assistant", timestamp, message: { role: "assistant", content } });
 const bash = (id, command) => ({ type: "tool_use", id, name: "Bash", input: { command } });
 const result = (id, text, isError = false) => ({ type: "tool_result", tool_use_id: id, content: text, ...(isError ? { is_error: true } : {}) });
+
+// The order decisions are put to a person: the kinds drafts miss most first.
+assert.equal(kindOf("Errors carry the word duration in their message.").kind, "output-format");
+assert.equal(kindOf("An empty list returns zero.").kind, "boundary");
+assert.equal(kindOf("Results are sorted by creation time.").kind, "ordering");
+assert.equal(kindOf("Splits the bounty by its configured share.").kind, "rule");
+assert.deepEqual(
+  byMissRate([{ text: "Results are sorted by creation time." }, { text: "Errors name the bad unit in their message." }, { text: "Splits the bounty." }]).map(({ item }) => item.text[0]),
+  ["E", "S", "R"],
+);
+console.log("ok - kindOf and byMissRate: output text first, the rule itself before ordering");
 
 const scratch = mkdtempSync(join(tmpdir(), "bouncer-confirm-test-"));
 try {

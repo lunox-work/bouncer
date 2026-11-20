@@ -164,3 +164,33 @@ export function diffDecisions(before, after) {
   }
   return { kept: before.length - left.length - edited.length, edited, added: right, removed: left };
 }
+
+/**
+ * The kind of a `Decided:` item, by keyword, and how often a drafted
+ * decision of that kind survived confirmation (RESULTS.md "Confirmation":
+ * 243 hand-labelled drafted decisions, evidence/default-match.json). `confirm`
+ * lists the kinds drafts miss most first, so the person's attention goes
+ * where the draft is likeliest wrong. A keyword rule, no model: its
+ * agreement with the hand labels is in evidence/decision-order.json.
+ */
+export const KINDS = [
+  { kind: "output-format", label: "exact output text", kept: 7 / 18, test: /\b(messages?|label(s|led)?|wording|reads?\s+["'`]|prints?|formatt?(ed|ing)?|format|header|column|subject|title|written as|rendered|decimal|digits|iso|utc|string ["'`])/i },
+  { kind: "invalid-input", label: "invalid or missing input", kept: 20 / 34, test: /\b(invalid|throws?|thrown|rejects?|rejected|refuse[sd]?|error|missing|null|undefined|nan|malformed|unknown|not a (string|number)|non-|negative)/i },
+  { kind: "text-handling", label: "reading input text", kept: 13 / 22, test: /\b(trim(med|s)?|whitespace|case[- ](in)?sensitive|lower[- ]?case|upper[- ]?case|normali[sz]|unicode|encoding|utf|surrogate|accent|spaces?)\b/i },
+  { kind: "naming", label: "export names and constants", kept: 8 / 12, test: /\b(export(s|ed)?|named|signature|constant|re-?export)\b/i },
+  { kind: "boundary", label: "limits, defaults, edges", kept: 23 / 32, test: /\b(empty|zero|limit|max(imum)?|min(imum)?|default|at most|at least|exceed|cap|overflow|boundary|edge|whole number|fraction)/i },
+  { kind: "ordering", label: "ordering and precedence", kept: 12 / 15, test: /\b(order(ed)?|sort(ed)?|precedence|tie|wins|first|last|before|after)\b/i },
+  { kind: "failure-handling", label: "collaborator failures", kept: 5 / 6, test: /\b(store|fetch|request|callback|collaborator|dependency)\b.*\b(fails?|rejects?|throws?|times? out|aborts?)/i },
+  { kind: "state", label: "purity, caching, concurrency", kept: 20 / 23, test: /\b(pure|mutat|freez|frozen|cache|concurren|overlap|simultaneous|at once|persist|idempot|retr(y|ies)|once)/i },
+  { kind: "scope", label: "contract scope", kept: 4 / 4, test: /\b(out of scope|not covered|left out|no tests? for)\b/i },
+];
+const RULE = { kind: "rule", label: "the rule itself", kept: 53 / 77 };
+export function kindOf(text) {
+  // Collaborator failures read like invalid input; check them first.
+  const failure = KINDS.find((item) => item.kind === "failure-handling");
+  if (failure.test.test(text)) return failure;
+  return KINDS.find((item) => item.test.test(text)) ?? RULE;
+}
+/** `items` (with `text`) in the order to put them to a person: lowest kept rate first, spec order within a kind. */
+export const byMissRate = (items) =>
+  items.map((item, at) => ({ item, at, kind: kindOf(item.text) })).sort((a, b) => a.kind.kept - b.kind.kept || a.at - b.at);

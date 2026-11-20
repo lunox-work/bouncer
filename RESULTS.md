@@ -502,6 +502,13 @@ the developer stand-in confirmed from the real diff, cross-checked with its
   input the code accepts or passes through: the drafter's conventional "validate
   and throw" was the developer's choice 7 times in 21. These are the decisions
   to put to the person first.
+- **The order they are put in** (2026-11-20, no model): `confirm` now lists
+  the kinds drafts miss most first, by a keyword rule
+  (bin/decisions.mjs `kindOf`). It agrees with the hand-labelled kind on 99
+  of 243 decisions, and still moves changed decisions forward: in each of
+  the 18 drafts' first half, 52 of the 78 changed decisions against 42 in
+  spec order ([evidence/decision-order.json](evidence/decision-order.json)).
+  In-sample: the kept rates come from the same labels.
 - **Person minutes: pending.** `bin/confirm.mjs` now records `startedAt` (the
   first listing), `at`, `minutes` and the decisions changed in `confirmed.json`;
   `node evidence/default-match.mjs confirmations` gives the median once five
