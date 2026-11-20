@@ -1,17 +1,18 @@
 {
-  "name": "bouncer",
-  "displayName": "bouncer",
+  "name": "bouncer-verify",
+  "displayName": "bouncer verify",
   "version": "0.8.1",
-  "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in. Hosted mode is the separate bouncer-hosted plugin.",
+  "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in.",
   "author": {
-    "name": "Charlie Angriawan",
-    "url": "https://github.com/lunox-work"
+    "name": "Lunox",
+    "url": "https://lunox.work"
   },
   "homepage": "https://github.com/lunox-work/bouncer#readme",
   "repository": "https://github.com/lunox-work/bouncer",
   "documentationUrl": "https://github.com/lunox-work/bouncer#readme",
   "supportUrl": "https://github.com/lunox-work/bouncer/issues",
-  "privacyPolicyUrl": "https://github.com/lunox-work/bouncer/blob/main/PRIVACY.md",
+  "privacyPolicyUrl": "https://lunox.work/privacy/platform",
+  "termsOfServiceUrl": "https://lunox.work/terms",
   "license": "MIT",
   "keywords": [
     "hidden-tests",

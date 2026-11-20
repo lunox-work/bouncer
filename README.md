@@ -50,7 +50,7 @@ npx skills add lunox-work/bouncer -g
 Then ask your agent: **_"write tests my agent can't see for this ticket"_**.
 Already done? Ask: **_"is this really done?"_** Works in Claude Code, Codex,
 Cursor and 20+ agents that load skills. In Claude Code it is also a plugin:
-`/plugin marketplace add lunox-work/bouncer`, then `/plugin install bouncer@bouncer`
+`/plugin marketplace add lunox-work/bouncer`, then `/plugin install bouncer-verify@bouncer`
 ([everything else](docs/REFERENCE.md#install-in-full)).
 
 <p align="center">
@@ -142,9 +142,10 @@ change spanning packages, or a task over about an hour ([scope](docs/REFERENCE.m
 
 A contractor task, a candidate exercise, a bounty. You already write the task
 before the code exists: that is the list. He adds a hidden suite the submitter
-never sees, and the 10–25 minutes cost nothing: nobody has started yet.
+never sees, and the 10–25 minutes it takes cost nothing, since nobody has
+started yet.
 `bouncer second` adds another writer's suite (Codex's caught 17 of 20 gaming
-passes the first let through). Payouts: [`bouncer-hosted`](skills/bouncer-hosted/SKILL.md).
+passes the first let through).
 
 ## FAQ
 

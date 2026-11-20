@@ -5,30 +5,18 @@
     "url": "https://github.com/lunox-work"
   },
   "metadata": {
-    "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Two plugins: bouncer (local, no sign-in) and bouncer-hosted (Lunox's hosted platform)."
+    "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. One plugin: bouncer-verify (local, no MCP server, no sign-in)."
   },
   "plugins": [
     {
-      "name": "bouncer",
-      "source": {
-        "source": "github",
-        "repo": "lunox-work/bouncer",
-        "ref": "claude-plugin"
-      },
-      "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.",
-      "version": "0.8.1",
-      "category": "testing",
-      "license": "MIT"
-    },
-    {
-      "name": "bouncer-hosted",
+      "name": "bouncer-verify",
       "source": {
         "source": "git-subdir",
         "url": "lunox-work/bouncer",
-        "path": "bouncer-hosted",
+        "path": "bouncer-verify",
         "ref": "claude-plugin"
       },
-      "description": "Bouncer on Lunox's hosted platform (platform.lunox.work): a bundled MCP server that signs in on first use, and the lunox-contribute skill for invited contributors.",
+      "description": "Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. Local only: no MCP server, installing it asks for no sign-in.",
       "version": "0.8.1",
       "category": "testing",
       "license": "MIT"

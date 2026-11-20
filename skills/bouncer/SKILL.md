@@ -39,8 +39,8 @@ existing suite green: start at step 0 of
 **The agent already says it's done** ("check my agent's work", "is this
 really done"): `bouncer check [--from <issue>]` runs the door, `bouncer id`
 (what the ticket never said and what the agent picked) as the confirmation,
-then steps 3 and 5 on the working tree ([references/check.md](references/check.md)).
-Hosted mode is the `bouncer-hosted` skill; this one needs no sign-in.
+then steps 3 and 5 on the working tree ([references/check.md](references/check.md)). This skill is
+local and needs no sign-in.
 
 ## Before you start
 

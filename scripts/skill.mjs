@@ -9,15 +9,15 @@
 //                                           (npm `version` hook)
 //   node scripts/skill.mjs pack [--offline] one zip per skill in dist-skills/
 //   node scripts/skill.mjs plugin-branch [--push] [--rev <rev>]
-//                                           commit both plugins' files to the
+//                                           commit the plugin's files to the
 //                                           claude-plugin branch
 //
-// Two Claude Code plugins (PLUGINS): `bouncer`, the local skill with no MCP
-// server, so installing it asks for no sign-in; and `bouncer-hosted`, the
-// `lunox` MCP server (.mcp.json) with the hosted and contributor skills.
-// Every skill belongs to exactly one of them. marketplace.json lists both,
-// fetched from the claude-plugin branch: `bouncer` at its root, the other in
-// its folder.
+// One Claude Code plugin (PLUGINS): `bouncer-verify`, the local skill with no
+// MCP server, so installing it asks for no sign-in. The hosted plugin
+// (`bouncer-hosted`, the `lunox` MCP server with the hosted and contributor
+// skills) was removed on 2026-11-20: no MCP server for now; git history has
+// it. Every skill belongs to exactly one plugin. marketplace.json lists it,
+// fetched from its folder on the claude-plugin branch.
 //
 // check: `name` matches its folder (lowercase, digits, single hyphens, at
 // most 64), `description` 1 to 1024 characters without < or >, written as
@@ -26,8 +26,7 @@
 // every relative link in SKILL.md and references/*.md resolves inside the
 // skill's folder, every `<package>@x.y.z` pin and every plugin manifest
 // carries package.json's version, and marketplace.json lists exactly
-// PLUGINS. `.mcp.json` declares exactly one MCP server, `lunox`, of type http
-// at MCP_URL: the hosted platform `bouncer-hosted` bundles. It also refuses
+// PLUGINS. There is no `.mcp.json`: the plugin bundles no MCP server. It also refuses
 // the plugin directory's scanner traps (SCANNER_TRAPS) in every skill file.
 //
 // pack: a zip holding one top-level folder named after the skill, with
@@ -37,10 +36,8 @@
 // plugin-branch: the Claude plugin directory scans every file in the plugin
 // folder, and on main that folder is the whole repository (CLI source,
 // lockfile, tests, experiments). The directory tracks the claude-plugin
-// branch instead. Its root is the `bouncer` plugin (what the directory
-// reads: .claude-plugin/plugin.json, LICENSE, skills/, README.md), and
-// bouncer-hosted/ is the `bouncer-hosted` plugin laid out the same way plus
-// .mcp.json. Each plugin.json drops LISTING_LINKS; each README.md is written
+// branch instead: each plugin in its own folder (what the directory reads:
+// .claude-plugin/plugin.json, LICENSE, skills/, README.md). Each README.md is written
 // from its plugin.json, its skills' frontmatter and .claude-plugin/data.md
 // (what is sent where, for the directory's data-handling review; the
 // directory requires a README). One commit per change on top of origin's
@@ -67,17 +64,16 @@ const REPO = "lunox-work/bouncer";
 /**
  * The two plugins. `dir` is the plugin's folder on the plugin branch ("" for
  * its root), `manifest` its plugin.json on main, `mcp` whether it carries
- * .mcp.json.
+ * .mcp.json. Each has a folder of its own: the Claude plugin directory scans
+ * a submission's whole folder, so a plugin at the root would carry the other
+ * one's files, MCP server included.
  */
 const PLUGINS = [
-  { name: NAME, dir: "", manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
-  {
-    name: `${NAME}-hosted`,
-    dir: `${NAME}-hosted`,
-    manifest: `.claude-plugin/${NAME}-hosted/plugin.json`,
-    skills: [`${NAME}-hosted`, "lunox-contribute"],
-    mcp: true,
-  },
+  // `bouncer-verify`, not `bouncer`: the Claude plugin directory holds the name
+  // "bouncer" for an existing publisher of that name (validation, 2026-11-20).
+  // The skill inside is still `bouncer`; displayName "bouncer" is held too, so
+  // it reads "bouncer verify", like "bouncer hosted".
+  { name: `${NAME}-verify`, dir: `${NAME}-verify`, manifest: ".claude-plugin/plugin.json", skills: [NAME], mcp: false },
 ];
 const MANIFESTS = [...PLUGINS.map((plugin) => plugin.manifest), MARKETPLACE];
 /** The marketplace entry's `source` for a plugin: the plugin branch, at its root or in the plugin's folder. */
@@ -100,10 +96,10 @@ const SCANNER_TRAPS = [
 ];
 /**
  * The plugin's one MCP server (plugin-root .mcp.json, as Claude Code plugins
- * declare them). The platform serves it under the package's name before the
- * rename (bin/identity.mjs `client`).
+ * declare them). The platform also still serves it at /mcp/duediligence, the
+ * package's name before the rename, for plugins installed then.
  */
-const MCP_URL = "https://platform.lunox.work/mcp/duediligence";
+const MCP_URL = "https://platform.lunox.work/mcp/bouncer";
 /**
  * The prompts this session reads itself (the spec-drafting rules), mirrored
  * into the skill's folder so the plugin carries every instruction it gives
@@ -255,8 +251,16 @@ function checkPlugins(names) {
   return problems;
 }
 
-/** `.mcp.json`: present, JSON, and `{ "mcpServers": { "lunox": { "type": "http", "url": MCP_URL } } }` and nothing else. */
+/** No `.mcp.json`: the plugin bundles no MCP server for now (2026-11-20). */
 function checkMcp() {
+  const path = join(ROOT, ".mcp.json");
+  if (existsSync(path)) return [".mcp.json: the plugin bundles no MCP server for now; remove it"];
+  return [];
+}
+
+/** How `.mcp.json` was checked while the hosted plugin bundled one; kept for when it comes back. */
+// eslint-disable-next-line no-unused-vars
+function checkMcpServer() {
   const path = join(ROOT, ".mcp.json");
   if (!existsSync(path)) return [".mcp.json: missing (the plugin's lunox MCP server)"];
   let mcp;
@@ -327,10 +331,11 @@ function pack(offline) {
 
 /** Files every plugin carries from main, at the same path in its folder. `.mcp.json` only where `mcp`. */
 const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE"];
-// plugin.json fields only the directory's listing reads. Claude Code warns on
-// them as unknown keys, so the branch's plugin.json drops them and its README
-// carries them as links, which the directory also reads.
-const LISTING_LINKS = { privacyPolicyUrl: "Privacy", documentationUrl: "Documentation", supportUrl: "Support" };
+// plugin.json fields the directory's listing reads. Claude Code accepts them
+// (2.1.329's `claude plugin validate` checks only that each is https:// or
+// mailto:), so the branch's plugin.json keeps them, and its README repeats
+// them as links for readers.
+const LISTING_LINKS = { privacyPolicyUrl: "Privacy", termsOfServiceUrl: "Terms", documentationUrl: "Documentation", supportUrl: "Support" };
 
 function git(args, env = {}) {
   const result = spawnSync("git", args, { cwd: ROOT, encoding: "utf8", env: { ...process.env, ...env } });
@@ -355,6 +360,9 @@ function pluginReadme(plugin, rev) {
     lines.push(`- **${fields.name}**: ${fields.description}`, "");
     if (fields.compatibility) needs.push(`- **${fields.name}**: ${fields.compatibility}`, "");
   }
+  // Example prompts (.claude-plugin/examples.md): the directory asks for at least three that work.
+  const examples = show(rev, ".claude-plugin/examples.md");
+  if (examples !== null) lines.push("## Examples", "", examples.trim(), "");
   lines.push("## Install", "", "```sh", `claude plugin marketplace add ${REPO}`);
   lines.push(`claude plugin install ${manifest.name}@${market.name}`, "```", "");
   const others = PLUGINS.filter((other) => other !== plugin);
@@ -410,7 +418,6 @@ function pluginBranch(push, rev) {
       for (const path of files) addFromRev(env, rev, path, at(path));
       const manifest = JSON.parse(show(rev, plugin.manifest) ?? "null");
       if (!manifest) return [`${plugin.manifest}: not in ${rev}`];
-      for (const key of Object.keys(LISTING_LINKS)) delete manifest[key];
       addBlob(env, at(".claude-plugin/plugin.json"), `${JSON.stringify(manifest, null, 2)}\n`);
       addBlob(env, at("README.md"), pluginReadme(plugin, rev));
     }
