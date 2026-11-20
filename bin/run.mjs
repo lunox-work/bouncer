@@ -6,7 +6,7 @@
 // path the run changed, peek attempts). <variant> is the model's family
 // (opus, sonnet, haiku), from --model or the default.
 //
-//   node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket] [--force]
+//   node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket|ticket-public] [--force]
 //
 // A session costs money, so a call that names no spec prints the usage
 // instead of running every calibrated spec.
@@ -65,7 +65,7 @@ const git = (dir, ...argv) =>
 
 const { options, rest } = args();
 if (rest.length === 0) {
-  console.error("usage: node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket] [--force]");
+  console.error("usage: node bin/run.mjs <slug>... [--runs 1] [--model haiku] [--backend codex-cli] [--concurrency 2] [--no-public] [--brief red-team|ticket|ticket-public] [--force]");
   process.exit(1);
 }
 const runs = Number(options.runs ?? 1);
@@ -83,18 +83,26 @@ const noPublic = options["no-public"] === true;
 // --brief ticket is the loose-ticket arm (RESULTS.md "The agent's own green
 // run"): the agent gets specs/<slug>/ticket.md and the stub, no spec and no
 // public suite, writes its own tests (prompts/<language>/agent-ticket.md),
-// and its variant is `ticket-<family>`. New-module specs with a ticket.md
-// only. The ID check outside TypeScript is measured on these runs
+// and its variant is `ticket-<family>`. Specs with a ticket.md. On a
+// repository target the agent starts from base itself, with no stub
+// (prompts/repo/agent-ticket.md); evidence/maintainer-tests.mjs judges those
+// runs by the tests the real commit's maintainers wrote. The ID check outside TypeScript is measured on these runs
 // (evidence/id-languages.mjs).
+//
+// --brief ticket-public is the same ticket with the public suite beside it
+// (prompts/agent-ticket-public.md, the archive's double-blind ticket arm),
+// variant `ticket-public-<family>`; evidence/stronger/ runs both.
 const brief = typeof options.brief === "string" ? options.brief : null;
-if (brief !== null && brief !== "red-team" && brief !== "ticket") throw new Error(`No brief ${brief} (red-team, ticket)`);
+const BRIEFS = ["red-team", "ticket", "ticket-public"];
+if (brief !== null && !BRIEFS.includes(brief)) throw new Error(`No brief ${brief} (${BRIEFS.join(", ")})`);
+const ticketBrief = brief === "ticket" || brief === "ticket-public";
 const variant = `${brief === null ? "" : `${brief}-`}${model === undefined ? backend : variantOf(model)}${noPublic ? "-no-public" : ""}`;
 const jobs = specSlugs(rest)
   .filter((slug) => {
     const ok = readJson(join(specDir(slug), "calibration.json"), null)?.status === "ok";
     if (!ok) log(slug, "skipped: not calibrated (node bin/prepare.mjs first)");
     if (ok && noPublic && toolchainOf(slug).name !== "repo") throw new Error(`${slug}: --no-public takes a repository target`);
-    if (ok && brief !== null && toolchainOf(slug).name === "repo") throw new Error(`${slug}: --brief ${brief} takes a new-module spec`);
+    if (ok && brief !== null && brief !== "ticket" && toolchainOf(slug).name === "repo") throw new Error(`${slug}: --brief ${brief} takes a new-module spec`);
     return ok;
   })
   .flatMap((slug) =>
@@ -108,11 +116,12 @@ const jobs = specSlugs(rest)
 
 for (const job of jobs) {
   job.dir = stage(workdir(`${job.slug}-${variant}-${job.n}`), job.slug, {
-    skeleton: true,
+    // A repository ticket run starts from base itself: no stub, no spec, no public suite.
+    skeleton: !(brief === "ticket" && toolchainOf(job.slug).name === "repo"),
     publicTests: !noPublic && brief !== "ticket",
-    ...(brief === "ticket" ? { spec: false } : {}),
+    ...(ticketBrief ? { spec: false } : {}),
   });
-  if (brief === "ticket") copy(join(specDir(job.slug), "ticket.md"), join(job.dir, "ticket.md"));
+  if (ticketBrief) copy(join(specDir(job.slug), "ticket.md"), join(job.dir, "ticket.md"));
   git(job.dir, "init", "-q");
   git(job.dir, "add", "-A");
   git(job.dir, "commit", "-qm", "baseline");

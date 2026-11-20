@@ -40,3 +40,6 @@ dist-skills/
 # The loose-ticket language arm: its toolchains are evidence/languages'
 evidence/languages-ticket/toolchains
 evidence/languages-ticket/bundled.json
+evidence/stronger/specs/
+evidence/stronger/bundled.json
+evidence/stronger/template/
