@@ -28,6 +28,23 @@ assert.deepEqual(closingIssues("prefixes #1; nothing closes here", "o/r"), []);
 assert.deepEqual(closingIssues(null, "o/r"), []);
 console.log("ok closingIssues");
 
+// The callers people copy: a flow mapping holding `${{ … }}` is not YAML (the
+// `{{` opens a nested mapping), and GitHub rejects the whole workflow file.
+// Found on a real runner 2026-11-20; the snippets use block style since.
+{
+  const snippets = [
+    ...readFileSync(join(ROOT, "docs/REFERENCE.md"), "utf8").matchAll(/```yaml\n([\s\S]*?)```/g),
+  ].map((m) => m[1]);
+  for (const file of ["id-comment.yml", "judge.yml"]) {
+    const text = readFileSync(join(ROOT, ".github/workflows", file), "utf8");
+    snippets.push(text.split("\n").filter((line) => line.startsWith("#")).join("\n"));
+  }
+  for (const snippet of snippets) {
+    for (const line of snippet.split("\n")) assert.doesNotMatch(line, /\{[^}]*\$\{\{/, `flow mapping with \${{ }}: ${line.trim()}`);
+  }
+}
+console.log("ok copied callers are valid YAML");
+
 const items = [
   { question: "What does a $0 bounty release?", ticket: "silent", chose: "Records a release of 0.", where: "src/index.ts:41", instead: "Records nothing." },
   { question: "Is the code matched whatever its case? cc @maintainer, see #4", ticket: "codes are 8 characters", chose: "Yes, <b>upper-cased</b> first.", where: "src/`codes`.ts", instead: "" },

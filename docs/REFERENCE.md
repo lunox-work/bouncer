@@ -386,7 +386,8 @@ jobs:
     permissions: { contents: read, checks: write, actions: read }
     uses: lunox-work/bouncer/.github/workflows/judge.yml@main
     with: { seal-repository: you/seals, seal-path: seals/<slug>.seal.gz }
-    secrets: { seal-token: ${{ secrets.SEALS_TOKEN }} }
+    secrets:
+      seal-token: ${{ secrets.SEALS_TOKEN }}
 ```
 
 The workflow runs `bouncer ci --seal <file> --repo . --ref <head>`, which judges
@@ -425,13 +426,16 @@ jobs:
   id:
     permissions: { contents: read, pull-requests: write, issues: read }
     uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
-    secrets: { anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} }
+    secrets:
+      anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 Measured by replaying the 11 commits as pull requests with two pushes each:
 one comment per pull request, 0 of 671 hidden test names in a comment, no call
 to a check or status endpoint. In that replay the lists stand in for model
-output, and the workflow has not run on a real runner yet.
+output. On a real runner (a private pull request, 2026-11-20) the caller above
+runs and, with no key, warns and stays green with no comment; a run with a key
+has not been made yet.
 
 ## How the hidden suite is kept honest
 

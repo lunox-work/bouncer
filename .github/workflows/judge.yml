@@ -15,7 +15,8 @@
 #       permissions: { contents: read, checks: write, actions: read }
 #       uses: lunox-work/bouncer/.github/workflows/judge.yml@main
 #       with: { seal-repository: you/seals, seal-path: seals/<slug>.seal.gz }
-#       secrets: { seal-token: ${{ secrets.SEALS_TOKEN }} }
+#       secrets:
+#         seal-token: ${{ secrets.SEALS_TOKEN }}
 name: bouncer judge
 on:
   workflow_call:
