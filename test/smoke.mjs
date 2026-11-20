@@ -31,6 +31,13 @@ const step = (name, fn) => {
 const show = (run) => `exit ${run.status}\n${run.stdout}${run.stderr}`.slice(-4000);
 
 try {
+  step("check --help prints its usage and starts nothing", () => {
+    const run = cli("check", "--help");
+    assert.equal(run.status, 0, show(run));
+    assert.match(run.stdout, /^bouncer check: /);
+    assert.match(run.stdout, /bouncer check \[--repo <checkout>\]/);
+    assert.ok(!/resuming|is not a git checkout/.test(run.stdout + run.stderr), show(run));
+  });
   step("judge the reference: passed", () => {
     const run = cli("judge", "duration-parse", reference);
     assert.equal(run.status, 0, show(run));

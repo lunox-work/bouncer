@@ -86,6 +86,23 @@ if (!Object.hasOwn(COMMANDS, command ?? "")) {
   );
   process.exit(command === undefined || command === "help" || command === "--help" ? 0 : 1);
 }
+// `bouncer <command> --help`: the script's header, its usage and contract. Without
+// this, `check --help` ran a check (the 2026-11-20 after-the-fact gate, run 1).
+if (rest.includes("--help") || rest.includes("-h")) {
+  console.log(helpOf(command));
+  process.exit(0);
+}
 const child = spawnSync(process.execPath, [join(BIN, `${command}.mjs`), ...rest], { stdio: "inherit" });
 if (child.signal) process.kill(process.pid, child.signal);
 process.exit(child.status ?? 1);
+
+/** A script's leading comment block, as help: `node bin/<x>.mjs` shown as `bouncer <x>`. */
+function helpOf(name) {
+  const lines = readFileSync(join(BIN, `${name}.mjs`), "utf8").split("\n");
+  const body = [];
+  for (const line of lines.slice(lines[0].startsWith("#!") ? 1 : 0)) {
+    if (!line.startsWith("//")) break;
+    body.push(line.replace(/^\/\/ ?/, "").replace(/node bin\/([a-z-]+)\.mjs/g, "bouncer $1"));
+  }
+  return [`bouncer ${name}: ${COMMANDS[name]}`, "", ...body].join("\n").trimEnd();
+}
