@@ -41,7 +41,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { byMissRate, closestSentence, decisionItems, decisions, dependentScenarios, diffDecisions, scenarios, ticketSentences } from "./decisions.mjs";
-import { args, confirmingTranscript, personAnswers, readJson, sha256, specDir, writeJson } from "./lib.mjs";
+import { args, confirmingTranscript, firstShown, personAnswers, readJson, sha256, specDir, writeJson } from "./lib.mjs";
 
 export { decisions };
 
@@ -67,6 +67,17 @@ function answerCheck(slug, started, at, options) {
     return { record: { how: elsewhere ? "elsewhere" : "unchecked", ...(elsewhere ? { elsewhere } : {}) }, note: elsewhere ? null : `${slug}: no Claude Code session here listed these decisions, so nobody's answer could be checked; recorded as unchecked.` };
   const seen = personAnswers(transcript, since, at.toISOString());
   const answers = seen.personTurns + seen.questionsAnswered;
+  // An answer given in this session after the decisions were first shown and
+  // before the listing is not "elsewhere" (the 2026-11-20 gate's second run
+  // recorded one that way): show the listing and ask again.
+  const shown = since === null ? null : firstShown(transcript, slug);
+  const early = shown !== null && shown < since ? personAnswers(transcript, shown, since) : null;
+  if (answers === 0 && elsewhere && early !== null && early.personTurns + early.questionsAnswered > 0)
+    return {
+      refuse: true,
+      record: { how: "none", transcript, ...seen },
+      message: `${slug}: not recorded. The person answered in this session (after ${shown}) before the decisions were listed (${since}); that is not elsewhere, so --answered-elsewhere does not cover it. Show them the listing and record --by after they say yes to it.`,
+    };
   const record = { how: answers > 0 ? "session" : elsewhere ? "elsewhere" : "none", transcript, ...seen, ...(elsewhere ? { elsewhere } : {}) };
   if (answers > 0 || elsewhere) return { record };
   return {

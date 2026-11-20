@@ -101,6 +101,20 @@ try {
   assert.match(refused.stderr, /--answered-elsewhere/);
   assert.throws(() => recorded(), /ENOENT/, "nothing recorded");
 
+  // Answered here, after check showed the list and before the listing: not elsewhere (the gate's second run).
+  const before = (ms) => new Date(Date.parse(started) - ms).toISOString();
+  const early = write("early.jsonl", [
+    assistant(before(60_000), [bash("c", "bouncer check --ticket ../ticket.md")]),
+    user(before(50_000), [result("c", "12 things your ticket never said")]),
+    user(before(30_000), "keep all but 3 and 4; record it"),
+    assistant(later(10), [bash("a", "bouncer confirm tiny")]),
+    user(later(20), [result("a", "Decided: ...")]),
+  ]);
+  const misused = confirm("--by", "someone", "--transcript", early, "--answered-elsewhere", "in this Claude Code conversation");
+  assert.equal(misused.status, 3, misused.stdout + misused.stderr);
+  assert.match(misused.stderr, /answered in this session .* before the decisions were listed .* --answered-elsewhere does not cover it/);
+  assert.throws(() => recorded(), /ENOENT/, "nothing recorded");
+
   const elsewhere = confirm("--by", "someone", "--transcript", silent, "--answered-elsewhere", "PR #12");
   assert.equal(elsewhere.status, 0, elsewhere.stderr);
   assert.deepEqual({ how: recorded().answered.how, elsewhere: recorded().answered.elsewhere }, { how: "elsewhere", elsewhere: "PR #12" });

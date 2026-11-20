@@ -2071,6 +2071,19 @@ function confirmingIn(folders, slug, since) {
 }
 
 /** Tool calls of a transcript that `match` names, each with the match, its time and its input's start. */
+/**
+ * When this session first showed the person a spec's decisions: its first
+ * `bouncer check`, `bouncer id` or `confirm <slug>` call, as an ISO time, or
+ * null. confirm --by uses it to tell an answer given here before the
+ * listing (which --answered-elsewhere must not cover) from one given
+ * somewhere else.
+ */
+export function firstShown(transcript, slug) {
+  const shows = (command) => /\bbouncer\s+(check|id)\b|\b(check|id)\.mjs\b/.test(command) || namesConfirm(command, slug);
+  const calls = scanTranscript(transcript, undefined, (block) => (block.name === "Bash" && shows(String(block.input?.command ?? "")) ? "shown" : null));
+  return calls.map((call) => call.at).filter(Boolean).sort()[0] ?? null;
+}
+
 function scanTranscript(transcript, since, match) {
   if (!existsSync(transcript)) return [];
   const found = [];
