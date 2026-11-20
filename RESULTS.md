@@ -21,7 +21,8 @@ Python, Go and Rust
 ([Commands and services in other languages](#commands-and-services-in-other-languages)).
 Run 2026-11-20: the ID check on all 75 rejected loose-ticket runs, judged
 blind, and in Python, Go and Rust ([The ID check, after the fact](#the-id-check-after-the-fact)), and which repositories `fit` takes: static checks, a clean install and the existing suite on 50 libraries
-([Which repositories fit](#which-repositories-fit)).
+([Which repositories fit](#which-repositories-fit)), and how often a pass
+misses a stated rule ([When he says yes](#when-he-says-yes)).
 p-values are Fisher's exact test,
 two-sided.
 
@@ -233,6 +234,40 @@ suite 1 time in 60, against 25 in 404 for own tests without the public suite.
   inputs the spec names by an outside format, which is why the skill asks for
   real tool output in the spec.
   ([Mutation score](evidence/FINDINGS.md#mutation-score))
+
+## When he says yes
+
+The referee above checks rejections. A pass was never checked until
+2026-11-20 ([evidence/passed-second.json](evidence/passed-second.json),
+`evidence/passed-second.mjs`): every stored run the archive's suites passed,
+judged again by Codex's suites for the same spec (written blind, calibrated
+on the same reference, never seen by the agent; no model), then each
+distinct failing test put to the same blind referee (Fable 5.1, 12 sessions,
+$3.97). A pass is a miss when a test it fails is one the spec requires.
+
+| arm, Haiku 5.5                                    | passes | miss a rule the spec requires | fail only an open reading |
+| ------------------------------------------------- | -----: | ----------------------------: | ------------------------: |
+| public suite, 26 specs                            |    386 |                  **51 (13%)** |                         5 |
+| public suite + own tests, the 4 specs of that arm |    100 |                            23 |                         6 |
+
+- **Concentrated.** 20 of 26 specs have no miss. gherkin-parse (12 of 15
+  passes: a tab after a keyword, trailing spaces kept), patch-apply (14 of 20
+  and 13 of 19: a deletion with no hunks of a non-empty file, a hunk's offset
+  from the moved line) and tool-versions (22 of 42 and 10 of 50) hold 71 of
+  the 74.
+- **One ruling carries 32.** Every tool-versions miss is go.mod's `toolchain`
+  and `go` lines read as two sources whose difference is a conflict. The
+  referee ruled that required on one test and open on a sibling test of the
+  same question. Without tool-versions: 42 of 394 passes.
+- **Mutant survival is a partial warning.** patch-apply and gherkin-parse are
+  two of the three specs whose mutants survive most (45%, 36%); tool-versions
+  is near the least (9%). Spearman 0.40 over the 26 specs.
+- **The writer matters.** Sonnet 5.5's second suites, the fallback
+  `bouncer second` uses without Codex, pass all 13 misses on gherkin-parse
+  and reverse-diff; Codex's fail all 13. With the red team below (Sonnet 10,
+  Codex 17 of 20), a second writer of the same family adds little.
+- **A lower bound.** Codex's suites have holes of their own, and these are the
+  archive's specs and Haiku only.
 
 ## Feedback after a verdict
 
@@ -1083,6 +1118,9 @@ Opus 5.5 session per port writes it in the language and calibration runs on it
 
 ## What it does not show
 
+- **That `passed` means the spec is met.** A second writer's suite and the
+  referee find a stated rule missed in 51 of 386 public-suite passes, 71 of
+  the 74 misses on three specs ([When he says yes](#when-he-says-yes)).
 - **That agents often overfit visible tests.** On precise specs every arm is at
   or near the ceiling: 3 real overfits in 230 regraded runs, and the public
   suite separated the arms on 1 spec of 14 (patch-apply, 20 of 20 against 7 and
