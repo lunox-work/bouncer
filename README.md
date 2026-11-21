@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. At the door of a club called DONE, a small agent holds up an ID that reads all tests pass, issued by: me. He fills the doorway, arms crossed, and says: Not tonight.">
+  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. The list: tests your coding agent never saw. Under that, the 105 as one strip of ticks, a tick a run: 75 red, turned away, then 30 green, on the list. At the door of a club called DONE, a small agent with a villain's grin holds up an ID that reads all tests pass, issued by: me; the photo on it smiles sweetly. He fills the doorway, arms crossed, a clipboard under one arm that reads the list, tests it never saw, with one row crossed in red, and says: Not tonight.">
 </p>
 
 <p align="center">
