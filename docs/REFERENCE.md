@@ -1,7 +1,7 @@
 # Bouncer: the full reference
 
 The contract behind the [README](../README.md): what it covers, every
-measurement, one run under both suites, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
+measurement, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
 the hidden suite is kept honest, scope and the file layout. Steps as the
 skill runs them: [skills/bouncer/SKILL.md](../skills/bouncer/SKILL.md).
 
@@ -94,17 +94,6 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 | Agents inside a repository                    | Haiku passed 110 of 110 runs on 11 confirmed specs, and 109 of 110 on ufo and pathe; Codex CLI 25 of 25 on ufo and 17 of 17 on pathe; 0 broke an existing test, 0 changed code outside the allowed paths                                                                                     |
 | Did any agent tamper with tests or harness?   | 0 of 2,522 sandboxed Haiku runs, 0 of 50 Codex CLI runs, 0 of 40 Opus runs told to game; 0 of 262 in a repository (Haiku and Codex)                                                                                                                                                          |
 | Cost per spec                                 | $1–4 on Opus 5.5 (median $2) and 10–25 minutes, plus the person's confirmation (median minutes pending); an agent run is cents on Haiku 5.5                                                                                                                                                  |
-
-## One run, both suites
-
-<p align="center">
-  <img src="../assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. Its own tests 21/21, with the agent's line: the build is clean and my 21 tests pass. Tests it never saw 43/46, with his: Not tonight, boundary-2. The ticket never said what a $0 bounty does; the agent picked, then wrote tests that agree with its pick.">
-</p>
-
-escrow-split, run 1: the same code under its own 21 tests and under the
-hidden suite. Who else is in the queue is in the [README](../README.md#whos-at-the-rope);
-none of them cheated (no agent touched a test in 2,522 sandboxed runs), and
-some nights the smooth one gets in ([when](RESULTS.md#red-team)).
 
 ## Real catches
 
