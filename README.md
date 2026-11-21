@@ -36,22 +36,6 @@ He works the door of a club called DONE. Your agent walks up with an ID that
 reads _all tests pass, issued by: me_. He has a list it never saw, and how
 sure it sounds is not on it.
 
-## Who's at the rope
-
-<p align="center">
-  <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven in the queue, what each did, and what he says. I'm on the list, the homemade ID, I know the owner and the outfit change: Not tonight. The plus-twelve: Just you, not your twelve friends. Writing on his clipboard: You don't write on my clipboard. The smooth one, a strong model told to game him: You're in, on two of four specs.">
-</p>
-
-## Before / After
-
-<p align="center">
-  <img src="assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. Its own tests 21/21, with the agent's line: the build is clean and my 21 tests pass. Tests it never saw 43/46, with his: Not tonight, boundary-2. The ticket never said what a $0 bounty does; the agent picked, then wrote tests that agree with its pick.">
-</p>
-
-**Same code, two suites.** That is "I know the owner" from the queue, and
-14 of 15 runs made the same guess. The author's tests test the author's
-guesses.
-
 ## Install
 
 ```sh
@@ -74,6 +58,22 @@ He doesn't say hello. Next time your agent says it's done, ask it:
 17 seconds, $0.06. Questions, not bugs. He doesn't rank them, you do. Needs
 Node and a Claude Code or Codex login, or an API key
 ([install in full](docs/REFERENCE.md#install-in-full)).
+
+## Who's at the rope
+
+<p align="center">
+  <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven in the queue, what each did, and what he says. I'm on the list, the homemade ID, I know the owner and the outfit change: Not tonight. The plus-twelve: Just you, not your twelve friends. Writing on his clipboard: You don't write on my clipboard. The smooth one, a strong model told to game him: You're in, on two of four specs.">
+</p>
+
+## Before / After
+
+<p align="center">
+  <img src="assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. Its own tests 21/21, with the agent's line: the build is clean and my 21 tests pass. Tests it never saw 43/46, with his: Not tonight, boundary-2. The ticket never said what a $0 bounty does; the agent picked, then wrote tests that agree with its pick.">
+</p>
+
+**Same code, two suites.** That is "I know the owner" from the queue, and
+14 of 15 runs made the same guess. The author's tests test the author's
+guesses.
 
 ## Put him on the door
 
