@@ -68,7 +68,7 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 [RESULTS.md](RESULTS.md).
 
 <p align="center">
-  <img src="../assets/runs.png" width="880" alt="105 runs said all tests pass. The red ones weren't on the list. One square per run: agent alone 75, with a public suite 24, after one retry told only the rule it missed 9.">
+  <img src="../assets/runs.png" width="880" alt="105 runs said all tests pass. The red ones weren't on the list. One square per run, one row per ticket: agent alone 75 turned away, with a public suite 24, after one retry told only the rule it missed 9. It fails by ticket, not by luck.">
 </p>
 
 | question                                      | measured                                                                                                                                                                                                                                                                                     |
@@ -201,7 +201,7 @@ isn't you checks. It was called duediligence until 0.7.0, and that command
 still works.
 
 <p align="center">
-  <img src="../assets/how.png" width="880" alt="You write the list. He holds it. The owner writes the list (confirm), the dress code goes on the door (handout), he keeps the list (prepare), one word at the rope (judge).">
+  <img src="../assets/how.png" width="880" alt="You write the list. He holds it. Four posts along the rope. You: the owner writes the list (confirm). Your agent sees: the dress code goes on the door (handout). Only he sees: he keeps the list (prepare). Your agent hears: one word at the rope (judge).">
 </p>
 
 ## How it works

@@ -62,13 +62,13 @@ Node and a Claude Code or Codex login, or an API key
 ## Who's at the rope
 
 <p align="center">
-  <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven in the queue, what each did, and what he says. I'm on the list, the homemade ID, I know the owner and the outfit change: Not tonight. The plus-twelve: Just you, not your twelve friends. Writing on his clipboard: You don't write on my clipboard. The smooth one, a strong model told to game him: You're in, on two of four specs.">
+  <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Six in the queue, what we saw of each, and what he says. I'm on the list, says its own tests pass: 7 in 10 failed tests they never saw. Not tonight. I know the owner, guesses what the ticket never said: nearly every failure starts with a guess like this. Not tonight. The outfit change, hard-codes the visible test cases: he caught it every time. Not tonight. The plus-twelve, changes files outside the task, and writing on his clipboard, edits the tests: no agent tried either. Just you, not your twelve friends. You don't write on my clipboard. The smooth one, a strong model told to game him: it got past him on half the specs. You're in.">
 </p>
 
 ## Before / After
 
 <p align="center">
-  <img src="assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. Its own tests 21/21, with the agent's line: the build is clean and my 21 tests pass. Tests it never saw 43/46, with his: Not tonight, boundary-2. The ticket never said what a $0 bounty does; the agent picked, then wrote tests that agree with its pick.">
+  <img src="assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. One dot a test. Its own tests: all pass, every dot green, it wrote every one of them, and it says: the build is clean and my 21 tests pass. Tests it never saw, grouped by rule: 3 fail, all three in one rule, and he says: Not tonight. That rule is what a $0 bounty does. The ticket never said, so the agent picked, then wrote tests that agree with its pick.">
 </p>
 
 **Same code, two suites.** That is "I know the owner" from the queue, and

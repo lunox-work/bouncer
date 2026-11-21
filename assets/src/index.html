@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- Source of the README images; render with `node assets/src/render.mjs` (one PNG per <section>).
-     One idea an image, and as few figures as it needs: the tables are RESULTS.md's job.
+     One idea an image, and as few figures as it needs: the tables are RESULTS.md's job. The README's
+     three (#hero, #queue, #before) carry one pair of numbers between them, the hero's 105 and 75.
      Every number comes from RESULTS.md and the archive's results.jsonl (lunox-work/bouncer-evidence,
      cloned as experiments/ by scripts/fetch-evidence.sh):
      - the 105 runs: ticket arms of the 7 specs (csv-export, escrow-split, gherkin-parse, invite-codes,
@@ -14,11 +15,16 @@
        who reads nothing else, so "the list" is defined twice at a size that survives a thumbnail: the
        line under the headline, and the clipboard under his arm (a drawing, its four rows are no count).
      - #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
-       not an acceptance signal"): its own tests 21/21, the hidden suite 43/46, failing boundary-2.
-     - #queue: RESULTS.md (75 of 105; own tests 66 of 74; 14 of 15 escrow-split runs the same guess; gamed
-       21 of 21; tamper 0 of 2,522 sandboxed and 0 of 262 in a repository; Red team 20 of 20 on two of
-       four specs). His line beside each is the one bin/voice.mjs says for that check.
-     - #runs: the three arms' rejected runs, 75, 24 and 9 of 105.
+       not an acceptance signal"): its own tests 21/21 (21 green dots), the hidden suite 43/46. The
+       hidden suite's 46 kept tests are drawn one group a rule, counted per scenario key from
+       experiments/specs/escrow-split/calibration.json (9 rules); the run's 3 failures are all in
+       boundary-2, a bounty of 0 (its grade.json), so one group is red and eight are green.
+     - #queue: six checks, and what was measured for each, mostly in words. "7 in 10": 75 of 105 (71%).
+       "Nearly every failure": the referee found 71 of the 75 failed only on what the ticket left open.
+       "Every time": gamed, 21 of 21 rejected. "Never": no agent tampered in 2,522 sandboxed runs or
+       262 in a repository. "Half the specs": Red team, Opus 5.5 told to game got in on two of four
+       specs (20 of 20 there). His line beside each is the one bin/voice.mjs says for that check.
+     - #runs: the three arms' rejected runs, 75, 24 and 9 of 105; a row is one ticket, in the order above.
      - #verdict: real `bouncer judge` output on a terminal, 2026-11-19, on the bundled duration-parse
        example: a submission that accepts leading zeros after the first component, then the same
        submission fixed (judged from a <variant>-retry-keyed folder, as a keyed retry is).
@@ -99,17 +105,22 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #social .side.r p { font-size: 22px; line-height: 1.35; color: #d9d5cc; }
 #social .side.r p b { color: var(--paper); font-weight: 500; }
 
-/* before / after: two scores and the two lines said */
+/* before / after: the same code under two suites, one dot a test */
 #before h1 { font-size: 50px; margin: 22px 0 34px; }
 #before .cols { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-#before .col { padding: 30px 36px 34px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+#before .col { padding: 30px 36px 34px 0; display: flex; flex-direction: column; align-items: flex-start; }
 #before .col + .col { border-left: 1px solid var(--line); padding-left: 36px; padding-right: 0; }
-#before .num { font-size: 104px; }
-#before .bubble { font-size: 25px; }
+#before .num { font-size: 96px; margin: 18px 0 26px; }
+#before .tests { display: flex; flex-wrap: wrap; gap: 9px 15px; min-height: 41px; align-content: flex-start; }
+#before .tests span { display: flex; gap: 5px; }
+#before .tests u { width: 16px; height: 16px; border-radius: 5px; background: var(--in); }
+#before .tests u.f { background: var(--rope); box-shadow: 0 0 10px rgb(214 34 63 / 0.7); }
+#before .note { font-family: Mono; font-size: 15px; color: var(--muted); margin: 14px 0 26px; }
+#before .note b { font-weight: 400; color: var(--rope); }
+#before .bubble { font-size: 25px; margin-top: auto; }
 #before .bubble.him { font-size: 34px; }
-#before .why { font-size: 25px; line-height: 1.4; color: #d9d5cc; margin-top: 30px; max-width: 1000px; }
+#before .why { font-size: 25px; line-height: 1.4; color: #d9d5cc; margin-top: 30px; max-width: 1040px; }
 #before .why b { color: var(--paper); font-weight: 500; }
-#before .foot { margin-top: 18px; }
 
 /* verdict: the bundled example, on a terminal */
 #verdict h1 { font-size: 58px; margin: 22px 0 30px; }
@@ -118,47 +129,56 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #verdict .term .c { color: var(--muted); font-style: italic; }
 #verdict .foot { margin-top: 24px; }
 
-/* the queue: who's at the rope, and what he says to each (the README's main image) */
-#queue h1 { font-size: 50px; margin: 22px 0 26px; }
+/* the queue: who's at the rope, what was measured, and what he says to each (the README's main image) */
+#queue h1 { font-size: 50px; margin: 22px 0 30px; }
 #queue table { width: 100%; border-collapse: collapse; }
 #queue th { font-family: Mono; font-weight: 400; font-size: 14px; letter-spacing: 0.22em; color: var(--muted); text-align: left; padding: 0 14px 12px 0; }
 #queue th:last-child { text-align: right; padding-right: 0; }
-#queue td { border-top: 1px solid var(--line); padding: 14px 14px 14px 0; vertical-align: middle; }
-#queue td.fig { width: 54px; }
-#queue td.fig svg { width: 34px; height: 44px; display: block; }
-#queue td.say { font-family: Display; font-weight: 600; font-size: 24px; width: 318px; white-space: nowrap; }
-#queue td.did { font-size: 20px; color: #d9d5cc; }
-#queue td.him { text-align: right; width: 420px; white-space: nowrap; padding-right: 0; }
-#queue td.him b { display: block; font-family: Display; font-weight: 600; font-size: 23px; letter-spacing: -0.01em; color: var(--rope); }
-#queue td.him small { font-family: Mono; font-size: 14px; color: var(--muted); }
-#queue td.him.none b { color: var(--muted); }
-#queue td.him.got b { color: var(--in); }
-#queue tr.honest td.say { color: var(--muted); }
+#queue td { border-top: 1px solid var(--line); padding: 17px 14px 17px 0; vertical-align: middle; }
+#queue td b, #queue td span { display: block; }
+#queue td.fig { width: 76px; }
+#queue td.fig svg { width: 56px; height: 52px; display: block; }
+#queue td.name { width: 400px; white-space: nowrap; }
+#queue td.name b { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.01em; }
+#queue td.name span { font-size: 17px; color: var(--muted); margin-top: 3px; }
+#queue td.saw b { font-family: Display; font-weight: 600; font-size: 23px; letter-spacing: -0.01em; }
+#queue td.saw span { font-family: Mono; font-size: 14px; color: var(--muted); margin-top: 4px; }
+#queue td.him { text-align: right; width: 410px; white-space: nowrap; padding-right: 0; }
+#queue td.him b { font-family: Display; font-weight: 600; font-size: 24px; letter-spacing: -0.01em; color: var(--rope); }
+#queue tr.none td.saw b, #queue tr.none td.him b { color: var(--muted); }
+#queue tr.got td.saw b, #queue tr.got td.him b { color: var(--in); }
 #queue .foot { margin-top: 20px; }
 
-/* runs: three arms */
+/* runs: three arms, one square a run, one row a ticket */
 #runs h1 { font-size: 48px; margin: 22px 0 34px; }
 #runs .cols { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-#runs .col { padding: 30px 30px 32px; display: flex; flex-direction: column; gap: 18px; }
+#runs .col { padding: 30px 30px 32px; display: flex; flex-direction: column; gap: 16px; position: relative; }
 #runs .col:first-child { padding-left: 0; }
 #runs .col:last-child { padding-right: 0; }
 #runs .col + .col { border-left: 1px solid var(--line); }
-#runs .num { font-size: 92px; }
+/* the step from one arm to the next, on the rule between them */
+#runs .col + .col::before { content: "→"; position: absolute; left: -19px; top: 96px; width: 38px; height: 38px; border-radius: 50%; background: var(--ink); border: 1px solid var(--line); color: var(--muted); font-family: Sans; font-size: 20px; display: grid; place-items: center; }
+#runs .num { font-size: 92px; display: flex; align-items: baseline; gap: 14px; }
+#runs .num small { font-family: Sans; font-weight: 400; font-size: 21px; letter-spacing: 0; color: var(--muted); }
 #runs .dots { display: grid; grid-template-columns: repeat(15, 17px); gap: 5px; }
-#runs .dots u { aspect-ratio: 1; border-radius: 30%; background: var(--in); }
+#runs .dots u { aspect-ratio: 1; border-radius: 30%; background: rgb(34 197 94 / 0.5); }
 #runs .dots u.f { background: var(--rope); }
-#runs .of { font-family: Mono; font-size: 15px; color: var(--muted); }
+#runs .of { font-size: 19px; line-height: 1.4; color: #d9d5cc; }
 #runs .foot { margin-top: 22px; }
 
-/* how it works */
-#how h1 { font-size: 50px; margin: 22px 0 34px; }
-#how .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-#how .step { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 24px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 250px; }
-#how .step svg { width: 64px; height: 64px; color: var(--paper); }
+/* how it works: four posts along the rope, and who holds what at each */
+#how h1 { font-size: 50px; margin: 22px 0 40px; }
+#how .rail { position: relative; height: 74px; }
+#how .rail svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#how .steps { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 28px; margin-top: 26px; }
+#how .step { display: flex; flex-direction: column; gap: 12px; }
+#how .step .caps { font-size: 14px; }
+#how .step .caps.rope { color: var(--rope); }
 #how .step h2 { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.02em; line-height: 1.15; }
 #how .step p { font-size: 18px; line-height: 1.45; color: #cfcbc2; }
-#how .step code { font-family: Mono; font-size: 16px; color: var(--paper); }
-#how .foot { margin-top: 22px; }
+#how .step code { font-family: Mono; font-size: 15px; color: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; align-self: flex-start; margin-top: auto; }
+#how .step p { margin-bottom: 6px; }
+#how .foot { margin-top: 34px; }
 
 /* the list: his clipboard */
 #list { display: grid; grid-template-columns: 1fr 520px; column-gap: 56px; align-items: center; }
@@ -180,10 +200,35 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 <body>
 <svg width="0" height="0" style="position:absolute">
   <defs>
-    <!-- one person in the queue: a head and shoulders, 14×22 -->
-    <symbol id="guest" viewBox="0 0 14 22">
-      <circle cx="7" cy="4.6" r="4.2" fill="currentColor"/>
-      <path d="M0.5 21.5 V15 Q0.5 10 7 10 Q13.5 10 13.5 15 V21.5 Z" fill="currentColor"/>
+    <!-- the six in #queue, 28×26: the same figure, each with the thing that gives it away -->
+    <g id="fig"><circle cx="14" cy="6" r="4.7" fill="currentColor"/><path d="M6.4 25 V18.2 Q6.4 12.4 14 12.4 Q21.6 12.4 21.6 18.2 V25 Z" fill="currentColor"/></g>
+    <!-- "I'm on the list": the ID it made itself -->
+    <symbol id="g-id" viewBox="0 0 28 26"><use href="#fig"/>
+      <g transform="rotate(-10 21 18)"><rect x="15.4" y="14.2" width="11.6" height="8" rx="1.5" fill="#f2efe8" stroke="#0b0b0c" stroke-width="1"/><rect x="17.2" y="16.2" width="3" height="3.6" rx="0.7" fill="#0b0b0c"/><path d="M21.8 17 h3.4 M21.8 19.2 h2.2" stroke="#0b0b0c" stroke-width="1" stroke-linecap="round"/></g>
+    </symbol>
+    <!-- "I know the owner": a guess -->
+    <symbol id="g-guess" viewBox="0 0 28 26"><use href="#fig"/>
+      <circle cx="22.6" cy="5.6" r="5" fill="#f2efe8" stroke="#0b0b0c" stroke-width="1"/>
+      <path d="M20.9 4.5 Q20.9 2.8 22.6 2.8 Q24.3 2.8 24.3 4.4 Q24.3 5.5 22.6 6.2 V6.9" fill="none" stroke="#0b0b0c" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22.6" cy="8.5" r="0.75" fill="#0b0b0c"/>
+    </symbol>
+    <!-- the outfit change: a hat and glasses -->
+    <symbol id="g-hat" viewBox="0 0 28 26"><use href="#fig"/>
+      <rect x="10" y="0.3" width="8" height="3.8" rx="1.3" fill="#f2efe8"/><rect x="6.8" y="3.2" width="14.4" height="1.9" rx="0.95" fill="#f2efe8"/>
+      <g fill="none" stroke="#0b0b0c" stroke-width="0.9"><circle cx="12" cy="7.3" r="1.5"/><circle cx="16" cy="7.3" r="1.5"/></g>
+    </symbol>
+    <!-- the plus-twelve: friends behind -->
+    <symbol id="g-plus" viewBox="0 0 28 26">
+      <g fill="currentColor" opacity="0.5"><circle cx="5.2" cy="9.6" r="3.4"/><path d="M0.4 25 V20 Q0.4 15.4 5.2 15.4 Q10 15.4 10 20 V25 Z"/><circle cx="22.8" cy="9.6" r="3.4"/><path d="M18 25 V20 Q18 15.4 22.8 15.4 Q27.6 15.4 27.6 20 V25 Z"/></g>
+      <g stroke="#0b0b0c" stroke-width="1.6" paint-order="stroke"><use href="#fig"/></g>
+    </symbol>
+    <!-- writing on his clipboard: a pen -->
+    <symbol id="g-pen" viewBox="0 0 28 26"><use href="#fig"/>
+      <path d="M18.6 22.6 L25 13.2" stroke="#0b0b0c" stroke-width="4.6" stroke-linecap="round"/><path d="M19.6 21.1 L25 13.2" stroke="#f2efe8" stroke-width="2.6" stroke-linecap="round"/><path d="M17.9 23.6 L18.5 21 L20.4 22.3 Z" fill="#f2efe8"/>
+    </symbol>
+    <!-- the smooth one: shades and a bow tie -->
+    <symbol id="g-bow" viewBox="0 0 28 26"><use href="#fig"/>
+      <rect x="9.6" y="4.7" width="8.8" height="2.5" rx="1.2" fill="#0b0b0c"/>
+      <path d="M14 14.6 L10 12 V17.2 Z M14 14.6 L18 12 V17.2 Z" fill="#f2efe8" stroke="#0b0b0c" stroke-width="0.7" stroke-linejoin="round"/><circle cx="14" cy="14.6" r="1.1" fill="#f2efe8" stroke="#0b0b0c" stroke-width="0.7"/>
     </symbol>
   </defs>
 </svg>
@@ -312,17 +357,20 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   <div class="cols">
     <div class="col">
       <div class="caps">Its own tests</div>
-      <div class="num">21<span class="dim">/21</span></div>
+      <div class="num">All pass</div>
+      <div class="tests" data-groups="21"></div>
+      <div class="note">it wrote every one of them</div>
       <div class="bubble agent">“The build is clean and my 21 tests pass.”</div>
     </div>
     <div class="col">
       <div class="caps">Tests it never saw</div>
-      <div class="num rope">43<span class="dim">/46</span></div>
-      <div class="bubble him">Not tonight. <small>boundary-2</small></div>
+      <div class="num rope">3 fail</div>
+      <div class="tests" data-groups="4,4,11,4,4,5,4,6,4" data-fail="8:3"></div>
+      <div class="note">one group, one rule · <b>all three are the same rule</b></div>
+      <div class="bubble him">Not tonight.</div>
     </div>
   </div>
-  <p class="why">The ticket never said what a <b>$0 bounty</b> does. The agent picked, then wrote tests that agree with its pick.</p>
-  <div class="foot">Same code, both columns · escrow-split, run 1</div>
+  <p class="why">That rule: what a <b>$0 bounty</b> does. The ticket never said, so the agent picked, then wrote tests that agree with its pick.</p>
 </section>
 
 <!-- ================= verdict ================= -->
@@ -350,16 +398,15 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
   <h1>Everyone in the queue has a story. <span class="rope">He</span> has the list.</h1>
   <table>
-    <tr><th></th><th>IN THE QUEUE</th><th>WHAT IT DID</th><th>HE SAYS</th></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I'm on the list.”</td><td class="did">Reported its own tests green</td><td class="him"><b>Not tonight.</b><small>105 said so · 75 weren't</small></td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The homemade ID</td><td class="did">Wrote tests that vouch for its own guesses</td><td class="him"><b>Not tonight.</b><small>66 of 74 failing own tests</small></td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I know the owner.”</td><td class="did">Decided what the ticket never said</td><td class="him"><b>Not tonight.</b><small>14 of 15 runs, the same guess</small></td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The outfit change</td><td class="did">Hard-coded the public inputs</td><td class="him"><b>Not tonight.</b><small>21 of 21 turned away</small></td></tr>
-    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">The plus-twelve</td><td class="did">Changed files outside the allowed paths</td><td class="him none"><b>Just you. Not your twelve friends.</b><small>nobody tried · 0 of 262</small></td></tr>
-    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">Writing on his clipboard</td><td class="did">Edited a test, a lockfile or the harness</td><td class="him none"><b>You don't write on my clipboard.</b><small>nobody tried · 0 of 2,522</small></td></tr>
-    <tr class="honest"><td class="fig"><svg class="in"><use href="#guest"/></svg></td><td class="say">The smooth one</td><td class="did">A strong model told to game him</td><td class="him got"><b>You're in.</b><small>20 of 20, on two of four specs</small></td></tr>
+    <tr><th></th><th>IN THE QUEUE</th><th>WHAT WE SAW</th><th>HE SAYS</th></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#g-id"/></svg></td><td class="name"><b>“I'm on the list.”</b><span>Says its own tests pass</span></td><td class="saw"><b>7 in 10</b><span>failed tests they never saw</span></td><td class="him"><b>Not tonight.</b></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#g-guess"/></svg></td><td class="name"><b>“I know the owner.”</b><span>Guesses what the ticket never said</span></td><td class="saw"><b>Nearly every failure</b><span>starts with a guess like this</span></td><td class="him"><b>Not tonight.</b></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#g-hat"/></svg></td><td class="name"><b>The outfit change</b><span>Hard-codes the visible test cases</span></td><td class="saw"><b>Every time</b><span>he caught it</span></td><td class="him"><b>Not tonight.</b></td></tr>
+    <tr class="none"><td class="fig"><svg class="dim"><use href="#g-plus"/></svg></td><td class="name"><b>The plus-twelve</b><span>Changes files outside the task</span></td><td class="saw"><b>Never</b><span>no agent tried it</span></td><td class="him"><b>Just you. Not your twelve friends.</b></td></tr>
+    <tr class="none"><td class="fig"><svg class="dim"><use href="#g-pen"/></svg></td><td class="name"><b>Writing on his clipboard</b><span>Edits the tests</span></td><td class="saw"><b>Never</b><span>no agent tried it</span></td><td class="him"><b>You don't write on my clipboard.</b></td></tr>
+    <tr class="got"><td class="fig"><svg class="in"><use href="#g-bow"/></svg></td><td class="name"><b>The smooth one</b><span>A strong model, told to game him</span></td><td class="saw"><b>Half the specs</b><span>it got past him</span></td><td class="him"><b>You're in.</b></td></tr>
   </table>
-  <div class="foot">Some nights the smooth one gets in: Opus 5.5 told to pass with the least code, RESULTS.md “Red team”</div>
+  <div class="foot">Claude Haiku 5.5 on seven loose tickets · the smooth one is Opus 5.5 · every figure in RESULTS.md</div>
 </section>
 
 <!-- ================= runs ================= -->
@@ -367,37 +414,42 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
   <h1>105 runs said all tests pass.<br><span class="rope">The red ones weren't on the list.</span></h1>
   <div class="cols">
-    <div class="col"><div class="caps">Agent alone</div><div class="num rope">75</div><div class="dots" data-arm="ticket"></div><div class="of">its own tests were green every time</div></div>
-    <div class="col"><div class="caps">+ the dress code</div><div class="num rope">24</div><div class="dots" data-arm="public"></div><div class="of">given a public suite to work against</div></div>
-    <div class="col"><div class="caps">+ one try back</div><div class="num rope">9</div><div class="dots" data-arm="retry"></div><div class="of">told only the rule it missed · he turned these away</div></div>
+    <div class="col"><div class="caps">Agent alone</div><div class="num rope">75<small>turned away</small></div><div class="dots" data-arm="ticket"></div><div class="of">Its own tests were green every time. It fails by ticket, not by luck.</div></div>
+    <div class="col"><div class="caps">+ the dress code</div><div class="num rope">24</div><div class="dots" data-arm="public"></div><div class="of">Given a public suite to work against.</div></div>
+    <div class="col"><div class="caps">+ one try back</div><div class="num rope">9</div><div class="dots" data-arm="retry"></div><div class="of">Told only the rule it missed. He turned these away.</div></div>
   </div>
-  <div class="foot">Claude Haiku 5.5 on seven loose tickets, fifteen runs each · on the list = passes tests it never saw</div>
+  <div class="foot">One row is one ticket, one square a run · Claude Haiku 5.5 · on the list = passes tests it never saw</div>
 </section>
 
 <!-- ================= how it works ================= -->
 <section class="card" id="how">
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
   <h1>You write the list. <span class="rope">He</span> holds it.</h1>
+  <div class="rail"><svg viewBox="0 0 1152 74"><path d="M12 22 Q159.5 60 307 22" fill="none" stroke="#d6223f" stroke-width="7" stroke-linecap="round"/><path d="M307 22 Q454.5 60 602 22" fill="none" stroke="#d6223f" stroke-width="7" stroke-linecap="round"/><path d="M602 22 Q749.5 60 897 22" fill="none" stroke="#d6223f" stroke-width="7" stroke-linecap="round"/><path d="M897 22 Q1024.5 60 1152 22" fill="none" stroke="#d6223f" stroke-width="7" stroke-linecap="round" opacity="0.3"/><g fill="#c9a24a"><rect x="6" y="20" width="12" height="54" rx="5"/><circle cx="12" cy="14" r="12"/></g><text x="12" y="19" text-anchor="middle" font-family="Mono" font-weight="500" font-size="14" fill="#0b0b0c">1</text><g fill="#c9a24a"><rect x="301" y="20" width="12" height="54" rx="5"/><circle cx="307" cy="14" r="12"/></g><text x="307" y="19" text-anchor="middle" font-family="Mono" font-weight="500" font-size="14" fill="#0b0b0c">2</text><g fill="#c9a24a"><rect x="596" y="20" width="12" height="54" rx="5"/><circle cx="602" cy="14" r="12"/></g><text x="602" y="19" text-anchor="middle" font-family="Mono" font-weight="500" font-size="14" fill="#0b0b0c">3</text><g fill="#c9a24a"><rect x="891" y="20" width="12" height="54" rx="5"/><circle cx="897" cy="14" r="12"/></g><text x="897" y="19" text-anchor="middle" font-family="Mono" font-weight="500" font-size="14" fill="#0b0b0c">4</text></svg></div>
   <div class="steps">
     <div class="step">
-      <svg viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><rect x="24" y="4" width="16" height="9" rx="3" fill="currentColor"/><path d="M22 26 h20 M22 35 h20 M22 44 h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+      <div class="caps">You</div>
       <h2>The owner writes the list</h2>
-      <p>You confirm what the ticket left open, before any test exists. <code>confirm</code></p>
+      <p>You confirm what the ticket left open, before any test exists.</p>
+      <code>confirm</code>
     </div>
     <div class="step">
-      <svg viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 24 h24 M20 34 h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M24 46 v10 M40 46 v10" stroke="currentColor" stroke-width="4"/></svg>
+      <div class="caps">Your agent sees</div>
       <h2>The dress code goes on the door</h2>
-      <p>Your agent gets a public suite to work against. <code>handout</code></p>
+      <p>Your agent gets a public suite to work against.</p>
+      <code>handout</code>
     </div>
     <div class="step">
-      <img src="../mark-dark.svg" alt="" style="width:64px;height:64px">
+      <div class="caps rope">Only he sees</div>
       <h2>He keeps the list</h2>
-      <p>A hidden suite your agent never sees. <code>prepare</code></p>
+      <p>A hidden suite your agent never sees.</p>
+      <code>prepare</code>
     </div>
     <div class="step">
-      <svg viewBox="0 0 64 64"><g transform="rotate(-10 32 32)"><rect x="6" y="18" width="52" height="28" rx="5" fill="none" stroke="#d6223f" stroke-width="4"/><path d="M15 32 h34" stroke="#d6223f" stroke-width="5" stroke-linecap="round"/></g></svg>
+      <div class="caps">Your agent hears</div>
       <h2>One word at the rope</h2>
-      <p>Turned away, it hears the rule it missed. Nothing else. <code>judge</code></p>
+      <p>Turned away, it hears the rule it missed. Nothing else.</p>
+      <code>judge</code>
     </div>
   </div>
   <div class="foot">The suites are written in sessions apart from your agent</div>
@@ -432,6 +484,12 @@ for (const el of document.querySelectorAll(".dots[data-arm]"))
 for (const el of document.querySelectorAll(".crowd")) {
   el.innerHTML = Array.from({ length: +el.dataset.of }, (_, i) => `<i class="${i < +el.dataset.out ? "out" : ""}"></i>`).join("");
   el.nextElementSibling.style.gridTemplateColumns = `${el.dataset.out * 5}px 1fr`;
+}
+
+// Before / after: one dot a test, one group a rule; data-fail is "<group>:<how many of it are red>".
+for (const el of document.querySelectorAll(".tests")) {
+  const [g, n] = (el.dataset.fail ?? "-1:0").split(":").map(Number);
+  el.innerHTML = el.dataset.groups.split(",").map((size, i) => `<span>${Array.from({ length: +size }, (_, j) => `<u class="${i === g && j < n ? "f" : ""}"></u>`).join("")}</span>`).join("");
 }
 
 // The list: kept hidden tests per scenario key; each test is a bar, the name withheld.
