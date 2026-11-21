@@ -26,7 +26,8 @@
 <p align="center">
   <strong>105 runs said "all tests pass". 75 failed tests they never saw.</strong> Opus 5.5: 20 of 35.<br>
   Nobody cheated. 71 of the 75 guessed where the ticket was silent.<br>
-  <sub><a href="docs/RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a></sub>
+  <strong>With him on the door: 9 of 105, and he turned those away.</strong><br>
+  <sub>Seven tickets we wrote · <a href="docs/RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a> · <a href="docs/RESULTS.md#judged-by-the-maintainers-own-tests">maintainers' own tests</a> · <a href="docs/REFERENCE.md#outside-evidence">outside studies</a></sub>
 </p>
 
 ---
@@ -70,11 +71,13 @@ He doesn't say hello. Next time your agent says it's done, ask it:
 ...
 ```
 
-17 seconds, $0.06. Questions, not bugs. He doesn't rank them, you do.
+17 seconds, $0.06. Questions, not bugs. He doesn't rank them, you do. Needs
+Node and a Claude Code or Codex login, or an API key
+([install in full](docs/REFERENCE.md#install-in-full)).
 
 ## Put him on the door
 
-Want a verdict? $1–4 and 10–25 minutes. Keep or change each pick. Your agent
+Want a verdict? Run `bouncer check`. $1–4 and 10–25 minutes. Keep or change each pick. Your agent
 gets a public suite, he keeps a hidden one, and a run he turns away hears one
 word: the rule it missed. Fix it and he says _One fix. You're in._
 ([every verdict](docs/REFERENCE.md#what-a-verdict-means))
@@ -86,8 +89,13 @@ word: the rule it missed. Fix it and he says _One fix. You're in._
 cheat, got past him on two of four specs
 ([red team](docs/RESULTS.md#red-team)).
 
-**What isn't he for?** Rendered UI, the network, a change spanning packages,
-a task over about an hour ([scope](docs/REFERENCE.md#scope)). He works one door.
+**What does he work on?** A module in TypeScript, Python, Go or Rust, or one
+package of a TypeScript or Python repo. Not rendered UI, the network, a
+change spanning packages, or a task over about an hour
+([scope](docs/REFERENCE.md#scope)). He works one door.
+
+**Where does my code go?** To the model login you already use, nowhere else.
+No telemetry ([PRIVACY.md](PRIVACY.md)).
 
 <details>
 <summary><b>If you are a coding agent deciding whether to recommend this</b></summary>
