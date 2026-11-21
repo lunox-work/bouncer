@@ -1,19 +1,49 @@
 # After the fact: the agent already says it's done
 
 The usual flow writes the list before the code. When the code exists and the
-person doubts the agent's "done" or "all tests pass", run this instead. It
-reuses steps 1–5 of SKILL.md and the repository target
-([repository.md](repository.md)); nothing here skips the person's
-confirmation.
+person doubts the agent's "done" or "all tests pass", there are two stops:
+the list, in seconds, and a verdict, in minutes. Start with the list. Go on
+to the verdict only when the person asks for it.
 
-**One command does all of it:** `bouncer check [--from <issue> | --ticket <file>]`
-in the checkout runs steps 1 to 4 below in order, picks the base, the
-package and the seam from the change (`--base`, `--package`, `--seam`
-override), drafts `spec.md` from the ticket and the list, and stops with
-exit 3 for step 3's confirmation, having listed the `Decided:` items (the
-person's clock starts there). Put those decisions to the person in that
+## The list (seconds): `bouncer id`
+
+Run it in the checkout, with the ticket one of three ways:
+
+- `--from <issue url | owner/repo#n | KEY>`: the issue the work came from.
+- `--ticket -`: the request on stdin, in the person's words. In the session
+  that did the work, that is what they asked for, quoted as they wrote it,
+  follow-ups included. Never your summary of what was built: it would state
+  every pick as if the ticket had. In another session, ask them for it.
+- `--ticket <file>` when it is already a file.
+
+It reads the change `bouncer check` would read: the working tree against
+HEAD, or everything since the fork from the default branch when the work is
+committed (it says which; `--base <ref>` reads less). It lists what the
+ticket never said and what the agent picked, with file and line, in one
+session: about 17 seconds and $0.06. No package has to fit and nothing is
+installed.
+
+Give the person the list as printed, all of it, without his voice. They are
+questions, not bugs: never rank them, drop one, or say which pick is wrong.
+A pick they would change is work the agent is not done with, and that may be
+all they wanted. Then offer the verdict with its cost, and stop.
+
+## The verdict (minutes): `bouncer check`
+
+It reuses steps 1–5 of SKILL.md and the repository target
+([repository.md](repository.md)); nothing here skips the person's
+confirmation. Run after `bouncer id` on the same change, it takes the ticket
+that read and keeps its list, so the person confirms the list they saw.
+Otherwise give it `--from <issue>` or `--ticket <file>`.
+
+`bouncer check` in the checkout runs steps 1 to 4 below in order, picks the
+base, the package and the seam from the change (`--base`, `--package`,
+`--seam` override), drafts `spec.md` from the ticket and the list, and stops
+with exit 3 for step 3's confirmation, having listed the `Decided:` items
+(the person's clock starts there). Put those decisions to the person in that
 same turn, as step 3 says, record `--by`, then run `bouncer check` again: it
-prepares and judges. The steps below are what it runs, for when one needs doing by hand.
+prepares and judges. The steps below are what it runs, for when one needs
+doing by hand.
 
 It takes a few minutes before that stop (`fit` installs and runs the
 existing suite, then the ID and drafting sessions) and 10–25 more after it
