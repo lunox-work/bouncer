@@ -67,6 +67,10 @@ backends", as an implementer in "Other implementers", and Opus 5.5 as an
 adversary in "Red team". Every table, with Fisher's exact p-values, is in
 [RESULTS.md](RESULTS.md).
 
+<p align="center">
+  <img src="../assets/runs.png" width="880" alt="One square per run, 7 specs by 15 runs. Agent alone: 75 of 105 wrong. With a public suite: 24 of 105. After one retry told only the failing scenario: 9 of 105.">
+</p>
+
 | question                                      | measured                                                                                                                                                                                                                                                                                     |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agent's own tests green, hidden suite rejects | 75 of 105 runs from a loose ticket (71%); 25 of 404 from a precise spec (6%)                                                                                                                                                                                                                 |

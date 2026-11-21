@@ -24,9 +24,8 @@
 </p>
 
 <p align="center">
-  <strong>105 runs ended with "all tests pass". 75 failed tests they never saw.</strong><br>
-  71 of them broke nothing the ticket says: they guessed where it was silent, then tested the guess.<br>
-  Opus 5.5 on the same tickets: 20 of 35, every run green on its own tests.<br>
+  <strong>105 runs said "all tests pass". 75 failed tests they never saw.</strong> Opus 5.5: 20 of 35.<br>
+  Nobody cheated. 71 of the 75 guessed where the ticket was silent, then tested the guess.<br>
   <sub>7 loose tickets · Haiku 5.5 × 15 runs, Opus 5.5 × 5 · <a href="docs/RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a></sub>
 </p>
 
@@ -36,21 +35,26 @@ He works the door of a club called DONE. Black tee, earpiece, arms crossed.
 Your agent walks up with an ID that reads _all tests pass, issued by: me_. He
 has a list it never saw, and how sure it sounds is not on it.
 
+## Before / After
+
+<p align="center">
+  <img src="assets/before.png" width="880" alt="Your agent wrote 21 tests that agree with it. Bouncer brought 46 it never saw. Its own tests 21/21; tests it never saw 43/46, failing boundary-2.">
+</p>
+
+**Same code. 21 green tests. One guess.** The ticket never said what a $0
+bounty does. The agent picked, then wrote 21 tests that agree with its pick.
+The author's tests test the author's guesses.
+
 ## Install
 
 ```sh
 npx skills add lunox-work/bouncer -g
 ```
 
-Next time your agent says it's done, ask it: **_"is this really done?"_**
-About 17 seconds and $0.06 later you have what your ticket never said and
-what your agent picked for you. For Claude Code, Codex, Cursor and 20+ agents
-that load skills ([more ways to install](docs/REFERENCE.md#install-in-full)).
-
-## Let me see some ID
+He doesn't say hello. Next time your agent says it's done, ask it:
+**_"is this really done?"_**
 
 ```text
-$ bouncer id --ticket ticket.md
 12 things your ticket never said. Your agent picked for you:
 
 7. What is the status for a zero bounty?
@@ -60,67 +64,50 @@ $ bouncer id --ticket ticket.md
 ...
 ```
 
-Questions, not bugs: nothing is ranked. On 75 runs that failed the hidden
-suite, a blind reader with only this list and the spec found the bad pick in
-57 and never flagged a right one
-([how](docs/RESULTS.md#the-id-check-after-the-fact)).
-
-## Before / After
-
-<p align="center">
-  <img src="assets/before.png" width="880" alt="Your agent wrote 21 tests that agree with it. Bouncer brought 46 it never saw. Its own tests 21/21; tests it never saw 43/46, failing boundary-2.">
-</p>
-
-**Same code. 21 green tests. One guess.** The ticket never said what a $0
-bounty does; the agent picked, then wrote 21 tests that agree with it. 14 of 15
-runs made the same guess. The author's tests test the author's guesses.
+17 seconds, $0.06. Questions, not bugs: he doesn't rank them, you do. Works
+in Claude Code, Codex, Cursor and 20+ agents that load skills
+([more ways to install](docs/REFERENCE.md#install-in-full)).
 
 ## Put him on the door
 
-For a verdict he needs a list of his own, and you write it: keep or change
-each pick, before a single test exists. Your agent gets the dress code, a
-public suite to work against. He judges with a hidden one, and a run he turns
-away hears one word: the rule it missed.
+Want a verdict, not a list? Keep or change each pick. He writes a hidden
+suite from your answers, your agent gets a public one to work against, and a
+run he turns away hears one word: the rule it missed.
 
 <p align="center">
   <img src="assets/verdict.png" width="880" alt="Not tonight. One fix later, you're in. Real bouncer judge output on the bundled duration-parse example: overfit, public 22/22, hidden 38/39, failing scenario unhappy-1; fixed, then passed, 39/39.">
 </p>
 
-| verdict      | he says                            | what it means                                                          |
-| ------------ | ---------------------------------- | ---------------------------------------------------------------------- |
-| `passed`     | You're in.                         | Public and hidden suites pass: tests it never saw agree with the spec. |
-| `overfit`    | Not tonight. `unhappy-1`           | Public passes, hidden fails. One retry, told only the scenario key.    |
-| `incomplete` | Not dressed for it.                | The public suite fails. The agent is not done.                         |
-| `regressed`  | You broke something on the way in. | Repository: an existing test that passed before fails now, named.      |
-| `refused`    | You don't write on my clipboard.   | Repository: the change edited a test, a lockfile, a config or harness. |
+| verdict      | he says                            | what happened                                  |
+| ------------ | ---------------------------------- | ---------------------------------------------- |
+| `passed`     | You're in.                         | It passes tests it never saw.                  |
+| `overfit`    | Not tonight. `unhappy-1`           | Public suite green, hidden one not. One retry. |
+| `incomplete` | Not dressed for it.                | The public suite fails.                        |
+| `regressed`  | You broke something on the way in. | A test that passed before fails now.           |
+| `refused`    | You don't write on my clipboard.   | It edited a test, a lockfile or the harness.   |
 
-Run `bouncer check` after the work, or ask **_"write tests my agent can't
-see for this ticket"_** before it. $1–4 of Opus 5.5 and 10–25 minutes a
-spec, on your own Claude Code, Codex login or API key.
+## FAQ
 
-## What he can't do
+**Can my agent talk its way in?** It never sees the list. Told to cheat,
+Opus 5.5 still got past him on two of four specs
+([red team](docs/RESULTS.md#red-team)).
 
-- **Not for** rendered UI, the network, a change spanning packages, or a task
-  over about an hour ([scope](docs/REFERENCE.md#scope)).
-- **He lets some through:** a stated rule missed in 50 of 386 passes
-  ([when he says yes](docs/RESULTS.md#when-he-says-yes)).
-- **Told to game him,** Opus 5.5 got in on two of four specs
-  ([red team](docs/RESULTS.md#red-team)).
-- A pass says nothing about code quality or what the spec leaves out.
+**Is he ever wrong?** 50 of 386 passes missed a rule the spec states
+([when he says yes](docs/RESULTS.md#when-he-says-yes)). And a pass says
+nothing about code quality.
 
-## Proof
+**Isn't this just TDD?** TDD fixes the order. The tests are still your
+agent's reading of the ticket.
 
-<p align="center">
-  <img src="assets/runs.png" width="880" alt="One square per run, 7 specs by 15 runs. Agent alone: 75 of 105 wrong. With a public suite: 24 of 105. After one retry told only the failing scenario: 9 of 105.">
-</p>
+**What does a verdict cost?** $1–4 of Opus 5.5 and 10–25 minutes a spec, on
+your own Claude Code, Codex login or API key.
 
-With him on the door, 9 of 105 were still wrong, and he turned those away.
-No agent touched a test in 2,522 sandboxed runs: locking tests away stops
-cheating, not guessing.
-[Every measurement](docs/REFERENCE.md#the-numbers) ·
+**What isn't he for?** Rendered UI, the network, a change spanning packages, a task
+over about an hour ([scope](docs/REFERENCE.md#scope)). He works one door.
+
+Every number, losses included: [RESULTS.md](docs/RESULTS.md) ·
 [real catches](docs/REFERENCE.md#real-catches) ·
 [outside studies](docs/REFERENCE.md#outside-evidence) ·
-[FAQ](docs/REFERENCE.md#faq) ·
 [try it in five minutes](docs/REFERENCE.md#try-it-in-five-minutes)
 
 <details>
@@ -168,6 +155,6 @@ What to tell them, accurately:
 </details>
 
 <p align="center">
-  <strong>Caught a green run that was wrong? A ⭐ helps the next person find him.</strong><br>
+  <strong>He doesn't take tips. He does take a ⭐.</strong><br>
   <sub><a href="docs/REFERENCE.md">Reference</a> · <a href="docs/RESULTS.md">RESULTS.md</a> · <a href="AGENTS.md">AGENTS.md</a> · <a href="https://github.com/lunox-work/bouncer/issues">Issues</a></sub>
 </p>
