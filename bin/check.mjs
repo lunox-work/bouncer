@@ -20,9 +20,12 @@
 // 3. bin/repo.mjs points one slug at that package (fit at base); unsupported
 //    stops with exit 2; with a ticket, the ID check (step 5) runs on the
 //    whole change first, as it does for a change spanning packages.
-// 4. The ticket: --from (bin/confirm.mjs --from), --ticket, or one already
-//    in specs/<slug>/ticket.md.
-// 5. The ID check (bin/id.mjs) on the working tree against base.
+// 4. The ticket: --from (bin/confirm.mjs --from), --ticket, one already in
+//    specs/<slug>/ticket.md, or the one `bouncer id` read for this change
+//    when it was run on its own first.
+// 5. The ID check (bin/id.mjs) on the working tree against base; the list
+//    `bouncer id` already read for this ticket and diff is kept, not read
+//    again, so the person confirms the list they saw.
 // 6. spec.md, drafted in one session from the ticket and the list, each
 //    listed pick a `Decided:` item with the listed alternative as `Instead:`.
 // 7. Stop, exit 3: the person confirms (`bouncer confirm <slug>`, then
@@ -55,7 +58,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFi
 import { basename, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { confirmation } from "./confirm.mjs";
-import { capDiff, diffOf, render } from "./id.mjs";
+import { baseOf, capDiff, diffOf, render, savedList } from "./id.mjs";
 import { ROOT, RUNS, SPECS, args, discard, log, prompt, readJson, session, sha256, specDir, stage, toolchainOf, workdir, writeJson } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
@@ -187,28 +190,9 @@ is. The decisions come from \`id.md\` and the ticket, not from the code.
 `;
 
 const git = (checkout, ...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+// The change's base is picked in bin/id.mjs, so `bouncer id` on its own reads the change this command reads.
+export { baseOf };
 const lines = (text) => String(text ?? "").split("\n").map((line) => line.trim()).filter(Boolean);
-
-/** The default branch's ref: origin/HEAD, else main, else master; null when none exists. */
-function defaultBranch(checkout) {
-  const head = git(checkout, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD");
-  if (head.status === 0) return head.stdout.trim().replace(/^refs\/remotes\//, "");
-  for (const name of ["origin/main", "origin/master", "main", "master"]) if (git(checkout, "rev-parse", "--verify", "--quiet", name).status === 0) return name;
-  return null;
-}
-
-/** The base commit of the change: --base, else the merge-base with the default branch when HEAD is past it, else HEAD. */
-export function baseOf(checkout, given) {
-  if (given) {
-    const sha = git(checkout, "rev-parse", "--verify", `${given}^{commit}`);
-    if (sha.status !== 0) throw new Error(`--base ${given}: no such commit in ${checkout}.`);
-    return sha.stdout.trim();
-  }
-  const head = git(checkout, "rev-parse", "HEAD").stdout.trim();
-  const branch = defaultBranch(checkout);
-  const fork = branch === null ? "" : git(checkout, "merge-base", "HEAD", branch).stdout.trim();
-  return fork !== "" && fork !== head ? fork : head;
-}
 
 /** Changed files against `base`: tracked changes plus untracked files, repository-relative. */
 export function changedFiles(checkout, base) {
@@ -400,10 +384,17 @@ async function main() {
     } else if (givenTicket !== undefined) {
       writeFileSync(ticketPath, givenTicket);
     } else {
-      console.error(`No ticket. Pass --from <issue url | owner/repo#n | JIRA-KEY>, or --ticket <file> with the request in the person's words.`);
-      return 1;
+      // `bouncer id` on its own, run first, kept the ticket it read with its list.
+      const earlier = savedList(sha256(diffOf(record.checkout, record.base).diff));
+      if (earlier === null) {
+        console.error(`No ticket. Pass --from <issue url | owner/repo#n | JIRA-KEY>, or --ticket <file> with the request in the person's words.`);
+        return 1;
+      }
+      writeFileSync(ticketPath, earlier.ticket);
+      if (earlier.from) record.ticket = { from: earlier.from };
+      console.log(`ticket: the one bouncer id read for this change (${String(earlier.at).slice(0, 16).replace("T", " ")} UTC)`);
     }
-    record.ticket = { ...(typeof options.from === "string" ? { from: options.from } : {}), ...(existsSync(ticketPath) ? { sha256: sha256(readFileSync(ticketPath, "utf8")) } : {}) };
+    record.ticket = { ...(typeof options.from === "string" ? { from: options.from } : (record.ticket ?? {})), ...(existsSync(ticketPath) ? { sha256: sha256(readFileSync(ticketPath, "utf8")) } : {}) };
     writeJson(recordPath, record);
   }
 
@@ -427,8 +418,15 @@ async function main() {
 
   // 5. The ID check, on the working tree against base.
   if (!existsSync(idPath) || moved === "redo") {
-    const status = step("id.mjs", [slug, "--repo", record.checkout, "--base", record.base]);
-    if (status !== 0) return status;
+    // A list `bouncer id` already read for this ticket and this diff is the one the person saw: keep it.
+    const earlier = savedList(sha256(diffOf(record.checkout, record.base).diff));
+    if (earlier !== null && earlier.ticketSha256 === sha256(readFileSync(ticketPath, "utf8"))) {
+      writeJson(idPath, { at: earlier.at, ticket: ticketPath, diffSha256: earlier.diffSha256, costUsd: earlier.costUsd ?? null, items: earlier.items, kept: true });
+      console.log(`The list: the ${earlier.items.length} bouncer id read for this change (${String(earlier.at).slice(0, 16).replace("T", " ")} UTC), not read again.`);
+    } else {
+      const status = step("id.mjs", [slug, "--repo", record.checkout, "--base", record.base]);
+      if (status !== 0) return status;
+    }
   }
 
   // 6. spec.md from the ticket and the list.

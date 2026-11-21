@@ -327,7 +327,8 @@ function ticketMarkdown(issue) {
   return `${lines.join("\n")}\n`;
 }
 
-async function writeTicket(slug, ref, options) {
+/** ticket.md's text for an issue reference: fetched, or `--body` (a file, or - for stdin) under the issue's source line. */
+export async function ticketFrom(ref, options = {}) {
   const github = GITHUB.test(ref);
   const jira = JIRA_KEY.test(ref) || JIRA_URL.test(ref);
   if (!github && !jira) throw new Error(`--from takes a GitHub issue URL, owner/repo#n, a Jira key or a Jira issue URL, not "${ref}".`);
@@ -337,7 +338,11 @@ async function writeTicket(slug, ref, options) {
     const source = github ? `https://github.com/${m[1]}/${m[2]}/issues/${m[3]}` : ref;
     issue = { source, given: readFileSync(options.body === "-" ? 0 : options.body, "utf8") };
   } else issue = github ? fromGitHub(ref, options.comments === true) : await fromJira(ref, options.comments === true);
-  const text = ticketMarkdown(issue);
+  return ticketMarkdown(issue);
+}
+
+async function writeTicket(slug, ref, options) {
+  const text = await ticketFrom(ref, options);
   const path = join(specDir(slug), "ticket.md");
   if (existsSync(path) && readFileSync(path, "utf8") !== text && options.force !== true)
     throw new Error(`${path} exists. Pass --force to replace it.`);

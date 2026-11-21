@@ -1,10 +1,10 @@
 // The ID check's parsing and rendering (bin/id.mjs), with no session.
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { NEW_FILE_BYTES, diffOf, fileLine, itemsOf, render } from "../bin/id.mjs";
+import { NEW_FILE_BYTES, ON_ITS_OWN, diffOf, fileLine, itemsOf, render } from "../bin/id.mjs";
 
 const answer = 'Reading both.\n```json\n[{"question":"What does a $0 bounty release?","ticket":"","chose":"Records a release of 0.","where":"src/index.ts:41","instead":"Records nothing."},{"bad":1}]\n```';
 assert.deepEqual(itemsOf(answer), [{ question: "What does a $0 bounty release?", ticket: "silent", chose: "Records a release of 0.", where: "src/index.ts:41", instead: "Records nothing." }]);
@@ -87,4 +87,58 @@ try {
 } finally {
   rmSync(repo, { recursive: true, force: true });
 }
+console.log("ok diffOf");
+
+// On its own, as the first thing a person runs: the request on stdin, the
+// change picked the way `bouncer check` picks it (here committed on a branch,
+// so the fork from main), no spec and no slug. The ticket and the list are
+// kept for a check of the same change.
+{
+  const work = mkdtempSync(join(tmpdir(), "bouncer-id-alone-"));
+  const home = mkdtempSync(join(tmpdir(), "bouncer-id-home-"));
+  try {
+    const git = (...argv) => spawnSync("git", ["-C", work, "-c", "user.email=t@t", "-c", "user.name=t", ...argv], { encoding: "utf8" });
+    git("init", "-q", "-b", "main");
+    writeFileSync(join(work, "a.ts"), "export const a = 1;\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    const first = git("rev-parse", "HEAD").stdout.trim();
+    git("checkout", "-q", "-b", "agent");
+    writeFileSync(join(work, "b.ts"), "export const b = 1;\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "agent");
+    const answer = '[{"question":"What is b?","ticket":"silent","chose":"b is 1","where":"b.ts:1","instead":"b is 0"}]';
+    const id = (argv, input) =>
+      spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "id.mjs"), ...argv], {
+        cwd: work,
+        input,
+        encoding: "utf8",
+        env: { ...process.env, BOUNCER_HOME: home, BOUNCER_BACKEND: "exec", BOUNCER_EXEC: `cat > /dev/null; printf '%s\\n' '\`\`\`json' '${answer}' '\`\`\`'`, BOUNCER_SPECS: "", BOUNCER_UNDER_CHECK: "" },
+        timeout: 120_000,
+      });
+    const alone = id(["--ticket", "-"], "Add b.\n");
+    assert.equal(alone.status, 0, alone.stdout + alone.stderr);
+    assert.match(alone.stderr, new RegExp(`id: reading everything since ${first.slice(0, 12)} \\(1 commit and the working tree\\)`));
+    assert.match(alone.stdout, /1 thing your ticket never said\. Your agent picked for you:[\s\S]*What is b\?[\s\S]*picked: b is 1 \(b\.ts:1\)/);
+    assert.ok(alone.stdout.includes(ON_ITS_OWN) && !alone.stdout.includes("spec.md"), "no spec yet: the list is questions, nothing goes into a spec");
+    assert.match(alone.stdout, /For a verdict from tests it never saw: bouncer check\./);
+    const lists = join(home, "runs", "_id", "lists");
+    const [kept] = readdirSync(lists).map((name) => JSON.parse(readFileSync(join(lists, name), "utf8")));
+    assert.equal(kept.ticket, "Add b.\n");
+    assert.equal(kept.items.length, 1);
+    assert.match(kept.diffSha256, /^[0-9a-f]{64}$/);
+
+    assert.equal(id(["--ticket", "-"], "  \n").status, 1, "an empty ticket is refused");
+    const none = id(["--ticket", "-", "--base", "HEAD"], "Add b.\n");
+    assert.equal(none.status, 1);
+    assert.match(none.stderr, /No change to check: nothing differs from [0-9a-f]{12}\./);
+    const noTicket = id([]);
+    assert.equal(noTicket.status, 1);
+    assert.match(noTicket.stderr, /No ticket: pass --ticket <file>, --ticket - with the request on stdin, --from <issue>/);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+    rmSync(home, { recursive: true, force: true });
+  }
+}
+console.log("ok id on its own: stdin ticket, the branch's change, the list kept for check");
 console.log("id passed");

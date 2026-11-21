@@ -149,6 +149,34 @@ try {
   }
   ok("out of scope with a ticket: fit unsupported or spanning packages still lists what the agent picked, exit 2");
 
+  // `bouncer id` was run on its own first: check takes the ticket it read and
+  // keeps its list, so the person is not asked twice nor shown another list.
+  // Seeded as pointed (toolchain.json) with a draft, so no session runs.
+  const after = mkdtempSync(join(tmpdir(), "bouncer-check-home-"));
+  try {
+    const sha = (text) => createHash("sha256").update(text).digest("hex");
+    const spec = join(after, "specs", "after-id");
+    mkdirSync(spec, { recursive: true });
+    writeFileSync(join(spec, "check.json"), JSON.stringify({ checkout: git("rev-parse", "--show-toplevel"), branch: "agent", base: first, package: ".", seam: ["src/a.ts", "src/b.ts"], changed: ["src/a.ts", "src/b.ts"], at: "2026-11-21T02:00:00.000Z" }));
+    writeFileSync(join(spec, "toolchain.json"), "{}\n");
+    writeFileSync(join(spec, "spec.md"), "# Add b\n\nDecided: b is 1.\n");
+    const diff = diffOf(repo, first).diff;
+    const items = [{ question: "What is b?", ticket: "silent", chose: "b is 1", where: "src/b.ts:1", instead: "b is 0" }];
+    mkdirSync(join(after, "runs", "_id", "lists"), { recursive: true });
+    writeFileSync(join(after, "runs", "_id", "lists", `${sha(diff).slice(0, 16)}.json`), JSON.stringify({ at: "2026-11-21T01:59:00.000Z", ticket: "Add b.\n", ticketSha256: sha("Add b.\n"), diffSha256: sha(diff), costUsd: 0.06, items }));
+    const went = spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "check.mjs"), "--repo", repo, "--no-door", "--slug", "after-id"], { encoding: "utf8", env: { ...process.env, BOUNCER_HOME: after, BOUNCER_BACKEND: "exec", BOUNCER_EXEC: "exit 1", BOUNCER_SPECS: "" }, timeout: 120_000 });
+    assert.equal(went.status, 3, went.stdout + went.stderr);
+    assert.match(went.stdout, /ticket: the one bouncer id read for this change \(2026-11-21 01:59 UTC\)/);
+    assert.match(went.stdout, /The list: the 1 bouncer id read for this change \(2026-11-21 01:59 UTC\), not read again\./);
+    assert.equal(readFileSync(join(spec, "ticket.md"), "utf8"), "Add b.\n");
+    const listed = JSON.parse(readFileSync(join(after, "runs", "after-id", "id.json"), "utf8"));
+    assert.deepEqual(listed.items, items);
+    assert.equal(listed.kept, true);
+  } finally {
+    rmSync(after, { recursive: true, force: true });
+  }
+  ok("after bouncer id on its own: check takes its ticket and keeps its list");
+
   // A rerun. The check is seeded as an earlier run left it at the confirmation
   // stop: pointed (toolchain.json), with its ticket, list and drafted spec.
   const state = mkdtempSync(join(tmpdir(), "bouncer-check-home-"));

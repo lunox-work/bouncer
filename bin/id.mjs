@@ -10,19 +10,25 @@
 // spec.md (`Ticket:` and `Instead:` come with it), which is step 2's
 // confirmation.
 //
-//   node bin/id.mjs [<slug>] [--ticket <file>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]
+//   node bin/id.mjs [<slug>] [--ticket <file>|- | --from <issue>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]
 //
-// The ticket: --ticket, else specs/<slug>/ticket.md. The diff: --diff, else
-// `git diff <base>` of --repo (default the current folder; base HEAD, so the
-// working tree's change) plus its untracked files. Writes
-// runs/<slug>/id.json when a slug is given. Exit 0 with a list (maybe
-// empty), 1 when the session gave no list.
+// The ticket: --ticket (a file, or - for stdin: the request in the person's
+// words), --from (a GitHub issue URL, owner/repo#n or a Jira key, as
+// bin/confirm.mjs --from reads one), else specs/<slug>/ticket.md. The diff:
+// --diff, else the change in --repo (default the current folder) against
+// --base. With no --base it is the change `bouncer check` would read: the
+// working tree against HEAD, or against the fork from the default branch
+// when HEAD is past it, which is then said. Writes runs/<slug>/id.json when
+// a slug is given. With none, the ticket and the list are kept under
+// runs/_id/lists/ by the diff's hash, so a `bouncer check` of the same
+// change goes on from them instead of asking and listing again. Exit 0 with
+// a list (maybe empty), 1 when the session gave no list.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PROMPTS, RUNS, args, log, session, sha256, specDir, workdir, writeJson, discard } from "./lib.mjs";
+import { PROMPTS, RUNS, args, log, readJson, session, sha256, specDir, workdir, writeJson, discard } from "./lib.mjs";
 import { say } from "./voice.mjs";
 
 export const ID_MODEL = "claude-sonnet-5-5";
@@ -113,15 +119,56 @@ export function fileLine(diff, where) {
   return to === null || to < from ? `${match[1]}:${from}` : `${match[1]}:${from}-${to}`;
 }
 
-/** The list as a person reads it. */
-export function render(items) {
+/** What follows the list when the answers go into a spec (a slug, or under `bouncer check`). */
+const INTO_SPEC = "Keep or change each one; the answers go into spec.md as Decided: lines.";
+/** What follows it on its own, with no spec yet. */
+export const ON_ITS_OWN = "Questions, not bugs: a pick you would change is work the agent is not done with.";
+
+/** The list as a person reads it; `closing` is the line after it. */
+export function render(items, closing = INTO_SPEC) {
   if (items.length === 0) return "Your ticket left nothing open that this change answers.";
   const head = `${items.length} thing${items.length === 1 ? "" : "s"} your ticket never said. Your agent picked for you:`;
   const lines = items.map((item, i) => {
     const said = item.ticket === "silent" ? "ticket: silent" : `ticket: "${item.ticket}"`;
     return [`${i + 1}. ${item.question}`, `   picked: ${item.chose}${item.where ? ` (${item.where})` : ""}`, `   ${said}`, ...(item.instead ? [`   instead: ${item.instead}`] : [])].join("\n");
   });
-  return [head, "", ...lines, "", "Keep or change each one; the answers go into spec.md as Decided: lines."].join("\n");
+  return [head, "", ...lines, "", closing].join("\n");
+}
+
+const git = (checkout, ...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+
+/** The default branch's ref: origin/HEAD, else main, else master; null when none exists. */
+function defaultBranch(checkout) {
+  const head = git(checkout, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD");
+  if (head.status === 0) return head.stdout.trim().replace(/^refs\/remotes\//, "");
+  for (const name of ["origin/main", "origin/master", "main", "master"]) if (git(checkout, "rev-parse", "--verify", "--quiet", name).status === 0) return name;
+  return null;
+}
+
+/** The base commit of the change: --base, else the merge-base with the default branch when HEAD is past it, else HEAD. */
+export function baseOf(checkout, given) {
+  if (given) {
+    const sha = git(checkout, "rev-parse", "--verify", `${given}^{commit}`);
+    if (sha.status !== 0) throw new Error(`--base ${given}: no such commit in ${checkout}.`);
+    return sha.stdout.trim();
+  }
+  const head = git(checkout, "rev-parse", "HEAD").stdout.trim();
+  const branch = defaultBranch(checkout);
+  const fork = branch === null ? "" : git(checkout, "merge-base", "HEAD", branch).stdout.trim();
+  return fork !== "" && fork !== head ? fork : head;
+}
+
+const listPath = (diffSha256) => join(RUNS, "_id", "lists", `${diffSha256.slice(0, 16)}.json`);
+
+/**
+ * The ticket and the list a slugless `bouncer id` read for the change whose
+ * diff hashes to `diffSha256`, or null: { at, ticket, ticketSha256, from,
+ * diffSha256, costUsd, items }. `bouncer check` goes on from it, so the
+ * person is not asked for the ticket twice nor shown a second, different list.
+ */
+export function savedList(diffSha256) {
+  const found = readJson(listPath(diffSha256), null);
+  return found !== null && found.diffSha256 === diffSha256 && Array.isArray(found.items) && typeof found.ticket === "string" ? found : null;
 }
 
 /** A new file larger than this is named in the diff, not quoted. */
@@ -135,11 +182,10 @@ export const DIFF_BYTES = 600 * 1024;
  * DIFF_BYTES. Returns { diff, left: what was named or cut, for the person }.
  */
 export function diffOf(checkout, base = "HEAD") {
-  const git = (...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  const tracked = git("diff", base, "--no-color", "--no-ext-diff");
+  const tracked = git(checkout, "diff", base, "--no-color", "--no-ext-diff");
   if (tracked.status !== 0) throw new Error(`${checkout}: git diff ${base} failed: ${(tracked.stderr ?? "").trim() || tracked.error?.message}`);
   const left = [];
-  const added = git("ls-files", "--others", "--exclude-standard")
+  const added = git(checkout, "ls-files", "--others", "--exclude-standard")
     .stdout.split("\n")
     .filter(Boolean)
     .map((path) => {
@@ -188,16 +234,43 @@ export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { options, rest } = args();
   const [slug] = rest;
-  const ticketFile = typeof options.ticket === "string" ? resolve(options.ticket) : slug ? join(specDir(slug), "ticket.md") : null;
-  if (ticketFile === null || !existsSync(ticketFile)) {
-    console.error("usage: bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]\nNo ticket: pass --ticket <file>, or a slug whose specs/<slug>/ticket.md exists.");
+  const usage = "usage: bouncer id [<slug>] [--ticket <file>|- | --from <issue>] [--diff <file> | --repo [<checkout>] [--base <ref>]] [--model <id>] [--json]";
+  let ticket;
+  let ticketFile = null;
+  try {
+    if (typeof options.from === "string") ticket = await (await import("./confirm.mjs")).ticketFrom(options.from, options);
+    else if (options.ticket === "-") ticket = readFileSync(0, "utf8");
+    else {
+      ticketFile = typeof options.ticket === "string" ? resolve(options.ticket) : slug ? join(specDir(slug), "ticket.md") : null;
+      if (ticketFile === null || !existsSync(ticketFile)) {
+        console.error(`${usage}\nNo ticket: pass --ticket <file>, --ticket - with the request on stdin, --from <issue>, or a slug whose specs/<slug>/ticket.md exists.`);
+        process.exit(1);
+      }
+      ticket = readFileSync(ticketFile, "utf8");
+    }
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+  if (ticket.trim() === "") {
+    console.error("The ticket is empty: pass the request in the person's words.");
     process.exit(1);
   }
   let diff;
+  let checkout = null;
+  let base = null;
   try {
     if (typeof options.diff === "string") diff = readFileSync(resolve(options.diff), "utf8");
     else {
-      const found = diffOf(resolve(typeof options.repo === "string" ? options.repo : "."), typeof options.base === "string" ? options.base : "HEAD");
+      const given = resolve(typeof options.repo === "string" ? options.repo : ".");
+      const top = git(given, "rev-parse", "--show-toplevel");
+      if (top.status !== 0) throw new Error(`${given} is not a git checkout. Run bouncer id inside the repository the agent changed, or pass --repo or --diff.`);
+      checkout = top.stdout.trim();
+      base = baseOf(checkout, typeof options.base === "string" ? options.base : undefined);
+      const behind = Number(git(checkout, "rev-list", "--count", `${base}..HEAD`).stdout.trim() || 0);
+      // Said, since on a shared branch those commits may not all be the agent's.
+      if (typeof options.base !== "string" && behind >= 1) console.error(`id: reading everything since ${base.slice(0, 12)} (${behind} commit${behind === 1 ? "" : "s"} and the working tree). --base <ref> reads less.`);
+      const found = diffOf(checkout, base);
       diff = found.diff;
       if (found.left.length > 0) console.error(`id: not read: ${found.left.join("; ")}.`);
     }
@@ -206,20 +279,26 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     process.exit(1);
   }
   if (diff.trim() === "") {
-    console.error("No change to check: the diff is empty.");
+    console.error(base === null ? "No change to check: the diff is empty." : `No change to check: nothing differs from ${base.slice(0, 12)}. Leave the agent's change in the working tree, or pass --base <the commit before it>.`);
     process.exit(1);
   }
   log("id: reading the ticket and the diff");
-  const result = await listOf({ ticket: readFileSync(ticketFile, "utf8"), diff, model: typeof options.model === "string" ? options.model : ID_MODEL, name: slug ?? "ticket", slug });
+  const result = await listOf({ ticket, diff, model: typeof options.model === "string" ? options.model : ID_MODEL, name: slug ?? "ticket", slug });
   const { items } = result;
   if (items === null) {
     console.error(`id: the session gave no list (${result.subtype ?? "no result"}${result.apiError ? `, ${result.apiError}` : ""}).`);
     process.exit(1);
   }
-  if (slug) writeJson(join(RUNS, slug, "id.json"), { at: new Date().toISOString(), ticket: ticketFile, diffSha256: sha256(diff), costUsd: result.costUsd, items });
+  const at = new Date().toISOString();
+  const from = typeof options.from === "string" ? options.from : undefined;
+  if (slug) writeJson(join(RUNS, slug, "id.json"), { at, ticket: ticketFile ?? from ?? "stdin", diffSha256: sha256(diff), costUsd: result.costUsd, items });
+  else writeJson(listPath(sha256(diff)), { at, ticket, ticketSha256: sha256(ticket), ...(from ? { from } : {}), diffSha256: sha256(diff), costUsd: result.costUsd, items });
   if (options.json !== undefined) console.log(JSON.stringify(items, null, 2));
   else {
     say("id", { options });
-    console.log(render(items));
+    // On its own there is no spec yet: say what the list is, and what a verdict would take.
+    const alone = !slug && !process.env.BOUNCER_UNDER_CHECK;
+    console.log(alone ? render(items, ON_ITS_OWN) : render(items));
+    if (alone && checkout !== null) console.log("For a verdict from tests it never saw: bouncer check. It keeps this ticket and list; about $1-7 of Opus and 10-25 minutes once you confirm.");
   }
 }
