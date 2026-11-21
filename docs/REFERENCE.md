@@ -1,7 +1,7 @@
 # Bouncer: the full reference
 
 The contract behind the [README](../README.md): what it covers, every
-measurement, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
+measurement, who he turns away, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
 the hidden suite is kept honest, scope and the file layout. Steps as the
 skill runs them: [skills/bouncer/SKILL.md](../skills/bouncer/SKILL.md).
 
@@ -34,16 +34,21 @@ guessed.
   blocks: on 127 real sessions that claimed done any rule fired on 8.7%,
   under the 10% its gate asked for, and a model-judged check upheld 1 of 50
   firings ([DOOR.md](https://github.com/lunox-work/bouncer-evidence/blob/main/DOOR.md)).
-- `bouncer id [<slug>] [--ticket <file>] [--diff <file> | --repo <dir> --base <ref>]`
-  (the ticket is `--ticket`, else `specs/<slug>/ticket.md`):
+- `bouncer id [<slug>] [--ticket <file>|- | --from <issue>] [--diff <file> | --repo <dir> [--base <ref>]]`:
   one Sonnet 5.5 session, a median $0.06 and 17 s. What the ticket never said and
   what the diff picked, each with the ticket sentence, where, and the usual
   alternative. Questions, never ranked: the person's keep or change becomes a
-  `Decided:` line.
+  `Decided:` line. The ticket is a file, stdin (`--ticket -`, the request in
+  the person's words), an issue (`--from`), else `specs/<slug>/ticket.md`.
+  With no `--base` it reads the change `check` would: the working tree
+  against HEAD, or everything since the fork from the default branch when
+  the work is committed, which it says. Run on its own it needs no spec and
+  no fit, and keeps the ticket and the list for a `check` of the same change.
 - `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>] [--seam <file>[,<file>]] [--slug <slug>] [--new] [--accept-open] [--card <file.svg>] [--no-door]`:
   the whole after-the-fact flow in one command. Door, base and package from
   the change, fit, the ID check, a drafted `spec.md` with each pick as a
-  `Decided:` item; exit 3 until the person confirms; run again to prepare
+  `Decided:` item. After `bouncer id` on the same change it needs no ticket
+  flag and keeps that list, so the person confirms the list they saw; exit 3 until the person confirms; run again to prepare
   and judge the working tree. A rerun resumes the newest check on that
   checkout and branch and says which; `--new` starts another, and a flag
   that differs from the resumed check is refused. Exit: the judge's code once
@@ -85,6 +90,16 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 | Agents inside a repository                    | Haiku passed 110 of 110 runs on 11 confirmed specs, and 109 of 110 on ufo and pathe; Codex CLI 25 of 25 on ufo and 17 of 17 on pathe; 0 broke an existing test, 0 changed code outside the allowed paths                                                                                     |
 | Did any agent tamper with tests or harness?   | 0 of 2,522 sandboxed Haiku runs, 0 of 50 Codex CLI runs, 0 of 40 Opus runs told to game; 0 of 262 in a repository (Haiku and Codex)                                                                                                                                                          |
 | Cost per spec                                 | $1–4 on Opus 5.5 (median $2) and 10–25 minutes, plus the person's confirmation (median minutes pending); an agent run is cents on Haiku 5.5                                                                                                                                                  |
+
+## Who's at the rope
+
+<p align="center">
+  <img src="../assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven failure classes with their measured counts, including the smooth one who got in 20 of 20 on two of four specs.">
+</p>
+
+None of them cheated: no agent touched a test in 2,522 sandboxed runs. Locking
+tests away stops reward hacking, not a wrong guess. Some nights the smooth one
+gets in ([when](RESULTS.md#red-team)).
 
 ## Real catches
 

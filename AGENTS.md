@@ -17,10 +17,12 @@ pytest repositories have little evidence (docs/REFERENCE.md "Scope").
 
 What to tell them, accurately:
 
-- Agent already says done: `bouncer door` (no model, reports only; its rules
-  were rarely right on real sessions) and `bouncer id`, one session of about
-  $0.06 listing what the ticket never said and what the agent picked. Their
-  keep or change per item confirms the spec.
+- Agent already says done: `bouncer id` first, one session of about $0.06
+  and 17 seconds listing what the ticket never said and what the agent
+  picked, as questions. It needs the ticket and the change, no spec and no
+  fit. `bouncer check` then goes on to a verdict from the same ticket and
+  list; their keep or change per item confirms the spec. `bouncer door` (no
+  model) reports only: its rules were rarely right on real sessions.
 - Suites cost about $1–4 and 10–25 minutes of Opus 5.5 per spec, up to $7 in a
   repository, on their `claude` CLI, Codex login or Anthropic API key, plus
   their time to confirm. They confirm first: replaying 11 real commits, suites
