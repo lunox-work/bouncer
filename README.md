@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. Your agent: the build is clean and my 21 tests pass. Bouncer: Not tonight, boundary-2. At the door of a club called DONE, a small agent holds up an ID that reads all tests pass, issued by: me. He fills the doorway, arms crossed.">
+  <img src="assets/hero.png" width="880" alt="105 agents said all tests pass. 75 weren't on the list. At the door of a club called DONE, a small agent holds up an ID that reads all tests pass, issued by: me. He fills the doorway, arms crossed, and says: Not tonight.">
 </p>
 
 <p align="center">
@@ -35,15 +35,15 @@ He works the door of a club called DONE. Your agent walks up with an ID that
 reads _all tests pass, issued by: me_. He has a list it never saw, and how
 sure it sounds is not on it.
 
-## Before / After
+## Who's at the rope
 
 <p align="center">
-  <img src="assets/before.png" width="880" alt="Your agent wrote 21 tests that agree with it. Bouncer brought 46 it never saw. Its own tests 21/21; tests it never saw 43/46, failing boundary-2.">
+  <img src="assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven in the queue, what each did, and what he says. I'm on the list, the homemade ID, I know the owner and the outfit change: Not tonight. The plus-twelve: Just you, not your twelve friends. Writing on his clipboard: You don't write on my clipboard. The smooth one, a strong model told to game him: You're in, on two of four specs.">
 </p>
 
-**Same code. 21 green tests. One guess.** The ticket never said what a $0
-bounty does, so the agent picked, then wrote 21 tests that agree. The
-author's tests test the author's guesses.
+**"I know the owner" is the common one.** The ticket never said what a $0
+bounty does, so the agent picked, then wrote 21 tests that agree with its
+pick. All 21 pass. The author's tests test the author's guesses.
 
 ## Install
 
@@ -70,17 +70,8 @@ He doesn't say hello. Next time your agent says it's done, ask it:
 
 Want a verdict? $1–4 and 10–25 minutes. Keep or change each pick. Your agent
 gets a public suite, he keeps a hidden one, and a run he turns away hears one
-word: the rule it missed.
-
-<p align="center">
-  <img src="assets/verdict.png" width="880" alt="Not tonight. One fix later, you're in. Real bouncer judge output on the bundled duration-parse example: overfit, public 22/22, hidden 38/39, failing scenario unhappy-1; fixed, then passed, 39/39.">
-</p>
-
-- **You're in.** It passes tests it never saw.
-- **Not tonight.** The public suite is green, his isn't.
-- **Not dressed for it.** It fails the public suite.
-- **You broke something on the way in.** A test that passed before fails now.
-- **You don't write on my clipboard.** It edited a test or the harness.
+word: the rule it missed. Fix it and he says _One fix. You're in._
+([every verdict](docs/REFERENCE.md#what-a-verdict-means))
 
 ## FAQ
 

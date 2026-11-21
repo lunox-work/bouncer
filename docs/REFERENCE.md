@@ -1,7 +1,7 @@
 # Bouncer: the full reference
 
 The contract behind the [README](../README.md): what it covers, every
-measurement, who he turns away, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
+measurement, one run under both suites, real catches, how it compares, the FAQ, the pipeline, install, the optional platform sign-in, CI, how
 the hidden suite is kept honest, scope and the file layout. Steps as the
 skill runs them: [skills/bouncer/SKILL.md](../skills/bouncer/SKILL.md).
 
@@ -68,7 +68,7 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 [RESULTS.md](RESULTS.md).
 
 <p align="center">
-  <img src="../assets/runs.png" width="880" alt="One square per run, 7 specs by 15 runs. Agent alone: 75 of 105 wrong. With a public suite: 24 of 105. After one retry told only the failing scenario: 9 of 105.">
+  <img src="../assets/runs.png" width="880" alt="105 runs said all tests pass. The red ones weren't on the list. One square per run: agent alone 75, with a public suite 24, after one retry told only the rule it missed 9.">
 </p>
 
 | question                                      | measured                                                                                                                                                                                                                                                                                     |
@@ -95,15 +95,16 @@ adversary in "Red team". Every table, with Fisher's exact p-values, is in
 | Did any agent tamper with tests or harness?   | 0 of 2,522 sandboxed Haiku runs, 0 of 50 Codex CLI runs, 0 of 40 Opus runs told to game; 0 of 262 in a repository (Haiku and Codex)                                                                                                                                                          |
 | Cost per spec                                 | $1–4 on Opus 5.5 (median $2) and 10–25 minutes, plus the person's confirmation (median minutes pending); an agent run is cents on Haiku 5.5                                                                                                                                                  |
 
-## Who's at the rope
+## One run, both suites
 
 <p align="center">
-  <img src="../assets/queue.png" width="880" alt="Everyone in the queue has a story. He has the list. Seven failure classes with their measured counts, including the smooth one who got in 20 of 20 on two of four specs.">
+  <img src="../assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. Its own tests 21/21, with the agent's line: the build is clean and my 21 tests pass. Tests it never saw 43/46, with his: Not tonight, boundary-2. The ticket never said what a $0 bounty does; the agent picked, then wrote tests that agree with its pick.">
 </p>
 
-None of them cheated: no agent touched a test in 2,522 sandboxed runs. Locking
-tests away stops reward hacking, not a wrong guess. Some nights the smooth one
-gets in ([when](RESULTS.md#red-team)).
+escrow-split, run 1: the same code under its own 21 tests and under the
+hidden suite. Who else is in the queue is in the [README](../README.md#whos-at-the-rope);
+none of them cheated (no agent touched a test in 2,522 sandboxed runs), and
+some nights the smooth one gets in ([when](RESULTS.md#red-team)).
 
 ## Real catches
 
@@ -367,6 +368,10 @@ The blind Haiku run on this example passed 22 of 22 public and 39 of 39 hidden
 tests for $0.014.
 
 ## What a verdict means
+
+<p align="center">
+  <img src="../assets/verdict.png" width="880" alt="Not tonight. One fix later, you're in. Real bouncer judge output on the bundled duration-parse example: overfit, public 22/22, hidden 38/39, failing scenario unhappy-1; told that one word the agent fixes the rule, then passed, 39/39.">
+</p>
 
 - **`passed`**: the public and hidden suites both pass: tests the agent never
   saw agree with the confirmed spec. Not proof the spec is met: a second

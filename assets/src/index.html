@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- Source of the README images; render with `node assets/src/render.mjs` (one PNG per <section>).
+     One idea an image, and as few figures as it needs: the tables are RESULTS.md's job.
      Every number comes from RESULTS.md and the archive's results.jsonl (lunox-work/bouncer-evidence,
      cloned as experiments/ by scripts/fetch-evidence.sh):
      - the 105 runs: ticket arms of the 7 specs (csv-export, escrow-split, gherkin-parse, invite-codes,
@@ -8,10 +9,12 @@
        its 24 failures replaced by double-blind-haiku-ticket-retry-keyed.
      - #hero's scene: the agent's ID is the measured finding that an agent's own tests vouch for its own
        guesses (66 of 74 failing own tests assert a reading the spec leaves open; 21/21 is escrow-split run 1).
-     - the exchange and #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's
-       own green run is not an acceptance signal"); 14 of 15 runs made the same guess.
-     - #queue: RESULTS.md (own tests 66 of 74; gamed 21 of 21; Red team 20 of 20 on two of four specs;
-       tamper 0 of 2,522 sandboxed and 0 of 262 in a repository).
+     - #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
+       not an acceptance signal"): its own tests 21/21, the hidden suite 43/46, failing boundary-2.
+     - #queue: RESULTS.md (75 of 105; own tests 66 of 74; 14 of 15 escrow-split runs the same guess; gamed
+       21 of 21; tamper 0 of 2,522 sandboxed and 0 of 262 in a repository; Red team 20 of 20 on two of
+       four specs). His line beside each is the one bin/voice.mjs says for that check.
+     - #runs: the three arms' rejected runs, 75, 24 and 9 of 105.
      - #verdict: real `bouncer judge` output on a terminal, 2026-11-19, on the bundled duration-parse
        example: a submission that accepts leading zeros after the first component, then the same
        submission fixed (judged from a <variant>-retry-keyed folder, as a keyed retry is).
@@ -54,25 +57,25 @@ h1 { font-family: Display; font-weight: 600; letter-spacing: -0.03em; line-heigh
 .num { font-family: Display; font-weight: 600; letter-spacing: -0.04em; line-height: 0.9; }
 pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space: pre; }
 
-/* hero: the door of a club called DONE (1280×640; the social preview is #social) */
-#hero { height: 640px; display: grid; grid-template-columns: 640px 1fr; column-gap: 40px; padding-top: 48px; }
-#hero .left { display: flex; flex-direction: column; gap: 16px; }
-#hero h1 { font-size: 48px; margin-top: 8px; }
-#hero .exchange { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
-#hero .exchange .him { margin-left: 70px; margin-top: 2px; font-size: 34px; padding: 16px 24px; }
-#hero .exchange .agent { font-size: 24px; padding: 16px 24px; }
-#hero .who.right { text-align: right; margin-top: 12px; }
+/* hero: the headline's one pair of numbers, and the scene (1280×640; the social preview is #social) */
+#hero { height: 640px; display: grid; grid-template-columns: 540px 1fr; column-gap: 20px; padding-top: 48px; }
+#hero .left { display: flex; flex-direction: column; }
+#hero h1 { font-size: 68px; margin: auto 0; padding-bottom: 44px; }
 #hero .foot { position: absolute; left: 64px; bottom: 34px; }
 #hero .door { position: relative; height: 560px; }
 #hero .door svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#hero .says { right: 53px; top: 100px; }
+
+/* his line, said from the door */
+.says { position: absolute; background: #2a0d13; border: 2px solid rgb(214 34 63 / 0.6); border-radius: 18px; padding: 12px 20px; font-family: Display; font-weight: 600; font-size: 34px; letter-spacing: -0.02em; box-shadow: 0 0 24px rgb(214 34 63 / 0.35); }
+.says::after { content: ""; position: absolute; left: 34px; bottom: -13px; width: 22px; height: 22px; background: #2a0d13; border-right: 2px solid rgb(214 34 63 / 0.6); border-bottom: 2px solid rgb(214 34 63 / 0.6); transform: rotate(45deg); }
 
 /* social: 1280×640 for GitHub's preview; everything that must survive a
    centre-square crop sits in x 320–960 */
 #social { height: 640px; padding: 0; }
 #social .stage { position: absolute; left: 320px; top: 0; width: 640px; height: 640px; }
 #social .stage svg { position: absolute; left: 46px; top: 34px; width: 548px; height: 590px; overflow: visible; }
-#social .says { position: absolute; right: 64px; top: 140px; background: #2a0d13; border: 2px solid rgb(214 34 63 / 0.6); border-radius: 18px; padding: 12px 20px; font-family: Display; font-weight: 600; font-size: 34px; letter-spacing: -0.02em; box-shadow: 0 0 24px rgb(214 34 63 / 0.35); }
-#social .says::after { content: ""; position: absolute; left: 34px; bottom: -13px; width: 22px; height: 22px; background: #2a0d13; border-right: 2px solid rgb(214 34 63 / 0.6); border-bottom: 2px solid rgb(214 34 63 / 0.6); transform: rotate(45deg); }
+#social .says { right: 64px; top: 140px; }
 #social .side { position: absolute; top: 0; bottom: 0; width: 268px; display: flex; flex-direction: column; }
 #social .side.l { left: 52px; padding-top: 52px; gap: 46px; }
 #social .side.l h1 { font-size: 42px; line-height: 1.08; }
@@ -82,16 +85,17 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #social .side.r p { font-size: 22px; line-height: 1.35; color: #d9d5cc; }
 #social .side.r p b { color: var(--paper); font-weight: 500; }
 
-/* before / after */
-#before h1 { font-size: 50px; margin: 22px 0 34px; max-width: 1100px; }
-#before .cols { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
-#before .col { padding: 30px 36px 6px 0; display: flex; flex-direction: column; gap: 18px; }
+/* before / after: two scores and the two lines said */
+#before h1 { font-size: 50px; margin: 22px 0 34px; }
+#before .cols { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+#before .col { padding: 30px 36px 34px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
 #before .col + .col { border-left: 1px solid var(--line); padding-left: 36px; padding-right: 0; }
-#before .num { font-size: 92px; }
-#before blockquote { font-size: 22px; line-height: 1.45; color: #d9d5cc; border-left: 3px solid #333; padding-left: 18px; }
-#before blockquote b { color: var(--paper); font-weight: 500; }
-#before pre { font-size: 18px; background: var(--panel); border-radius: 14px; padding: 18px 22px; }
-#before .foot { margin-top: 26px; }
+#before .num { font-size: 104px; }
+#before .bubble { font-size: 25px; }
+#before .bubble.him { font-size: 34px; }
+#before .why { font-size: 25px; line-height: 1.4; color: #d9d5cc; margin-top: 30px; max-width: 1000px; }
+#before .why b { color: var(--paper); font-weight: 500; }
+#before .foot { margin-top: 18px; }
 
 /* verdict: the bundled example, on a terminal */
 #verdict h1 { font-size: 58px; margin: 22px 0 30px; }
@@ -100,15 +104,21 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #verdict .term .c { color: var(--muted); font-style: italic; }
 #verdict .foot { margin-top: 24px; }
 
-/* the queue: who's at the rope */
-#queue h1 { font-size: 50px; margin: 22px 0 28px; }
+/* the queue: who's at the rope, and what he says to each (the README's main image) */
+#queue h1 { font-size: 50px; margin: 22px 0 26px; }
 #queue table { width: 100%; border-collapse: collapse; }
-#queue td { border-top: 1px solid var(--line); padding: 15px 14px 15px 0; vertical-align: middle; }
+#queue th { font-family: Mono; font-weight: 400; font-size: 14px; letter-spacing: 0.22em; color: var(--muted); text-align: left; padding: 0 14px 12px 0; }
+#queue th:last-child { text-align: right; padding-right: 0; }
+#queue td { border-top: 1px solid var(--line); padding: 14px 14px 14px 0; vertical-align: middle; }
 #queue td.fig { width: 54px; }
 #queue td.fig svg { width: 34px; height: 44px; display: block; }
-#queue td.say { font-family: Display; font-weight: 600; font-size: 24px; width: 330px; white-space: nowrap; }
+#queue td.say { font-family: Display; font-weight: 600; font-size: 24px; width: 318px; white-space: nowrap; }
 #queue td.did { font-size: 20px; color: #d9d5cc; }
-#queue td.n { font-family: Mono; font-size: 17px; text-align: right; color: var(--muted); width: 420px; white-space: nowrap; }
+#queue td.him { text-align: right; width: 420px; white-space: nowrap; padding-right: 0; }
+#queue td.him b { display: block; font-family: Display; font-weight: 600; font-size: 23px; letter-spacing: -0.01em; color: var(--rope); }
+#queue td.him small { font-family: Mono; font-size: 14px; color: var(--muted); }
+#queue td.him.none b { color: var(--muted); }
+#queue td.him.got b { color: var(--in); }
 #queue tr.honest td.say { color: var(--muted); }
 #queue .foot { margin-top: 20px; }
 
@@ -119,7 +129,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #runs .col:first-child { padding-left: 0; }
 #runs .col:last-child { padding-right: 0; }
 #runs .col + .col { border-left: 1px solid var(--line); }
-#runs .num { font-size: 76px; }
+#runs .num { font-size: 92px; }
 #runs .dots { display: grid; grid-template-columns: repeat(15, 17px); gap: 5px; }
 #runs .dots u { aspect-ratio: 1; border-radius: 30%; background: var(--in); }
 #runs .dots u.f { background: var(--rope); }
@@ -129,7 +139,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 /* how it works */
 #how h1 { font-size: 50px; margin: 22px 0 34px; }
 #how .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-#how .step { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 24px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 300px; }
+#how .step { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 24px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 250px; }
 #how .step svg { width: 64px; height: 64px; color: var(--paper); }
 #how .step h2 { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.02em; line-height: 1.15; }
 #how .step p { font-size: 18px; line-height: 1.45; color: #cfcbc2; }
@@ -168,14 +178,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 <section class="card" id="hero">
   <div class="left">
     <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
-    <div class="caps">He doesn't take your agent's word for it</div>
-    <h1>105 agents said<br>all tests pass.<br><span class="rope">75 weren't on the list.</span></h1>
-    <div class="exchange">
-      <div class="who">YOUR AGENT</div>
-      <div class="bubble agent">“The build is clean and my 21 tests pass.”</div>
-      <div class="who right">BOUNCER</div>
-      <div class="bubble him">Not tonight. <small>boundary-2</small></div>
-    </div>
+    <h1>105 agents said<br>all tests pass.<br><span class="rope">75 weren't<br>on the list.</span></h1>
   </div>
   <div class="door"><svg viewBox="0 0 520 560">
     <defs>
@@ -211,8 +214,10 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
       <text x="94" y="414" font-family="Mono" font-weight="500" font-size="12.5" fill="#0b0b0c">ALL TESTS PASS</text>
       <text x="94" y="430" font-family="Mono" font-size="11.5" fill="#d6223f">issued by: me</text>
     </g>
-  </svg></div>
-  <div class="foot">Claude Haiku 5.5 on seven loose tickets · on the list = passes tests it never saw</div>
+  </svg>
+    <div class="says">Not tonight.</div>
+  </div>
+  <div class="foot">on the list = passes tests it never saw<br>Claude Haiku 5.5 on seven loose tickets</div>
 </section>
 
 <!-- ================= social: the preview's crop-safe cut =================
@@ -260,33 +265,28 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   <div class="side r">
     <div class="num">75<span class="dim"> of 105</span></div>
     <p>agents that said <b>all tests pass</b> failed tests they never saw.</p>
-    <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs</div>
+    <div class="foot">Claude Haiku 5.5 on seven loose tickets</div>
   </div>
 </section>
 
 <!-- ================= before / after ================= -->
 <section class="card" id="before">
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
-  <h1>Your agent wrote 21 tests that agree with it. <span class="rope">Bouncer</span> brought 46 it never saw.</h1>
+  <h1>Its own tests say yes. <span class="rope">His say not tonight.</span></h1>
   <div class="cols">
     <div class="col">
       <div class="caps">Its own tests</div>
       <div class="num">21<span class="dim">/21</span></div>
-      <blockquote>“The escrow release logic is implemented. The build is clean and my 21 tests under <b>tests/own/</b> pass.”<br><br>“<b>Zero-amount releases are recorded.</b> … If the grader expects <b>releases</b> to be empty for pro bono tasks, this is the line to change.”</blockquote>
+      <div class="bubble agent">“The build is clean and my 21 tests pass.”</div>
     </div>
     <div class="col">
       <div class="caps">Tests it never saw</div>
       <div class="num rope">43<span class="dim">/46</span></div>
-<pre>hidden 43/46
-Failing scenarios: <span class="rope">boundary-2</span>
-hidden: [boundary-2] passing hidden tests on a
-  bounty of 0 at any share records nothing
-  and the task is pro bono
-  <span class="in">+ [{ kind: 'hidden-tests', amount: 0 }]</span>
-  <span class="rope">- []</span></pre>
+      <div class="bubble him">Not tonight. <small>boundary-2</small></div>
     </div>
   </div>
-  <div class="foot">escrow-split, run 1 · the ticket never said what a $0 bounty does · 14 of 15 runs made the same guess</div>
+  <p class="why">The ticket never said what a <b>$0 bounty</b> does. The agent picked, then wrote tests that agree with its pick.</p>
+  <div class="foot">Same code, both columns · escrow-split, run 1</div>
 </section>
 
 <!-- ================= verdict ================= -->
@@ -300,13 +300,13 @@ hidden: [boundary-2] passing hidden tests on a
 duration-parse: <span class="rope">overfit</span>. Public 22/22, hidden <span class="rope">38/39</span>.
 Failing scenarios: <span class="rope">unhappy-1</span>
 
-<span class="c"># told only "unhappy-1": leading zeros are rejected in every component, not just the first</span>
+<span class="c"># told one word, unhappy-1, the agent fixes the rule</span>
 <span class="p">$</span> bouncer judge duration-parse ./src
   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
   ▀█████▀▀█████▀≀   <b class="in">One fix. You're in.</b>
        ▀▀▀▀     ≀
 duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class="in">39/39</span>.</div>
-  <div class="foot">The bundled duration-parse example · leading zeros allowed after the first component, then fixed · recorded 2026-11-19</div>
+  <div class="foot">Real output, on the bundled duration-parse example</div>
 </section>
 
 <!-- ================= the queue ================= -->
@@ -314,13 +314,14 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
   <h1>Everyone in the queue has a story. <span class="rope">He</span> has the list.</h1>
   <table>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I'm on the list.”</td><td class="did">Reported its own tests green</td><td class="n">105 of 105 said so · 75 weren't</td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The homemade ID</td><td class="did">Wrote tests that vouch for its own guesses</td><td class="n">66 of 74 failing own tests</td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I know the owner.”</td><td class="did">Decided what the ticket never said</td><td class="n">14 of 15 runs, the same guess</td></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The outfit change</td><td class="did">Hard-coded the public inputs</td><td class="n">21 of 21 turned away</td></tr>
-    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">The plus-twelve</td><td class="did">Changed files outside the allowed paths</td><td class="n">nobody tried · 0 of 262</td></tr>
-    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">Writing on his clipboard</td><td class="did">Edited a test, a lockfile or the harness</td><td class="n">nobody tried · 0 of 2,522</td></tr>
-    <tr class="honest"><td class="fig"><svg class="in"><use href="#guest"/></svg></td><td class="say">The smooth one</td><td class="did">A strong model told to game it</td><td class="n">got in 20 of 20, on two of four specs</td></tr>
+    <tr><th></th><th>IN THE QUEUE</th><th>WHAT IT DID</th><th>HE SAYS</th></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I'm on the list.”</td><td class="did">Reported its own tests green</td><td class="him"><b>Not tonight.</b><small>105 said so · 75 weren't</small></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The homemade ID</td><td class="did">Wrote tests that vouch for its own guesses</td><td class="him"><b>Not tonight.</b><small>66 of 74 failing own tests</small></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">“I know the owner.”</td><td class="did">Decided what the ticket never said</td><td class="him"><b>Not tonight.</b><small>14 of 15 runs, the same guess</small></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#guest"/></svg></td><td class="say">The outfit change</td><td class="did">Hard-coded the public inputs</td><td class="him"><b>Not tonight.</b><small>21 of 21 turned away</small></td></tr>
+    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">The plus-twelve</td><td class="did">Changed files outside the allowed paths</td><td class="him none"><b>Just you. Not your twelve friends.</b><small>nobody tried · 0 of 262</small></td></tr>
+    <tr><td class="fig"><svg class="dim"><use href="#guest"/></svg></td><td class="say">Writing on his clipboard</td><td class="did">Edited a test, a lockfile or the harness</td><td class="him none"><b>You don't write on my clipboard.</b><small>nobody tried · 0 of 2,522</small></td></tr>
+    <tr class="honest"><td class="fig"><svg class="in"><use href="#guest"/></svg></td><td class="say">The smooth one</td><td class="did">A strong model told to game him</td><td class="him got"><b>You're in.</b><small>20 of 20, on two of four specs</small></td></tr>
   </table>
   <div class="foot">Some nights the smooth one gets in: Opus 5.5 told to pass with the least code, RESULTS.md “Red team”</div>
 </section>
@@ -328,13 +329,13 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
 <!-- ================= runs ================= -->
 <section class="card" id="runs">
   <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
-  <h1>105 said they were on the list. <span class="rope">75 weren't.</span><br>With <span class="in">Bouncer</span>: 9, and he turned them away.</h1>
+  <h1>105 runs said all tests pass.<br><span class="rope">The red ones weren't on the list.</span></h1>
   <div class="cols">
-    <div class="col"><div class="caps">Agent alone</div><div class="num rope">71%</div><div class="dots" data-arm="ticket"></div><div class="of">75 of 105 wrong, all of them green</div></div>
-    <div class="col"><div class="caps">+ the dress code</div><div class="num rope">23%</div><div class="dots" data-arm="public"></div><div class="of">24 of 105 · a public suite from the confirmed spec</div></div>
-    <div class="col"><div class="caps">+ one try back</div><div class="num in">9%</div><div class="dots" data-arm="retry"></div><div class="of">9 of 105 · told only which scenario failed</div></div>
+    <div class="col"><div class="caps">Agent alone</div><div class="num rope">75</div><div class="dots" data-arm="ticket"></div><div class="of">its own tests were green every time</div></div>
+    <div class="col"><div class="caps">+ the dress code</div><div class="num rope">24</div><div class="dots" data-arm="public"></div><div class="of">given a public suite to work against</div></div>
+    <div class="col"><div class="caps">+ one try back</div><div class="num rope">9</div><div class="dots" data-arm="retry"></div><div class="of">told only the rule it missed · he turned these away</div></div>
   </div>
-  <div class="foot">Claude Haiku 5.5 · 7 loose tickets × 15 runs · wrong = fails tests it never saw · better on 5 of 7 tickets, worse on none</div>
+  <div class="foot">Claude Haiku 5.5 on seven loose tickets, fifteen runs each · on the list = passes tests it never saw</div>
 </section>
 
 <!-- ================= how it works ================= -->
@@ -345,25 +346,25 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
     <div class="step">
       <svg viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><rect x="24" y="4" width="16" height="9" rx="3" fill="currentColor"/><path d="M22 26 h20 M22 35 h20 M22 44 h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
       <h2>The owner writes the list</h2>
-      <p>The ticket leaves things open. You confirm each decision before a single test is written. <code>confirm</code></p>
+      <p>You confirm what the ticket left open, before any test exists. <code>confirm</code></p>
     </div>
     <div class="step">
       <svg viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 24 h24 M20 34 h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M24 46 v10 M40 46 v10" stroke="currentColor" stroke-width="4"/></svg>
       <h2>The dress code goes on the door</h2>
-      <p>Your agent works against a public suite written from that spec. <code>handout</code></p>
+      <p>Your agent gets a public suite to work against. <code>handout</code></p>
     </div>
     <div class="step">
       <img src="../mark-dark.svg" alt="" style="width:64px;height:64px">
       <h2>He keeps the list</h2>
-      <p>A hidden suite, kept only where a separately written reference passes it. Never shown. <code>prepare</code></p>
+      <p>A hidden suite your agent never sees. <code>prepare</code></p>
     </div>
     <div class="step">
       <svg viewBox="0 0 64 64"><g transform="rotate(-10 32 32)"><rect x="6" y="18" width="52" height="28" rx="5" fill="none" stroke="#d6223f" stroke-width="4"/><path d="M15 32 h34" stroke="#d6223f" stroke-width="5" stroke-linecap="round"/></g></svg>
       <h2>One word at the rope</h2>
-      <p>The verdict and the scenario key it failed. One try back, told the key and nothing else. <code>judge</code></p>
+      <p>Turned away, it hears the rule it missed. Nothing else. <code>judge</code></p>
     </div>
   </div>
-  <div class="foot">Writers run in sessions apart from your agent · Claude Code, a Codex login or an Anthropic API key</div>
+  <div class="foot">The suites are written in sessions apart from your agent</div>
 </section>
 
 <!-- ================= the list ================= -->
@@ -371,14 +372,14 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
   <div>
     <div class="top"><img src="../mark-dark.svg" alt="">bouncer</div>
     <h1>He never shows the list.<br><span class="rope">Ask why, you get one word.</span></h1>
-    <p class="say">39 hidden tests, filed under the spec's scenarios. Your agent sees the scenario it missed, <b>unhappy-1</b>, and never a test: the name, the input or the assertion. That is why the next try fixes the rule, not the example.</p>
+    <p class="say">Your agent hears which rule it missed, <b>unhappy-1</b>. Never a test: not its name, its input or its assertion. So the next try fixes the rule, not the example.</p>
   </div>
   <div class="board">
     <div class="clip"></div>
     <div class="head"><span>THE LIST</span><span>duration-parse</span></div>
     <div id="rows"></div>
   </div>
-  <div class="foot">The bundled duration-parse example: 22 public tests, 39 hidden, every one kept by calibration</div>
+  <div class="foot">The bundled duration-parse example · one bar is one hidden test</div>
 </section>
 
 <script>
