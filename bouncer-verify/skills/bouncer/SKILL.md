@@ -14,7 +14,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.3 CLI from npm, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.4 CLI from npm, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -25,9 +25,9 @@ Bouncer holds the list and never shows it: from a spec the person confirms, he
 writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
-`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.3`. If `bouncer
+`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.4`. If `bouncer
 --version` prints another version or nothing, ask before installing it (`npm i
--g @lunox-work/bouncer@0.8.3`), or use `npx @lunox-work/bouncer@0.8.3` (in a
+-g @lunox-work/bouncer@0.8.4`), or use `npx @lunox-work/bouncer@0.8.4` (in a
 clone, `node bin/cli.mjs`). `specs/` and `runs/` are in `~/.bouncer/`.
 
 **A new module** is built on its own: TypeScript by default; Python, Go, Rust,
@@ -36,11 +36,15 @@ or a command or HTTP service checked at its boundary by
 repository** is built in the person's checkout of one package and keeps its
 existing suite green: start at step 0 of
 [references/repository.md](references/repository.md), which adds to each step.
-**The agent already says it's done** ("check my agent's work", "is this
-really done"): `bouncer check [--from <issue>]` runs the door, `bouncer id`
-(what the ticket never said and what the agent picked) as the confirmation,
-then steps 3 and 5 on the working tree ([references/check.md](references/check.md)). This skill is
-local and needs no sign-in.
+**The agent already says it's done** ("is this really done", "check my
+agent's work"): the list first, which takes seconds. `bouncer id --from
+<issue>`, or `bouncer id --ticket -` with the request on stdin in the
+person's words: what they asked the agent for, as they wrote it, never your
+summary of what was built. It prints what the ticket never said and what the
+agent picked, in about 17 seconds for $0.06. Give the person the whole list
+and stop. Only when they want a verdict: `bouncer check`, which keeps that
+ticket and list ([references/check.md](references/check.md); say its cost
+first). This skill is local and needs no sign-in.
 
 ## Before you start
 
