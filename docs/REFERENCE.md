@@ -558,7 +558,7 @@ bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place
 bin/check.mjs       after the fact as one command: door, fit, the ID check, a drafted spec, then prepare and judge
 bin/voice.mjs       his line: above a verdict on a terminal, leading a CI check's title, heading the ID comment; never in --json, a pipe or a check's body
 bin/card.mjs        the verdict as an SVG to post (judge --card)
-bin/mark.mjs        the mark as SVG shapes: the README's files, the icon and the card draw from it
+bin/mark.mjs        the mark as an <image> for the card; the picture is bin/mark-art.mjs, written by assets/src/marks.py
 bin/lines.mjs       a file's lines without holding it whole (long transcripts)
 bin/platform-client.mjs  the hosted platform: its URL, ~/.lunox/credentials, one fetch-based request with the CLI version
 bin/account.mjs     login (device flow), whoami, logout; bin/login.mjs, whoami.mjs and logout.mjs run them
@@ -601,7 +601,7 @@ template-go/, template-rust/  the Go and Rust toolchains: standard library only
 test/               no-model tests, run by npm test: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
 evidence/           not in this repository: `sh scripts/fetch-evidence.sh` clones lunox-work/bouncer-evidence here,
                     the scripts, runs and data behind docs/RESULTS.md; experiments links to its archive/
-assets/src/         the README images: index.html, mark.mjs, render.mjs; docs/REFERENCE.md, this file
+assets/src/         the README images and the social preview: index.html, render.mjs; marks.py (the marks, plugin icon), scene.py (the door)
 
 ~/.bouncer/   BOUNCER_HOME (BOUNCER_SPECS, _RESULTS move those)
   specs/<slug>/     spec.md, ticket.md, confirming.json, confirmed.json, skeleton/, tests/, reference/;
