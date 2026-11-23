@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <strong>105 runs said "all tests pass". 75 failed tests they never saw.</strong> Opus 5.5: 20 of 35.<br>
+  <strong>105 runs said "all tests pass". 75 failed tests they never saw.</strong> Fable 5.2: 15 of 35.<br>
   Nobody cheated. 71 of the 75 guessed where the ticket was silent.<br>
   <strong>With him on the door: 9 of 105, and he turned those away.</strong><br>
   <sub>Seven tickets we wrote · <a href="docs/RESULTS.md#the-agents-own-green-run-is-not-an-acceptance-signal">method and every table</a> · <a href="docs/RESULTS.md#judged-by-the-maintainers-own-tests">maintainers' own tests</a> · <a href="docs/REFERENCE.md#outside-evidence">outside studies</a></sub>

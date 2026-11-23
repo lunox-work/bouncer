@@ -68,8 +68,8 @@ all 21 passed, and the hidden suite passed 43 of 46, failing scenario
 ## Stronger implementers
 
 The same 7 loose tickets, imported unchanged into
-[evidence/stronger/](https://github.com/lunox-work/bouncer-evidence/tree/main/stronger) and run 2026-11-20 on one harness,
-5 runs per ticket and model: from the ticket alone with the agent's own tests
+[evidence/stronger/](https://github.com/lunox-work/bouncer-evidence/tree/main/stronger) and run 2026-11-20 on one harness
+(Fable 5.2 added 2026-11-23, same harness), 5 runs per ticket and model: from the ticket alone with the agent's own tests
 (`bin/run.mjs --brief ticket`), and from the ticket plus the public suite
 written from the confirmed spec (`--brief ticket-public`). Graded by the
 archive's hidden suites; own tests rerun on each submission with no model
@@ -80,26 +80,32 @@ archive's hidden suites; own tests rerun on each submission with no model
 | Haiku 5.5   |      9 of 35 |                  26 of 35 |          **26 of 35** |
 | Sonnet 5.5  |     16 of 35 |                  19 of 35 |          **25 of 35** |
 | Opus 5.5    |     15 of 35 |                  20 of 35 |          **26 of 35** |
+| Fable 5.2   |     20 of 35 |                  15 of 35 |          **35 of 35** |
 
-| ticket           | Haiku | + suite | Sonnet | + suite | Opus | + suite |
-| ---------------- | ----: | ------: | -----: | ------: | ---: | ------: |
-| csv-export       |   0/5 |     0/5 |    0/5 |     0/5 |  0/5 |     1/5 |
-| escrow-split     |   0/5 |     2/5 |    4/5 |     1/5 |  0/5 |     0/5 |
-| gherkin-parse    |   2/5 |     4/5 |    3/5 |     5/5 |  5/5 |     5/5 |
-| invite-codes     |   0/5 |     5/5 |    0/5 |     5/5 |  0/5 |     5/5 |
-| status-normalize |   0/5 |     5/5 |    0/5 |     5/5 |  0/5 |     5/5 |
-| usage-counter    |   5/5 |     5/5 |    4/5 |     4/5 |  5/5 |     5/5 |
-| weekly-digest    |   2/5 |     5/5 |    5/5 |     5/5 |  5/5 |     5/5 |
+| ticket           | Haiku | + suite | Sonnet | + suite | Opus | + suite | Fable | + suite |
+| ---------------- | ----: | ------: | -----: | ------: | ---: | ------: | ----: | ------: |
+| csv-export       |   0/5 |     0/5 |    0/5 |     0/5 |  0/5 |     1/5 |   0/5 |     5/5 |
+| escrow-split     |   0/5 |     2/5 |    4/5 |     1/5 |  0/5 |     0/5 |   5/5 |     5/5 |
+| gherkin-parse    |   2/5 |     4/5 |    3/5 |     5/5 |  5/5 |     5/5 |   5/5 |     5/5 |
+| invite-codes     |   0/5 |     5/5 |    0/5 |     5/5 |  0/5 |     5/5 |   0/5 |     5/5 |
+| status-normalize |   0/5 |     5/5 |    0/5 |     5/5 |  0/5 |     5/5 |   0/5 |     5/5 |
+| usage-counter    |   5/5 |     5/5 |    4/5 |     4/5 |  5/5 |     5/5 |   5/5 |     5/5 |
+| weekly-digest    |   2/5 |     5/5 |    5/5 |     5/5 |  5/5 |     5/5 |   5/5 |     5/5 |
 
-- **A stronger model does not read a ticket's silence better.** Opus passes
-  15 of 35 from the ticket against Haiku's 9 (p = 0.21), no more than
-  Sonnet's 16, and every Opus run ended with its own tests green. Three
-  tickets fail every run of every model: what they leave out (CSV
-  conventions, which old spellings map where, codes issued at once over a
-  slow store) is the owner's to decide.
+- **A stronger model reads the ticket's other gaps, not the owner's
+  decisions.** Opus passes 15 of 35 from the ticket against Haiku's 9
+  (p = 0.21), no more than Sonnet's 16. Fable 5.2 passes 20 (against Haiku
+  p = 0.015, against Opus p = 0.34): every run of the four tickets it passes
+  at all, escrow-split included, where Opus and Haiku passed none. Every
+  run of every model ended with its own tests green, and 15 of Fable's 35
+  were still rejected. Three tickets fail every run of all four
+  models: what they leave out (CSV conventions, which old spellings map
+  where, codes issued at once over a slow store) is the owner's to decide.
 - **The confirmed decisions carry over to every model.** With the public
-  suite: Haiku p = 0.0001, Opus p = 0.015, Sonnet p = 0.05 over runs; by
-  ticket, Opus is better on 3 and worse on none, Sonnet better on 3 and worse
+  suite: Haiku p = 0.0001, Opus p = 0.015, Sonnet p = 0.05, Fable
+  p < 0.0001 over runs; by ticket, Fable and Opus are each better on 3 and
+  worse on none (Fable passes all 35, the only model to pass csv-export
+  every run), Sonnet better on 3 and worse
   on 1 (escrow-split: alone, Sonnet guessed the $0 rule in 4 of 5 runs; with the
   public suite, which tests $0 at the default share, 4 of 5 passed every
   public test and fail one hidden test of $0 at another share, `overfit`,
@@ -107,7 +113,10 @@ archive's hidden suites; own tests rerun on each submission with no model
   repeats the archive's 30
   and 81 of 105.
 - No run tried to read a hidden path, edited a test or the harness, or timed
-  out. Agent cost: Haiku $0.79, Sonnet $5.78, Opus $22.71 for 70 runs each.
+  out. Agent cost: Haiku $0.79, Sonnet $5.78, Opus $22.71, Fable $66.78 for
+  70 runs each. Fable 5.2 here is the implementer; the blind referee
+  elsewhere in this page is Fable 5.1, a separate session that never sees
+  these runs.
 
 ## The ID check, after the fact
 
