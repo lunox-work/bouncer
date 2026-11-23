@@ -39,22 +39,24 @@ sure it sounds is not on it.
 npx skills add lunox-work/bouncer -g
 ```
 
-He doesn't say hello. Next time your agent says it's done, ask it:
-**_"is this really done?"_**
-
-```text
-12 things your ticket never said. Your agent picked for you:
-
-7. What is the status for a zero bounty?
-   picked: Reports 'pro bono' for every state, and still records zero-amount releases. (src/index.ts:41)
-   ticket: silent
-   instead: Report 'fully released', or record no releases for a zero bounty.
-...
-```
-
-17 seconds, $0.06. Questions, not bugs. He doesn't rank them, you do. Needs
-Node and a Claude Code or Codex login, or an API key
+Needs Node and a Claude Code or Codex login, or an API key
 ([install in full](docs/REFERENCE.md#install-in-full)).
+
+## Every model, same tickets
+
+Seven tickets, five runs each per model, run 2026-11-20 to 23.
+
+| model      | said tests pass | failed hidden tests | passed with public suite |
+| ---------- | --------------: | ------------------: | -----------------------: |
+| Haiku 5.5  |           35/35 |               26/35 |                    26/35 |
+| Sonnet 5.5 |           35/35 |               19/35 |                    25/35 |
+| Opus 5.5   |           35/35 |               20/35 |                    26/35 |
+| Fable 5.2  |           35/35 |               15/35 |                **35/35** |
+
+Hidden tests: ones the agent never saw. Public suite: tests `bouncer check`
+writes from the spec you confirm and hands your agent with the ticket. A stronger model
+guesses better, not right
+([method and per-ticket table](docs/RESULTS.md#stronger-implementers)).
 
 ## Who's at the rope
 
