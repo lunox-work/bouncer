@@ -509,7 +509,7 @@ export async function judgePlatform(argv, meta, deps) {
   }
   const keys = submission.failedScenarios ?? [];
   const count = (suite) => (suite ? `${suite.passed}/${suite.total}` : "-");
-  if (deps.voice) say(submission.verdict, { stream: deps.voice, keys, retry: Boolean(submission.retryOf) });
+  if (deps.voice) say(submission.verdict, { stream: deps.voice, keys, retry: Boolean(submission.retryOf), counts: { public: submission.public, hidden: submission.hidden } });
   const lines = [
     `${submission.id}: ${submission.verdict}. Public ${count(submission.public)}, hidden ${count(submission.hidden)}.`,
     `Judged on the platform against version ${submission.sandboxVersionId}${submission.retryOf ? `, a retry of ${submission.retryOf}` : ""}.`,

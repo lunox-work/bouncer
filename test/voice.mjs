@@ -3,7 +3,7 @@
 // toolchain, no network.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { banner, LINES, lineFor, MARK, say, voiceOn } from "../bin/voice.mjs";
+import { banner, FIGURE, LINES, lineFor, say, voiceOn } from "../bin/voice.mjs";
 
 const tty = { isTTY: true, out: "", write(text) { this.out += text; } };
 const pipe = { isTTY: false, out: "", write(text) { this.out += text; } };
@@ -33,10 +33,15 @@ assert.equal(lineFor("no-such-verdict"), null);
 for (const [id, text] of Object.entries(LINES)) assert.ok(text.length <= 70, `${id} is short`);
 console.log("ok lines");
 
-// The banner: three lines of mark, his line beside the middle one.
+// The banner: the figure, his line under it; with counts, the counts and
+// the verdict word between (the "Bouncer mascot review" CLI mock).
 const plain = banner(lineFor("overfit", { keys: ["boundary-2", "unhappy-1"] }), { color: false });
-assert.equal(plain, [`  ${MARK[0]}`, `  ${MARK[1]}   Not tonight. boundary-2, unhappy-1`, `  ${MARK[2]}`, ""].join("\n"));
+assert.equal(plain, [...FIGURE, "", "  Not tonight.  boundary-2, unhappy-1", ""].join("\n"));
 assert.ok(!plain.includes("\x1b"), "no escape codes without colour");
+const judged = banner(lineFor("overfit", { keys: ["unhappy-1"] }), { color: false, verdict: "overfit", counts: { public: { passed: 22, total: 22 }, hidden: { passed: 38, total: 39 } } });
+assert.equal(judged, [...FIGURE, "", "  public  22/22    hidden  38/39", "  verdict overfit", "", "  Not tonight.  unhappy-1", ""].join("\n"));
+assert.ok(FIGURE.every((row) => /^[\x20-\x7e]*$/.test(row) && row.length <= 38), "plain ASCII, 38 columns at most");
+assert.match(banner(lineFor("passed"), { verdict: "passed", counts: { public: { passed: 1, total: 1 }, hidden: null } }), /hidden\x1b\[0m  -/);
 console.log("ok banner");
 
 // say(): writes to a TTY, never to a pipe.

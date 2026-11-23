@@ -157,7 +157,7 @@ if (second !== null && second.outcome.failedScenarios.length > 0 && (result === 
 }
 
 // His line, on a terminal only (bin/voice.mjs); a keyed retry's submission sits under <variant>-retry-keyed/.
-say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)) });
+say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)), counts: { public: publicCount, hidden: hiddenCount } });
 console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}${second === null ? "" : `, second hidden ${second.outcome.hidden.passed}/${second.outcome.hidden.total}`}.`);
 console.log(hashLine());
 if (second !== null) console.log(`Second hidden suite by ${second.writer}, sha256 ${second.sha}${second.outcome.failedScenarios.length > 0 ? `; failing ${second.outcome.failedScenarios.join(", ")}` : ""}.`);
@@ -248,7 +248,7 @@ function judgeRepo() {
   }
 
   const where = ref === undefined ? `${found.root} (working tree)` : `${found.root} at ${ref}`;
-  say(result, { options, sealed: sealed !== null, keys: scenarios, aside: result === "passed" && !strict && scope.outsideScope.length > 0 ? "outside-scope" : null });
+  say(result, { options, sealed: sealed !== null, keys: scenarios, aside: result === "passed" && !strict && scope.outsideScope.length > 0 ? "outside-scope" : null, counts: { public: publicCount, hidden: hiddenCount } });
   console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}, existing ${judged === null ? "-" : `${outcome.existing.passed}/${baseline.passing.length}`}; ${where}.`);
   console.log(hashLine());
   if (refused.length > 0) console.log(`Refused:\n${pathsOf(refused).map((line) => `- ${line}`).join("\n")}`);

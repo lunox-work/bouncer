@@ -52,22 +52,51 @@ export function lineFor(verdict, { retry = false, keys = [], aside = null } = {}
 }
 
 /**
- * The terminal mark, three lines: the visor, the mouth, the coil (≀). Kept
- * to block characters every terminal font has.
+ * The terminal figure (the "Bouncer mascot review" CLI mock): bald, shades,
+ * the earpiece's coil down to his collar, arms crossed over the suit. Plain
+ * ASCII, so every terminal font draws him the same; 38 columns wide.
  */
-export const MARK = ["▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ", "▀█████▀▀█████▀≀", "     ▀▀▀▀     ≀"];
+export const FIGURE = [
+  "               _.------._",
+  "             .'          '.",
+  "            /   ________   \\",
+  "           |   [___][___]   |~,",
+  "           |       __       |  )",
+  "            \\     '--'     /  (",
+  "       ______'.__________.'___)__",
+  "     .'                          '.",
+  "    /                              \\",
+  "   |      .------------------.      |",
+  "   |     (=========><=========)     |",
+  "   |      '------------------'      |",
+  "   |                                |",
+];
 
-/** The banner printed above a verdict: the mark, his line beside it, coloured by tone. */
-export function banner(line, { color = true } = {}) {
+/**
+ * The banner printed above a verdict: the figure, then, when `counts` is
+ * given ({ public, hidden }, each { passed, total }), the counts and the
+ * machine word, then his line with the failing keys beside it.
+ */
+export function banner(line, { color = true, counts = null, verdict = null } = {}) {
   if (line === null) return "";
   const paint = (code, text) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
-  const said = `${paint(`1;${{ in: 32, ask: 33 }[line.tone] ?? 31}`, line.text)}${line.keys.length > 0 ? ` ${paint(2, line.keys.join(", "))}` : ""}`;
-  return [`  ${MARK[0]}`, `  ${MARK[1]}   ${said}`, `  ${MARK[2]}`, ""].join("\n");
+  const tone = { in: 32, ask: 33 }[line.tone] ?? 31;
+  const count = (suite) => {
+    if (!suite) return "-";
+    const text = `${suite.passed}/${suite.total}`;
+    return suite.passed < suite.total ? paint(31, text) : text;
+  };
+  const stats =
+    counts === null
+      ? []
+      : [`  ${paint(2, "public")}  ${count(counts.public)}    ${paint(2, "hidden")}  ${count(counts.hidden)}`, ...(verdict === null ? [] : [`  ${paint(2, "verdict")} ${paint(tone, verdict)}`]), ""];
+  const said = `${paint(`1;${tone}`, line.text)}${line.keys.length > 0 ? `  ${paint(2, line.keys.join(", "))}` : ""}`;
+  return [...FIGURE, "", ...stats, `  ${said}`, ""].join("\n");
 }
 
 /** Prints the banner for `id` on `stream` when a person is reading it. */
-export function say(id, { stream = process.stdout, options = {}, sealed = false, keys = [], retry = false, aside = null } = {}) {
+export function say(id, { stream = process.stdout, options = {}, sealed = false, keys = [], retry = false, aside = null, counts = null } = {}) {
   if (!voiceOn({ stream, options, sealed })) return;
   const line = lineFor(id, { retry, keys, aside });
-  if (line !== null) stream.write(`${banner(line)}\n`);
+  if (line !== null) stream.write(`${banner(line, { counts, verdict: counts === null ? null : id })}\n`);
 }
