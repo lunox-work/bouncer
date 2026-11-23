@@ -1,8 +1,9 @@
-# The hero's door: Bouncer (assets/src/bouncer-cut.webp) in front of a club's double doors, both
-# leaves swung open, the doorway full of Matrix-style rain made of test results. Each stream spells
+# The hero's door, behind Bouncer: a club's double doors, both leaves swung open, the doorway full
+# of Matrix-style rain made of test results. Each stream spells
 # a real test name from specs/duration-parse/tests down the column and ends in PASS (green, most)
 # or FAIL (red); dim letters fill the screen behind. The wall is left transparent so the card's own
-# background shows round the door. Drawn at 2x the hero's 520×560 door box (index.html places it).
+# background shows round the door. Drawn at 2x the hero's 520×560 door box; index.html puts him
+# (assets/mark-scene.svg, the same drawing as the README mark) in front of it.
 # Writes assets/src/scene.webp. Needs: pip install pillow numpy; macOS for the Menlo font.
 #   python assets/src/scene.py
 import os, re, glob
@@ -14,7 +15,6 @@ root = os.path.join(here, "..", "..")
 S = 2  # px per unit of the 520×560 box
 W, H, FLOOR = 520 * S, 560 * S, 540 * S
 DX0, DX1, DTOP, FRAME, LEAF = 210 * S, 390 * S, 100 * S, 12 * S, 74 * S  # doorway, frame, open leaves
-HEADTOP, WIDE = 194 * S, 404 * S  # where his head starts, and how wide his cut-out is drawn
 FAIL = 0.14  # share of streams that end in FAIL
 FONT = "/System/Library/Fonts/Menlo.ttc"
 
@@ -77,13 +77,4 @@ r = np.asarray(rain(dw, dh)).astype(float)
 r *= np.clip(0.35 + np.arange(dh)[:, None, None] / (45 * S), 0, 1)
 r *= np.clip(0.55 + np.minimum(np.arange(dw), dw - np.arange(dw))[None, :, None] / (30 * S), 0, 1)
 scene.paste(Image.fromarray(r.astype(np.uint8)), (DX0, DTOP))
-# him, cut off at the floor line, with a night keyline so the black suit holds against the rain
-cut = Image.open(os.path.join(here, "bouncer-cut.webp")).convert("RGBA")
-top = int(np.where(np.asarray(cut)[..., 3].max(1) > 128)[0][0])
-him = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-him.paste(cut.resize((WIDE, WIDE), Image.LANCZOS), ((DX0 + DX1 - WIDE) // 2, HEADTOP - top * WIDE // 1024))
-a = np.asarray(him).copy(); a[FLOOR:, :, 3] = 0; him = Image.fromarray(a, "RGBA")
-key = him.split()[3].filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(3))
-scene.alpha_composite(Image.merge("RGBA", (*Image.new("RGB", (W, H), (11, 11, 12)).split(), key)))
-scene.alpha_composite(him)
 scene.save(os.path.join(here, "scene.webp"), quality=92, method=6)

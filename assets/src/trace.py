@@ -12,32 +12,51 @@
 #   running down his neck into his collar, clearly visible earpiece, waist-up, camera at his chest
 #   height looking up slightly, he faces the viewer straight on, symmetrical, shoulders square,
 #   chin down, looking straight down at the viewer, no photo, no 3d render
-# assets/src/bouncer-cut.webp is that drawing at 1024px with the poster cut away (rembg, u2net);
-# the scene (assets/src/scene.py) and this trace both start from it.
-# The drawing paints the suit black with charcoal light planes. Here the whole suit becomes ink and
-# a thin paper line runs round each light plane, so the folds and crossed arms read as white lines
-# on a black suit; the skin stays paper with its dark lines in ink. Then potrace traces two shapes:
-# the ink, and the fill (his whole cut-out, so a scene can paint him solid).
-# Writes bin/mark-art.mjs. Needs: pip install pillow numpy potracer
+# assets/src/bouncer-cut.webp is that drawing at 1024px with the poster cut away (rembg, u2net).
+# Black and white, kept simple so it holds from the README down to a 46px corner logo: skin
+# (told apart by colour) is paper, with its deepest shadows (nose, mouth, cheeks) in ink; the rest
+# is ink. Only the suit's big light planes survive, each drawn as one paper line round its edge
+# (lapels, tie, the crossed arms); small planes, specks and the drawing's grey earpiece go, and a
+# clean coil is drawn in its place. Then potrace traces two shapes: the ink, and the fill (his
+# whole outline, so a scene can paint him solid).
+# Writes bin/mark-art.mjs. Needs: pip install pillow numpy scipy potracer
 #   python assets/src/trace.py assets/src/bouncer-cut.webp bin/mark-art.mjs [preview.png]
-import sys, json
-from PIL import Image, ImageFilter
+import sys, json, math
+from PIL import Image, ImageDraw
 import numpy as np, potrace
+from scipy import ndimage as nd
 
 src, dst = sys.argv[1], sys.argv[2]
 CROP, N = (22, 0, 1008, 986), 1024  # his whole width: round shoulders, the suit runs off the bottom
-DARK, LIGHT = 95, 21  # the suit (and the dark lines) is below DARK; its light planes are LIGHT and up
-LINE = 7  # fold line width, px of the 1024 box
+SHADE = 125  # skin darker than this is ink: nose, mouth, cheeks
+PLANE, OPEN, LINE = 9000, 17, 7  # suit light planes: min area, min thickness, paper line width (px)
+COIL = [(386, 284), (381, 318), (387, 348), (405, 368), (432, 376)]  # earbud down into the collar
 
 im = Image.open(src).convert("RGBA").crop(CROP).resize((N, N), Image.LANCZOS)
-cut = np.asarray(im)[..., 3] > 128
-g = np.asarray(im.convert("L").filter(ImageFilter.GaussianBlur(1.2))).astype(int)
-m = lambda arr, f: np.asarray(Image.fromarray((arr * 255).astype(np.uint8)).filter(f)) > 127
-suit = m(cut & (g < DARK), ImageFilter.MedianFilter(5))
-light = m(suit & (g >= LIGHT), ImageFilter.MedianFilter(7))
-light = m(m(light, ImageFilter.MinFilter(5)), ImageFilter.MaxFilter(5))  # planes, not specks
-ink = suit & ~(m(light, ImageFilter.MaxFilter(LINE)) & ~light)  # a paper line just outside each plane
-fill = m(cut, ImageFilter.MedianFilter(5))
+a = np.asarray(im).astype(float)
+rgb = nd.gaussian_filter(a[..., :3], (1.5, 1.5, 0))
+L = rgb @ [0.299, 0.587, 0.114]
+smooth = lambda m, s: nd.gaussian_filter(m.astype(float), s) > 0.5
+def keep_big(m, area):
+    lab, n = nd.label(m); sizes = nd.sum(m, lab, range(1, n + 1))
+    return np.isin(lab, 1 + np.where(sizes >= area)[0])
+
+fill = nd.binary_fill_holes(smooth(a[..., 3] > 128, 2))
+skin = keep_big(smooth(fill & (rgb[..., 0] - rgb[..., 2] > 35) & (L > 60), 2.5), 2000)
+skin = nd.binary_fill_holes(skin) & ~(fill & (L < 70) & ~smooth(skin, 6))  # the shades and mouth stay dark
+ink = fill & ~skin
+ink = keep_big(ink, 300) | ~keep_big(~ink & fill, 400) & fill  # no specks either way
+ink |= keep_big(smooth(skin & (L < SHADE), 3), 600)
+light = nd.binary_opening(fill & ~skin & (L >= 21) & (L < 95), structure=np.ones((OPEN, OPEN)))
+light = keep_big(smooth(light, 5), PLANE)
+ink &= ~smooth(nd.binary_dilation(light, iterations=LINE) & ~light, 1.5)
+
+# the earpiece coil, drawn at 4x for a clean line: paper on the dark suit
+K = 4
+big = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8)).resize((N * K, N * K), Image.NEAREST)
+pts = [(x0 + (x1 - x0) * i / 30, y0 + (y1 - y0) * i / 30) for (x0, y0), (x1, y1) in zip(COIL, COIL[1:]) for i in range(30)]
+ImageDraw.Draw(big).line([((x + 4.5 * math.sin(k * math.pi / 5)) * K, y * K) for k, (x, y) in enumerate(pts)], fill=255, width=4 * K, joint="curve")
+ink = np.asarray(big.resize((N, N), Image.LANCZOS)) < 128
 
 def d(mask):
     out = []
@@ -56,4 +75,4 @@ with open(dst, "w") as f:
     f.write(f"export const INK_PATH = {json.dumps(d(ink))};\n")
     f.write(f"export const FILL_PATH = {json.dumps(d(fill))};\n")
 if len(sys.argv) > 3:
-    Image.fromarray(np.where(ink, 0, np.where(fill, 200, 255)).astype(np.uint8)).save(sys.argv[3])
+    Image.fromarray(np.where(ink, 0, np.where(fill, 255, 200)).astype(np.uint8)).save(sys.argv[3])

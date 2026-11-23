@@ -246,11 +246,13 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   </div>
   <div class="door"><svg viewBox="0 0 520 560">
     <defs>
+      <clipPath id="floor"><rect width="520" height="540"/></clipPath>
       <filter id="neon" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
-    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL, and he
-         is wider than the doorway (assets/src/scene.py draws all three) -->
+    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL
+         (assets/src/scene.py), and he is wider than the doorway, cut off at the floor -->
     <image href="scene.webp" x="0" y="0" width="520" height="560"/>
+    <image href="../mark-scene.svg" x="107" y="188" width="389" height="389" clip-path="url(#floor)"/>
     <text x="300" y="62" text-anchor="middle" font-family="Display" font-weight="600" font-size="44" letter-spacing="14" fill="#ffe3e8" filter="url(#neon)">DONE</text>
     <rect x="0" y="540" width="520" height="3" fill="#2a2a2e"/>
     <!-- his list, at his side: the same rows as the agent's ID, with the one it never saw coming -->
@@ -307,9 +309,10 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   </div>
   <div class="stage">
     <svg viewBox="0 0 520 560">
-    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL, and he
-         is wider than the doorway (assets/src/scene.py draws all three) -->
+    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL
+         (assets/src/scene.py), and he is wider than the doorway, cut off at the floor -->
     <image href="scene.webp" x="0" y="0" width="520" height="560"/>
+    <image href="../mark-scene.svg" x="107" y="188" width="389" height="389" clip-path="url(#floor)"/>
     <text x="300" y="62" text-anchor="middle" font-family="Display" font-weight="600" font-size="44" letter-spacing="14" fill="#ffe3e8" filter="url(#neon)">DONE</text>
     <rect x="0" y="540" width="520" height="3" fill="#2a2a2e"/>
     <!-- the rope -->
