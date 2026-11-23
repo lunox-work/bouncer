@@ -67,7 +67,7 @@ guesses better, not right
 ## Before / After
 
 <p align="center">
-  <img src="assets/before.png" width="880" alt="Its own tests say yes. His say not tonight. One dot a test. Its own tests: all pass, every dot green, it wrote every one of them, and it says: the build is clean and my 21 tests pass. Tests it never saw, grouped by rule: 3 fail, all three in one rule, and he says: Not tonight. That rule is what a $0 bounty does. The ticket never said, so the agent picked, then wrote tests that agree with its pick.">
+  <img src="assets/before.png" width="880" alt="Two rooms, one wall. Only the code goes through. You, the owner, hand the ticket to your agent and the spec you confirmed to him. In your agent's room: its own tests on its own wall, 21 of 21 pass, written by itself from its reading of the ticket. It tries to look past the wall and can't see his list. A padlocked brick wall with no window and one slot stands between the rooms: the agent pushes the code through the slot, and one word comes back, boundary-2, the rule it missed. In his room he stands arms crossed beside the list, tests it never saw, written by him apart, one row a rule: 3 fail, 43 of 46, all three in boundary-2, and he says: Not tonight. No stake in the code, no peek at the list. Its own 21 tests agree with its guess. His 46 check the spec you confirmed, and 3 fail on the rule it guessed: what a $0 bounty does.">
 </p>
 
 **Same code, two suites.** That is "I know the owner" from the queue, and

@@ -14,7 +14,10 @@
        keeps the score, 21/21, which is escrow-split run 1. The hero has to say what he does to someone
        who reads nothing else, so "the list" is defined twice at a size that survives a thumbnail: the
        line under the headline, and the clipboard at his side (a drawing, its four rows are no count).
-     - #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
+     - #before: three parties, two rooms and a wall (REFERENCE.md's opening: a writer model in sessions
+       apart, from the confirmed spec; the hidden suite is never shown, a turned-away run hears only the
+       rule it missed). This run had the ticket alone, no public suite, so only the ticket goes in. The run is
+       runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
        not an acceptance signal"): its own tests 21/21 (21 green dots), the hidden suite 43/46. The
        hidden suite's 46 kept tests are drawn one group a rule, counted per scenario key from
        experiments/specs/escrow-split/calibration.json (9 rules); the run's 3 failures are all in
@@ -105,21 +108,12 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #social .side.r p { font-size: 22px; line-height: 1.35; color: #d9d5cc; }
 #social .side.r p b { color: var(--paper); font-weight: 500; }
 
-/* before / after: the same code under two suites, one dot a test */
-#before h1 { font-size: 50px; margin: 22px 0 34px; }
-#before .cols { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-#before .col { padding: 30px 36px 34px 0; display: flex; flex-direction: column; align-items: flex-start; }
-#before .col + .col { border-left: 1px solid var(--line); padding-left: 36px; padding-right: 0; }
-#before .num { font-size: 96px; margin: 18px 0 26px; }
-#before .tests { display: flex; flex-wrap: wrap; gap: 9px 15px; min-height: 41px; align-content: flex-start; }
-#before .tests span { display: flex; gap: 5px; }
-#before .tests u { width: 16px; height: 16px; border-radius: 5px; background: var(--in); }
-#before .tests u.f { background: var(--rope); box-shadow: 0 0 10px rgb(214 34 63 / 0.7); }
-#before .note { font-family: Mono; font-size: 15px; color: var(--muted); margin: 14px 0 26px; }
-#before .note b { font-weight: 400; color: var(--rope); }
-#before .bubble { font-size: 25px; margin-top: auto; }
-#before .bubble.him { font-size: 34px; }
-#before .why { font-size: 25px; line-height: 1.4; color: #d9d5cc; margin-top: 30px; max-width: 1040px; }
+/* before / after: three parties. You hand the ticket to your agent and the confirmed spec to him;
+   a wall stands between their rooms, and the only way through it is a slot: the code goes in, one
+   word comes back. Same run both sides (see the comment at the top). */
+#before h1 { font-size: 50px; margin: 22px 0 26px; }
+#before .scene { display: block; width: 1152px; height: 600px; overflow: visible; }
+#before .why { font-size: 24px; line-height: 1.4; color: #d9d5cc; margin-top: 26px; max-width: 1100px; }
 #before .why b { color: var(--paper); font-weight: 500; }
 
 /* verdict: the bundled example, on a terminal */
@@ -352,24 +346,110 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 <!-- ================= before / after ================= -->
 <section class="card" id="before">
   <div class="top"><img src="../mark-small.png" alt="">bouncer</div>
-  <h1>Its own tests say yes. <span class="rope">His say not tonight.</span></h1>
-  <div class="cols">
-    <div class="col">
-      <div class="caps">Its own tests</div>
-      <div class="num">All pass</div>
-      <div class="tests" data-groups="21"></div>
-      <div class="note">it wrote every one of them</div>
-      <div class="bubble agent">“The build is clean and my 21 tests pass.”</div>
-    </div>
-    <div class="col">
-      <div class="caps">Tests it never saw</div>
-      <div class="num rope">3 fail</div>
-      <div class="tests" data-groups="4,4,11,4,4,5,4,6,4" data-fail="8:3"></div>
-      <div class="note">one group, one rule · <b>all three are the same rule</b></div>
-      <div class="bubble him">Not tonight.</div>
-    </div>
-  </div>
-  <p class="why">That rule: what a <b>$0 bounty</b> does. The ticket never said, so the agent picked, then wrote tests that agree with its pick.</p>
+  <h1>Two rooms, one wall. <span class="rope">Only the code goes through.</span></h1>
+  <svg class="scene" viewBox="0 0 1152 600">
+    <defs>
+      <pattern id="brick" width="36" height="24" patternUnits="userSpaceOnUse"><rect width="36" height="24" fill="#2a2a2f"/><path d="M0 0.5 H36 M0 12.5 H36 M18 0 V12 M0 12 V24 M36 12 V24" stroke="#151518" stroke-width="2"/></pattern>
+      <radialGradient id="lamp" cx="50%" cy="45%" r="50%"><stop offset="0" stop-color="#d6223f" stop-opacity="0.32"/><stop offset="0.6" stop-color="#d6223f" stop-opacity="0.08"/><stop offset="1" stop-color="#d6223f" stop-opacity="0"/></radialGradient>
+      <clipPath id="his-room"><rect x="612" y="130" width="540" height="470" rx="18"/></clipPath>
+      <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#8b877f"/></marker>
+      <marker id="tip-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#d6223f"/></marker>
+    </defs>
+
+    <!-- you: the third party, above the wall, handing each room what it gets -->
+    <rect x="486" y="4" width="180" height="58" rx="29" fill="#151517" stroke="rgb(242 239 232 / 0.25)" stroke-width="1.5"/>
+    <use href="#fig" x="506" y="18" width="28" height="26" style="color:#f2efe8"/>
+    <text x="546" y="31" font-family="Display" font-weight="600" font-size="22" fill="#f2efe8">You</text>
+    <text x="546" y="50" font-family="Mono" font-size="12.5" fill="#8b877f">the owner</text>
+    <path d="M486 33 C380 33 300 50 286 124" fill="none" stroke="#8b877f" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#tip)"/>
+    <text x="300" y="70" text-anchor="end" font-family="Mono" font-size="15" fill="#d9d5cc">the ticket</text>
+    <path d="M666 33 C772 33 852 50 866 124" fill="none" stroke="#d6223f" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#tip-r)"/>
+    <text x="852" y="70" font-family="Mono" font-size="15" fill="#d6223f">the spec you confirmed</text>
+
+    <!-- the two rooms -->
+    <rect x="0" y="130" width="540" height="470" rx="18" fill="#111113" stroke="rgb(242 239 232 / 0.09)"/>
+    <rect x="612" y="130" width="540" height="470" rx="18" fill="#140c0e" stroke="rgb(214 34 63 / 0.25)"/>
+    <text x="24" y="166" font-family="Mono" font-size="14" letter-spacing="3" fill="#8b877f">YOUR AGENT'S ROOM</text>
+    <text x="636" y="166" font-family="Mono" font-size="14" letter-spacing="3" fill="#d6223f">HIS ROOM</text>
+
+    <!-- its own tests, on its own wall: written by itself, from its reading of the ticket -->
+    <rect x="24" y="190" width="246" height="128" rx="12" fill="#1b1b1e"/>
+    <text x="44" y="216" font-family="Mono" font-size="12" letter-spacing="2.5" fill="#8b877f">ITS OWN TESTS</text>
+    <text x="44" y="242" font-family="Display" font-weight="600" font-size="24" fill="#22c55e">21/21 all pass</text>
+    <rect x="44.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="54.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="65.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="75.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="86.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="97.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="107.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="118.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="128.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="139.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="150.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="160.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="171.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="181.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="192.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="203.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="213.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="224.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="234.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="245.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="256.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/>
+    <text x="44" y="284" font-family="Mono" font-size="12" fill="#8b877f">written by itself, from</text>
+    <text x="44" y="302" font-family="Mono" font-size="12" fill="#8b877f">its reading of the ticket</text>
+
+    <!-- what it tries to see: the wall stops it -->
+    <path d="M372 404 L522 262" stroke="#8b877f" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+    <circle cx="528" cy="256" r="11" fill="#2a0d13" stroke="#d6223f" stroke-width="2"/>
+    <path d="M523 251 L533 261 M533 251 L523 261" stroke="#d6223f" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="508" y="222" text-anchor="end" font-family="Mono" font-size="14" fill="#d6223f">can't see his list</text>
+
+    <!-- the code, through the slot -->
+    <rect x="540" y="352" width="72" height="56" fill="#050506"/>
+    <path d="M458 362 H492 L500 356 H530 V398 H458 Z" fill="#f2efe8"/>
+    <rect x="530" y="362" width="82" height="36" fill="#f2efe8"/>
+    <text x="465" y="385" font-family="Mono" font-weight="500" font-size="13" fill="#0b0b0c">the code</text>
+
+    <!-- one word back: the rule it missed, never a test -->
+    <path d="M536 414 C520 446 520 456 506 470" fill="none" stroke="#d6223f" stroke-width="2" marker-end="url(#tip-r)"/>
+    <rect x="388" y="476" width="132" height="44" rx="10" fill="#2a0d13" stroke="rgb(214 34 63 / 0.6)" stroke-width="2"/>
+    <text x="454" y="504" text-anchor="middle" font-family="Mono" font-weight="500" font-size="17" fill="#d6223f">boundary-2</text>
+    <text x="388" y="546" font-family="Mono" font-size="14" fill="#d9d5cc">one word back:</text>
+    <text x="388" y="566" font-family="Mono" font-size="14" fill="#d9d5cc">the rule it missed</text>
+
+    <!-- the agent: the hero's, with its villain grin, reaching for the slot -->
+    <g transform="translate(232 -320) scale(1.6)">
+      <g fill="#151517" stroke="#f2efe8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M52 418 V402"/><circle cx="52" cy="398" r="4" fill="#f2efe8"/>
+        <path d="M76 492 L96 452 L140 432"/>
+        <rect x="34" y="476" width="42" height="42" rx="9"/>
+        <path d="M46 518 V538 M64 518 V538"/>
+        <rect x="24" y="418" width="58" height="46" rx="12"/>
+      </g>
+      <use href="#claude" x="42" y="484" width="26" height="26"/>
+      <g fill="#f2efe8"><path d="M34.5 431 L50 437.5 Q50 444.5 43 444.5 Q34.5 444.5 34.5 437 Z"/><path d="M71.5 431 L56 437.5 Q56 444.5 63 444.5 Q71.5 444.5 71.5 437 Z"/><path d="M38.5 449.5 Q53 453.5 67.5 448 Q66.5 459.5 53 459.5 Q41 459.5 38.5 449.5 Z"/></g>
+      <circle cx="45.6" cy="440.6" r="2" fill="#151517"/><circle cx="60.6" cy="440.6" r="2" fill="#151517"/>
+      <path d="M46 451.6 V458.6 M53 452.2 V459.5 M60 451.4 V458.6" stroke="#151517" stroke-width="1.2" fill="none"/>
+    </g>
+    <rect x="0" y="597" width="540" height="3" fill="#2a2a2e"/>
+
+    <!-- the wall: no window, one slot -->
+    <path d="M540 108 H612 V600 H540 Z M540 352 V408 H612 V352 Z" fill="url(#brick)" fill-rule="evenodd"/>
+    <path d="M540 352 H612 M540 408 H612" stroke="#c9a24a" stroke-width="3"/>
+    <circle cx="576" cy="150" r="20" fill="#0b0b0c" stroke="#d6223f" stroke-width="2"/>
+    <g transform="translate(566 139)"><path d="M5 10 V6.5 a5 5 0 0 1 10 0 V10" fill="none" stroke="#d6223f" stroke-width="2.4" stroke-linecap="round"/><rect x="1.5" y="9.5" width="17" height="11.5" rx="3" fill="#d6223f"/><circle cx="10" cy="14.6" r="1.8" fill="#0b0b0c"/></g>
+
+    <!-- him, and the list he wrote from your spec, apart from the agent -->
+    <g clip-path="url(#his-room)">
+      <ellipse cx="780" cy="440" rx="190" ry="200" fill="url(#lamp)"/>
+      <image href="bouncer-cut.webp" x="620" y="262" width="330" height="330"/>
+    </g>
+    <!-- the code, out his side of the slot -->
+    <rect x="612" y="362" width="44" height="36" fill="#f2efe8"/>
+    <path d="M656 362 L668 380 L656 398 Z" fill="#f2efe8"/>
+    <g transform="translate(640 196)">
+      <rect width="208" height="50" rx="14" fill="#2a0d13" stroke="rgb(214 34 63 / 0.6)" stroke-width="2"/>
+      <path d="M40 49 L52 62 L60 49" fill="#2a0d13" stroke="rgb(214 34 63 / 0.6)" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="38" y="46" width="24" height="5" fill="#2a0d13"/>
+      <text x="104" y="34" text-anchor="middle" font-family="Display" font-weight="600" font-size="26" letter-spacing="-0.5" fill="#f2efe8">Not tonight.</text>
+    </g>
+    <g transform="rotate(2 1024 360)">
+      <rect x="912" y="186" width="220" height="372" rx="14" fill="#ece7dc"/>
+      <rect x="988" y="176" width="68" height="20" rx="6" fill="#3a3a3e"/>
+      <text x="932" y="224" font-family="Display" font-weight="600" font-size="22" fill="#0b0b0c">THE LIST</text>
+      <text x="932" y="244" font-family="Mono" font-weight="500" font-size="12.5" fill="#d6223f">tests it never saw</text>
+      <rect x="936" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1001" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1014" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1027" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1040" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1053" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1066" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1001" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="949" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="962" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="975" y="436" width="10" height="10" rx="2.5" fill="#15803d"/>
+      <text x="932" y="474" font-family="Display" font-weight="600" font-size="30" fill="#d6223f">3 fail</text>
+      <text x="1030" y="474" font-family="Mono" font-size="14" fill="#555">43/46</text>
+      <text x="932" y="502" font-family="Mono" font-size="12" fill="#555">one row a rule · all</text>
+      <text x="932" y="518" font-family="Mono" font-size="12" fill="#555">three in boundary-2</text>
+      <text x="932" y="542" font-family="Mono" font-size="12" fill="#555">written by him, apart</text>
+    </g>
+    <rect x="612" y="597" width="540" height="3" fill="#2a2a2e"/>
+  </svg>
+  <p class="why"><b>No stake in the code, no peek at the list.</b> Its own 21 tests agree with its guess. His 46 check the spec you confirmed, and 3 fail on the rule it guessed: what a $0 bounty does.</p>
 </section>
 
 <!-- ================= verdict ================= -->
