@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/mark-dark.svg">
-    <img src="assets/mark-light.svg" width="180" alt="Bouncer, a marker doodle: a bald egg of a head straight on huge shoulders, no neck, black shades, an earpiece coil, a flat bored mouth">
+    <img src="assets/mark-light.svg" width="180" alt="Bouncer: a huge bald man in a black suit, black shades, arms crossed, an earpiece wire coiling into his collar">
   </picture>
 </p>
 

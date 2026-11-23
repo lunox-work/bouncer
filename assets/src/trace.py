@@ -1,54 +1,69 @@
-# Bouncer's mark from the FLUX doodle: crop to the bust, thicken the line to marker
-# weight, threshold to ink, add a few specks, then trace two shapes with potrace:
-# the ink, the specks, and the fill (everything his outline encloses, so a scene can paint him solid).
-# The doodle is FLUX.1 schnell (Apache 2.0) on AI Horde, 768px, 4 steps, prompt:
-#   crude hand-drawn doodle of a bald nightclub bouncer, just the big round head sitting
-#   straight on huge shoulders with no neck, tiny black wraparound sunglasses, coiled earpiece
-#   wire from one ear, flat bored mouth, stubble dots, thick wobbly black marker outline, no
-#   shading, no fill, no color, plain white paper background, scanned photocopy, a few ink
-#   specks, imperfect hand-drawn line, minimal
+# Bouncer's mark from a FLUX comic drawing: the movie bouncer, huge in a black suit,
+# shaved head, shades, arms crossed, the earpiece wire coiling into his collar.
+# The source is FLUX.1 schnell (Apache 2.0) on AI Horde, 768px, 4 steps, prompt:
+#   an enormous towering nightclub bouncer, massively wide barrel-shaped body, huge round
+#   shoulders, thick bull neck, shaved bald head, small black sunglasses at night, clear
+#   earpiece with a coiled wire running into his collar, black suit jacket stretched tight,
+#   black shirt open at the collar, no tie, heavy jaw, deadpan, arms crossed, waist up, front
+#   view, bold black ink comic illustration, thick confident outlines, solid black suit fill,
+#   flat, no gray, no gradients, plain white background, single character, centered
+# The comic paints the suit a flat dark grey and draws its folds in black on it. Here the
+# grey becomes solid ink and the black lines inside it become paper, so the crossed arms
+# read as white lines on a black suit; outside the suit, black lines stay ink, thickened.
+# The earpiece wire is drawn in (the drawing only has a small hook) so it survives at
+# icon size. Then potrace traces two shapes: the ink, and the fill (everything his
+# outline encloses, so a scene can paint him solid).
 # Writes bin/mark-art.mjs. Needs: pip install pillow numpy potracer
 #   python assets/src/trace.py assets/src/bouncer-flux.webp bin/mark-art.mjs [preview.png]
-import sys, json
+import sys, json, math
 from PIL import Image, ImageFilter, ImageDraw
 import numpy as np, potrace
+
 src, dst = sys.argv[1], sys.argv[2]
-CROP, GROW, N = (95, 60, 675, 640), 13, 1024
+CROP, N = (40, 30, 728, 718), 1024
+SUIT = (25, 70)  # the suit's flat grey, 0-255
+GROW, THR = 3, 110  # line thickening and ink threshold outside the suit
+COIL = ((372, 236), (382, 336), 7, 6)  # earpiece wire: from, to, amplitude, turns
+
 im = Image.open(src).convert("L").crop(CROP).resize((N, N), Image.LANCZOS)
-im = im.filter(ImageFilter.MinFilter(GROW))
-a = np.asarray(im.filter(ImageFilter.GaussianBlur(2.4))).astype(float)
-rng = np.random.default_rng(11)
-a += rng.normal(0, 10, a.shape)
-ink = a < 150
-ink = np.asarray(Image.fromarray((ink * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))) > 127
-# fill: flood the outside from the top row; what the flood never reaches (and is not ink) is him
-outside = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8)).copy()  # fromarray shares a read-only buffer
-for x in range(0, N, 8):
-    if outside.getpixel((x, 0)) == 255: ImageDraw.floodfill(outside, (x, 0), 128)
+g = np.asarray(im.filter(ImageFilter.GaussianBlur(1.0))).astype(int)
+m = lambda arr, f: np.asarray(Image.fromarray((arr * 255).astype(np.uint8)).filter(f)) > 127
+suit = (g >= SUIT[0]) & (g < SUIT[1])
+suit = m(m(suit, ImageFilter.MinFilter(7)), ImageFilter.MaxFilter(7))  # solid grey only, not line edges
+suit_area = m(m(suit, ImageFilter.MaxFilter(9)), ImageFilter.MinFilter(5))
+thick = np.asarray(im.filter(ImageFilter.MinFilter(GROW)).filter(ImageFilter.GaussianBlur(1.2))) < THR
+ink = m(suit | (thick & ~suit_area), ImageFilter.MedianFilter(5))
+
+(x0, y0), (x1, y1), amp, turns = COIL
+wire = Image.fromarray((ink * 255).astype(np.uint8)).copy()  # fromarray shares a read-only buffer
+dx, dy = x1 - x0, y1 - y0
+ln = math.hypot(dx, dy)
+pts = [(x0 + dx * t - dy / ln * amp * math.sin(t * turns * 2 * math.pi), y0 + dy * t + dx / ln * amp * math.sin(t * turns * 2 * math.pi)) for t in (i / 200 for i in range(201))]
+ImageDraw.Draw(wire).line(pts, fill=255, width=6, joint="curve")
+ink = np.asarray(wire) > 127
+
+# fill: flood the outside from every edge; what the flood never reaches is him
+outside = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8)).copy()
+for t in range(0, N, 8):
+    for xy in ((t, 0), (0, t), (N - 1, t), (t, N - 1)):
+        if outside.getpixel(xy) == 255: ImageDraw.floodfill(outside, xy, 128)
 fill = np.asarray(outside) != 128
-# specks, outside him, so they read as ink spatter on the paper; their own shape so
-# small marks and scenes can leave them off
-specks = np.zeros_like(ink)
-for _ in range(22):
-    x, y, r = int(rng.integers(30, N - 30)), int(rng.integers(30, N - 30)), int(rng.integers(3, 7))
-    if fill[max(0,y-r-6):y+r+6, max(0,x-r-6):x+r+6].any(): continue
-    yy, xx = np.ogrid[-r:r+1, -r:r+1]
-    specks[y-r:y+r+1, x-r:x+r+1][xx*xx + yy*yy <= r*r] = True
+
 def d(mask):
     out = []
     # potracer traces the False pixels as shape, so hand it the inverse
-    for c in potrace.Bitmap(~mask).trace(turdsize=6, alphamax=1.0, opticurve=True, opttolerance=0.3):
-        s = c.start_point; seg = [f"M{s.x:.1f} {s.y:.1f}"]
-        for g in c.segments:
-            if g.is_corner: seg.append(f"L{g.c.x:.1f} {g.c.y:.1f}L{g.end_point.x:.1f} {g.end_point.y:.1f}")
-            else: seg.append(f"C{g.c1.x:.1f} {g.c1.y:.1f} {g.c2.x:.1f} {g.c2.y:.1f} {g.end_point.x:.1f} {g.end_point.y:.1f}")
+    for c in potrace.Bitmap(~mask).trace(turdsize=24, alphamax=1.0, opticurve=True, opttolerance=0.6):
+        s = c.start_point; seg = [f"M{s.x:.0f} {s.y:.0f}"]
+        for p in c.segments:
+            if p.is_corner: seg.append(f"L{p.c.x:.0f} {p.c.y:.0f}L{p.end_point.x:.0f} {p.end_point.y:.0f}")
+            else: seg.append(f"C{p.c1.x:.0f} {p.c1.y:.0f} {p.c2.x:.0f} {p.c2.y:.0f} {p.end_point.x:.0f} {p.end_point.y:.0f}")
         out.append("".join(seg) + "Z")
     return "".join(out)
+
 with open(dst, "w") as f:
     f.write("// Generated by assets/src/trace.py from assets/src/bouncer-flux.webp: do not edit by hand.\n")
     f.write(f"export const BOX = {N};\n")
     f.write(f"export const INK_PATH = {json.dumps(d(ink))};\n")
     f.write(f"export const FILL_PATH = {json.dumps(d(fill))};\n")
-    f.write(f"export const SPECK_PATH = {json.dumps(d(specks & ~ink))};\n")
 if len(sys.argv) > 3:
-    Image.fromarray(np.where(ink | specks, 0, np.where(fill, 200, 255)).astype(np.uint8)).save(sys.argv[3])
+    Image.fromarray(np.where(ink, 0, np.where(fill, 200, 255)).astype(np.uint8)).save(sys.argv[3])

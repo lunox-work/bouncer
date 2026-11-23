@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 import { INK, PAPER, iconSvg, markSvg } from "../../bin/mark.mjs";
 
 const assets = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-writeFileSync(path.join(assets, "mark-light.svg"), markSvg(INK, 240, { specks: true }));
-writeFileSync(path.join(assets, "mark-dark.svg"), markSvg(PAPER, 240, { specks: true }));
-writeFileSync(path.join(assets, "mark-scene.svg"), markSvg(INK, 240, { fill: PAPER, weight: 0.6 })); // the hero: solid paper on the door
-writeFileSync(path.join(assets, "mark-small.svg"), markSvg(PAPER, 120, { weight: 2.4 })); // the images' corner logo, drawn ~36px
+writeFileSync(path.join(assets, "mark-light.svg"), markSvg(INK, 240, { fill: PAPER }));
+writeFileSync(path.join(assets, "mark-dark.svg"), markSvg(INK, 240, { fill: PAPER, outline: PAPER, ring: 2 }));
+writeFileSync(path.join(assets, "mark-scene.svg"), markSvg(INK, 240, { fill: PAPER })); // the hero: solid on the door
+writeFileSync(path.join(assets, "mark-small.svg"), markSvg(INK, 120, { fill: PAPER, outline: PAPER, ring: 4 })); // the images' corner logo, ~46px on night
 writeFileSync(path.join(assets, "icon.svg"), iconSvg());

@@ -40,7 +40,7 @@ export function wrap(text, width, max) {
 
 /** Him (bin/mark.mjs), `size` px square, at x, y. */
 function mark(x, y, size, color) {
-  return `<g transform="translate(${x} ${y}) scale(${size / 120})">${markShapes(color, "card", { weight: 2.4 })}</g>`;
+  return `<g transform="translate(${x} ${y}) scale(${size / 120})">${markShapes(INK, "card", { fill: color, outline: color, ring: 4 })}</g>`;
 }
 
 /** The club hand stamp: two words in a double border, a little off square. */
