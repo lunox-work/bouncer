@@ -5,7 +5,7 @@
 // failing scenario keys and the hidden suite's hash, never a hidden test's
 // name or body.
 import { linesOf } from "./lines.mjs";
-import { markShapes } from "./mark.mjs";
+import { markImage } from "./mark.mjs";
 import { lineFor } from "./voice.mjs";
 
 const INK = "#0b0b0c";
@@ -38,10 +38,6 @@ export function wrap(text, width, max) {
   return kept;
 }
 
-/** Him (bin/mark.mjs), `size` px square, at x, y. */
-function mark(x, y, size, color) {
-  return `<g transform="translate(${x} ${y}) scale(${size / 120})">${markShapes(INK, "card", { fill: color, outline: color, ring: 4 })}</g>`;
-}
 
 /** The club hand stamp: two words in a double border, a little off square. */
 export function stamp(x, y, words, color, rotate = -9) {
@@ -66,7 +62,7 @@ export function card({ verdict, claim = null, keys = [], slug = "", counts = nul
   const parts = [];
   parts.push(`<rect width="1280" height="640" fill="${INK}"/>`);
   parts.push(`<rect width="1280" height="640" fill="url(#glow)"/>`);
-  parts.push(mark(72, 52, 56, PAPER));
+  parts.push(markImage(72, 52, 56));
   parts.push(`<text x="144" y="92" font-family="${MONO}" font-size="24" fill="${PAPER}">bouncer</text>`);
 
   let y = 170;

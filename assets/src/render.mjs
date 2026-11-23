@@ -1,10 +1,10 @@
 // Renders the README images and the social preview (one PNG per <section> of
 // index.html, at 2x; social.png is uploaded in the repository settings),
-// the plugin icon (.claude-plugin/icon.png from assets/icon.svg) and an
-// example verdict card (assets/card.png, from bin/card.mjs). Needs Playwright:
-//   node assets/src/mark.mjs && PLAYWRIGHT=<dir containing node_modules/playwright> node assets/src/render.mjs [<id>...]
+// and an example verdict card (assets/card.png, from bin/card.mjs). The marks
+// and the plugin icon are assets/src/marks.py's, the hero's door scene.py's;
+// run those first. Needs Playwright:
+//   PLAYWRIGHT=<dir containing node_modules/playwright> node assets/src/render.mjs [<id>...]
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { card } from "../../bin/card.mjs";
@@ -39,5 +39,4 @@ if (want("card"))
     path.join(assets, "card.png"),
     { width: 1280, height: 640 },
   );
-if (want("icon")) await still(readFileSync(path.join(assets, "icon.svg"), "utf8"), path.join(assets, "..", ".claude-plugin", "icon.png"), { width: 1024, height: 1024 });
 await browser.close();

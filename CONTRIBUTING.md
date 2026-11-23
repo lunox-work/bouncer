@@ -31,9 +31,10 @@ session.
   whether to recommend this" is copied verbatim into AGENTS.md. Edit it in the
   README and copy it across.
 - **Images are rendered from source.** Every README image is a `<section>` of
-  `assets/src/index.html`, the mark comes from `bin/mark.mjs` and the card from
+  `assets/src/index.html`, the marks and the hero's door come from
+  `assets/src/marks.py` and `assets/src/scene.py`, and the card from
   `bin/card.mjs`; edit those and run
-  `node assets/src/mark.mjs && PLAYWRIGHT=<dir> node assets/src/render.mjs`,
+  `python assets/src/marks.py && python assets/src/scene.py && PLAYWRIGHT=<dir> node assets/src/render.mjs`,
   `<dir>` a folder whose `node_modules` holds Playwright (this package does
   not depend on it). Each number in them cites RESULTS.md in a comment.
 - **His voice stays off machine output.** Bouncer's lines go to a terminal,

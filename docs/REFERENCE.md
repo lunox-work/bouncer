@@ -423,8 +423,8 @@ A repository that judges its pull requests this way can say so:
 [![bouncer on the door](https://raw.githubusercontent.com/lunox-work/bouncer/main/assets/badge.svg)](https://github.com/lunox-work/bouncer)
 ```
 
-`assets/badge.svg` is shields.io's flat-square badge with the mark
-(`assets/mark-dark.svg`) as its logo.
+`assets/badge.svg` is shields.io's flat-square badge with the mark as its logo
+(assets/src/marks.py writes it in).
 
 **The ID check on pull requests.** `.github/workflows/id-comment.yml` is the
 same placement with no seal and no suite: on each push it runs `bouncer id-comment`

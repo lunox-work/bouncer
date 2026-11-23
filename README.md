@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/mark-dark.svg">
-    <img src="assets/mark-light.svg" width="180" alt="Bouncer: a huge, heavyset bald man in a black suit, black shades, arms crossed, an earpiece with a coiled tube running into his collar">
-  </picture>
+  <img src="assets/mark.png" width="180" alt="Bouncer: a huge, heavyset bald man in a black suit, black shades, arms crossed, an earpiece with a coiled tube running into his collar">
 </p>
 
 <h1 align="center">Bouncer</h1>
