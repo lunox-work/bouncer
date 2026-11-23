@@ -1,10 +1,10 @@
-// Bouncer, drawn: the movie bouncer, huge in a black suit, shaved head, shades,
-// arms crossed, the earpiece wire coiling into his collar. Traced from a FLUX
-// comic drawing (assets/src/trace.py writes bin/mark-art.mjs): the ink is the
-// suit, the shades and the lines; `fill` paints what his outline encloses (face,
-// hands, the fold lines), `outline` rings him like a sticker so the black suit
-// holds on a dark background. Used by bin/card.mjs and assets/src/mark.mjs (the
-// README marks, the hero's door and the plugin icon).
+// Bouncer, drawn: the movie bouncer, huge and heavyset in a black suit, bald,
+// shades, arms crossed, an earpiece with a coiled tube into his collar. Traced
+// from a FLUX drawing (assets/src/trace.py writes bin/mark-art.mjs): the ink is
+// the suit, the shades and the lines; `fill` paints what his outline encloses
+// (face, hands, the fold lines), `outline` rings him like a sticker so the black
+// suit holds on a dark background. Used by bin/card.mjs and assets/src/mark.mjs
+// (the README marks, the images' corner logo and the plugin icon).
 import { BOX, FILL_PATH, INK_PATH } from "./mark-art.mjs";
 
 export const INK = "#0b0b0c"; // night

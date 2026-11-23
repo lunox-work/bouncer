@@ -1,53 +1,43 @@
-# Bouncer's mark from a FLUX comic drawing: the movie bouncer, huge in a black suit,
-# shaved head, shades, arms crossed, the earpiece wire coiling into his collar.
-# The source is FLUX.1 schnell (Apache 2.0) on AI Horde, 768px, 4 steps, prompt:
-#   an enormous towering nightclub bouncer, massively wide barrel-shaped body, huge round
-#   shoulders, thick bull neck, shaved bald head, small black sunglasses at night, clear
-#   earpiece with a coiled wire running into his collar, black suit jacket stretched tight,
-#   black shirt open at the collar, no tie, heavy jaw, deadpan, arms crossed, waist up, front
-#   view, bold black ink comic illustration, thick confident outlines, solid black suit fill,
-#   flat, no gray, no gradients, plain white background, single character, centered
-# The comic paints the suit a flat dark grey and draws its folds in black on it. Here the
-# grey becomes solid ink and the black lines inside it become paper, so the crossed arms
-# read as white lines on a black suit; outside the suit, black lines stay ink, thickened.
-# The earpiece wire is drawn in (the drawing only has a small hook) so it survives at
-# icon size. Then potrace traces two shapes: the ink, and the fill (everything his
-# outline encloses, so a scene can paint him solid).
+# Bouncer's mark, traced from a FLUX drawing: the movie bouncer, huge and heavyset in a black suit,
+# bald, shades, arms crossed, a security earpiece with a coiled tube into his collar.
+# assets/src/bouncer-flux.webp is FLUX.1 schnell (Apache 2.0) on AI Horde, 768px, 4 steps, cfg 1,
+# k_euler, prompt:
+#   soviet constructivist propaganda poster, red black and cream, flat colors, bold geometric
+#   shapes, diagonal stripes behind him, flat cel-shaded black suit with warm charcoal highlights
+#   and sharp shadow planes, no lettering, illustration of a huge heavyset nightclub bouncer built
+#   like a crime boss enforcer, massive wide shoulders, barrel chest, thick bull neck, big powerful
+#   heavyweight body, solid muscle with some heft, broad square jaw, a firm face with only slight
+#   heaviness under the chin, bald head, small black sunglasses, stern frown, black suit and black
+#   shirt, arms crossed over his chest, a security earpiece in his ear with a clear coiled tube
+#   running down his neck into his collar, clearly visible earpiece, waist-up, camera at his chest
+#   height looking up slightly, he faces the viewer straight on, symmetrical, shoulders square,
+#   chin down, looking straight down at the viewer, no photo, no 3d render
+# assets/src/bouncer-cut.webp is that drawing at 1024px with the poster cut away (rembg, u2net);
+# the scene (assets/src/scene.py) and this trace both start from it.
+# The drawing paints the suit black with charcoal light planes. Here the whole suit becomes ink and
+# a thin paper line runs round each light plane, so the folds and crossed arms read as white lines
+# on a black suit; the skin stays paper with its dark lines in ink. Then potrace traces two shapes:
+# the ink, and the fill (his whole cut-out, so a scene can paint him solid).
 # Writes bin/mark-art.mjs. Needs: pip install pillow numpy potracer
-#   python assets/src/trace.py assets/src/bouncer-flux.webp bin/mark-art.mjs [preview.png]
-import sys, json, math
-from PIL import Image, ImageFilter, ImageDraw
+#   python assets/src/trace.py assets/src/bouncer-cut.webp bin/mark-art.mjs [preview.png]
+import sys, json
+from PIL import Image, ImageFilter
 import numpy as np, potrace
 
 src, dst = sys.argv[1], sys.argv[2]
-CROP, N = (40, 30, 728, 718), 1024
-SUIT = (25, 70)  # the suit's flat grey, 0-255
-GROW, THR = 3, 110  # line thickening and ink threshold outside the suit
-COIL = ((372, 236), (382, 336), 7, 6)  # earpiece wire: from, to, amplitude, turns
+CROP, N = (22, 0, 1008, 986), 1024  # his whole width: round shoulders, the suit runs off the bottom
+DARK, LIGHT = 95, 21  # the suit (and the dark lines) is below DARK; its light planes are LIGHT and up
+LINE = 7  # fold line width, px of the 1024 box
 
-im = Image.open(src).convert("L").crop(CROP).resize((N, N), Image.LANCZOS)
-g = np.asarray(im.filter(ImageFilter.GaussianBlur(1.0))).astype(int)
+im = Image.open(src).convert("RGBA").crop(CROP).resize((N, N), Image.LANCZOS)
+cut = np.asarray(im)[..., 3] > 128
+g = np.asarray(im.convert("L").filter(ImageFilter.GaussianBlur(1.2))).astype(int)
 m = lambda arr, f: np.asarray(Image.fromarray((arr * 255).astype(np.uint8)).filter(f)) > 127
-suit = (g >= SUIT[0]) & (g < SUIT[1])
-suit = m(m(suit, ImageFilter.MinFilter(7)), ImageFilter.MaxFilter(7))  # solid grey only, not line edges
-suit_area = m(m(suit, ImageFilter.MaxFilter(9)), ImageFilter.MinFilter(5))
-thick = np.asarray(im.filter(ImageFilter.MinFilter(GROW)).filter(ImageFilter.GaussianBlur(1.2))) < THR
-ink = m(suit | (thick & ~suit_area), ImageFilter.MedianFilter(5))
-
-(x0, y0), (x1, y1), amp, turns = COIL
-wire = Image.fromarray((ink * 255).astype(np.uint8)).copy()  # fromarray shares a read-only buffer
-dx, dy = x1 - x0, y1 - y0
-ln = math.hypot(dx, dy)
-pts = [(x0 + dx * t - dy / ln * amp * math.sin(t * turns * 2 * math.pi), y0 + dy * t + dx / ln * amp * math.sin(t * turns * 2 * math.pi)) for t in (i / 200 for i in range(201))]
-ImageDraw.Draw(wire).line(pts, fill=255, width=6, joint="curve")
-ink = np.asarray(wire) > 127
-
-# fill: flood the outside from every edge; what the flood never reaches is him
-outside = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8)).copy()
-for t in range(0, N, 8):
-    for xy in ((t, 0), (0, t), (N - 1, t), (t, N - 1)):
-        if outside.getpixel(xy) == 255: ImageDraw.floodfill(outside, xy, 128)
-fill = np.asarray(outside) != 128
+suit = m(cut & (g < DARK), ImageFilter.MedianFilter(5))
+light = m(suit & (g >= LIGHT), ImageFilter.MedianFilter(7))
+light = m(m(light, ImageFilter.MinFilter(5)), ImageFilter.MaxFilter(5))  # planes, not specks
+ink = suit & ~(m(light, ImageFilter.MaxFilter(LINE)) & ~light)  # a paper line just outside each plane
+fill = m(cut, ImageFilter.MedianFilter(5))
 
 def d(mask):
     out = []
@@ -61,7 +51,7 @@ def d(mask):
     return "".join(out)
 
 with open(dst, "w") as f:
-    f.write("// Generated by assets/src/trace.py from assets/src/bouncer-flux.webp: do not edit by hand.\n")
+    f.write("// Generated by assets/src/trace.py from assets/src/bouncer-cut.webp: do not edit by hand.\n")
     f.write(f"export const BOX = {N};\n")
     f.write(f"export const INK_PATH = {json.dumps(d(ink))};\n")
     f.write(f"export const FILL_PATH = {json.dumps(d(fill))};\n")

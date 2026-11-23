@@ -13,7 +13,7 @@
        its own guesses (66 of 74 failing own tests assert a reading the spec leaves open). #social's ID
        keeps the score, 21/21, which is escrow-split run 1. The hero has to say what he does to someone
        who reads nothing else, so "the list" is defined twice at a size that survives a thumbnail: the
-       line under the headline, and the clipboard under his arm (a drawing, its four rows are no count).
+       line under the headline, and the clipboard at his side (a drawing, its four rows are no count).
      - #before: runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
        not an acceptance signal"): its own tests 21/21 (21 green dots), the hidden suite 43/46. The
        hidden suite's 46 kept tests are drawn one group a rule, counted per scenario key from
@@ -84,7 +84,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #hero .foot { position: absolute; left: 64px; bottom: 34px; }
 #hero .door { position: relative; height: 560px; }
 #hero .door svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-#hero .says { right: 53px; top: 100px; }
+#hero .says { right: 53px; top: 92px; }
 
 /* his line, said from the door */
 .says { position: absolute; background: #2a0d13; border: 2px solid rgb(214 34 63 / 0.6); border-radius: 18px; padding: 12px 20px; font-family: Display; font-weight: 600; font-size: 34px; letter-spacing: -0.02em; box-shadow: 0 0 24px rgb(214 34 63 / 0.35); }
@@ -95,7 +95,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #social { height: 640px; padding: 0; }
 #social .stage { position: absolute; left: 320px; top: 0; width: 640px; height: 640px; }
 #social .stage svg { position: absolute; left: 46px; top: 34px; width: 548px; height: 590px; overflow: visible; }
-#social .says { right: 64px; top: 140px; }
+#social .says { right: 64px; top: 126px; }
 #social .side { position: absolute; top: 0; bottom: 0; width: 268px; display: flex; flex-direction: column; }
 #social .side.l { left: 52px; padding-top: 52px; gap: 46px; }
 #social .side.l h1 { font-size: 42px; line-height: 1.08; }
@@ -246,20 +246,15 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   </div>
   <div class="door"><svg viewBox="0 0 520 560">
     <defs>
-      <radialGradient id="spill" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff3d62" stop-opacity="0.42"/><stop offset="1" stop-color="#ff3d62" stop-opacity="0"/></radialGradient>
-      <linearGradient id="inside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b86"/><stop offset="0.55" stop-color="#d6223f"/><stop offset="1" stop-color="#7a0f24"/></linearGradient>
       <filter id="neon" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
-    <!-- the club is called DONE; he is wider than its door -->
-    <ellipse cx="300" cy="320" rx="300" ry="300" fill="url(#spill)"/>
-    <path d="M176 540 V176 Q176 92 300 92 Q424 92 424 176 V540 Z" fill="url(#inside)"/>
+    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL, and he
+         is wider than the doorway (assets/src/scene.py draws all three) -->
+    <image href="scene.webp" x="0" y="0" width="520" height="560"/>
     <text x="300" y="62" text-anchor="middle" font-family="Display" font-weight="600" font-size="44" letter-spacing="14" fill="#ffe3e8" filter="url(#neon)">DONE</text>
-    <image href="../mark-scene.svg" x="112" y="164" width="376" height="376" style="filter: drop-shadow(0 0 1.2px rgba(255,120,145,0.95)) drop-shadow(0 0 12px rgba(255,61,98,0.4))"/>
     <rect x="0" y="540" width="520" height="3" fill="#2a2a2e"/>
-    <!-- his list, under his arm: the same rows as the agent's ID, with the one it never saw coming -->
-    <mask id="behind-arms" maskUnits="userSpaceOnUse" x="0" y="0" width="620" height="560"><rect width="620" height="560" fill="#fff"/>
-      <g transform="translate(112 164) scale(3.13333)" fill="#000" stroke="#000" stroke-width="2.8"><rect x="28" y="86" width="64" height="16" rx="8" transform="rotate(12 60 94)"/><rect x="28" y="86" width="64" height="16" rx="8" transform="rotate(-12 60 94)"/></g></mask>
-    <g mask="url(#behind-arms)"><g transform="translate(-8 -6) rotate(9 452 400)">
+    <!-- his list, at his side: the same rows as the agent's ID, with the one it never saw coming -->
+    <g transform="translate(-8 -6) rotate(9 452 400)">
       <rect x="384" y="316" width="148" height="160" rx="9" fill="#f2efe8"/>
       <rect x="436" y="307" width="44" height="18" rx="5" fill="#3a3a3e"/>
       <text x="396" y="349" font-family="Display" font-weight="600" font-size="20" fill="#0b0b0c">THE LIST</text>
@@ -267,7 +262,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
       <g fill="#1a1a1a"><rect x="396" y="383" width="72" height="8" rx="2.5"/><rect x="396" y="401" width="54" height="8" rx="2.5"/><rect x="396" y="437" width="62" height="8" rx="2.5"/></g>
       <rect x="396" y="419" width="80" height="8" rx="2.5" fill="#d6223f"/>
       <g font-family="Mono" font-weight="500" font-size="14" text-anchor="middle"><text x="510" y="392" fill="#15803d">✓</text><text x="510" y="410" fill="#15803d">✓</text><text x="510" y="428" fill="#d6223f">✕</text><text x="510" y="446" fill="#15803d">✓</text></g>
-    </g></g>
+    </g>
     <!-- the rope -->
     <path d="M128 474 Q300 532 478 474" fill="none" stroke="#d6223f" stroke-width="9" stroke-linecap="round"/>
     <g fill="#c9a24a"><rect x="121" y="468" width="13" height="72" rx="5"/><circle cx="127.5" cy="464" r="10"/><rect x="471" y="468" width="13" height="72" rx="5"/><circle cx="477.5" cy="464" r="10"/></g>
@@ -312,11 +307,10 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   </div>
   <div class="stage">
     <svg viewBox="0 0 520 560">
-    <!-- the club is called DONE; he is wider than its door -->
-    <ellipse cx="300" cy="320" rx="300" ry="300" fill="url(#spill)"/>
-    <path d="M176 540 V176 Q176 92 300 92 Q424 92 424 176 V540 Z" fill="url(#inside)"/>
+    <!-- the club is called DONE: its double doors open on falling test results, PASS and FAIL, and he
+         is wider than the doorway (assets/src/scene.py draws all three) -->
+    <image href="scene.webp" x="0" y="0" width="520" height="560"/>
     <text x="300" y="62" text-anchor="middle" font-family="Display" font-weight="600" font-size="44" letter-spacing="14" fill="#ffe3e8" filter="url(#neon)">DONE</text>
-    <image href="../mark-scene.svg" x="112" y="164" width="376" height="376" style="filter: drop-shadow(0 0 1.2px rgba(255,120,145,0.95)) drop-shadow(0 0 12px rgba(255,61,98,0.4))"/>
     <rect x="0" y="540" width="520" height="3" fill="#2a2a2e"/>
     <!-- the rope -->
     <path d="M128 474 Q300 532 478 474" fill="none" stroke="#d6223f" stroke-width="9" stroke-linecap="round"/>
