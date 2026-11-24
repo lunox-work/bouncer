@@ -1,37 +1,48 @@
 <!doctype html>
 <!-- Source of the README images; render with `node assets/src/render.mjs` (one PNG per <section>).
-     One idea an image, and as few figures as it needs: the tables are RESULTS.md's job. The README's
-     three (#hero, #queue, #before) carry one pair of numbers between them, the hero's 105 and 75.
+     One idea an image, in the launch film's words and order (bouncer-video's narration): the hero is
+     its experiment, #before "He writes his own tests, in a room your agent never sees", #list "a list
+     of every decision your agent made that you never asked for", said shorter. Words a reader gets
+     in one glance: short sentences, no door slang where a plain word does. The tables are
+     RESULTS.md's job.
      Every number comes from RESULTS.md and the archive's results.jsonl (lunox-work/bouncer-evidence,
      cloned as experiments/ by scripts/fetch-evidence.sh):
-     - the 105 runs: ticket arms of the 7 specs (csv-export, escrow-split, gherkin-parse, invite-codes,
-       status-normalize, usage-counter, weekly-digest), Claude Haiku 5.5, 15 runs each;
-       ticket = self-tested-haiku-ticket, public = double-blind-haiku-ticket, retry = public with each of
-       its 24 failures replaced by double-blind-haiku-ticket-retry-keyed.
-     - #hero: the scene, and the 105 runs drawn as one strip of ticks under the headline, a tick a run,
-       75 turned away (red) and 30 on the list (green), sorted. The agent's ID is the measured finding that an agent's own tests vouch for
-       its own guesses (66 of 74 failing own tests assert a reading the spec leaves open). #social's ID
-       keeps the score, 21/21, which is escrow-split run 1. The hero has to say what he does to someone
-       who reads nothing else, so "the list" is defined twice at a size that survives a thumbnail: the
-       line under the headline, and the clipboard at his side (a drawing, its four rows are no count).
+     - #hero: the scene, and RESULTS.md "Stronger implementers": 140 runs (Haiku 5.5, Sonnet 5.5,
+       Opus 5.5 and Fable 5.2 on the 7 loose tickets, 5 runs each, from the ticket alone), every one
+       with its own tests green, 60 passed the hidden suites (9 + 16 + 15 + 20) and 80 were rejected
+       (26 + 19 + 20 + 15). The strip is a tick a run, the 80 first. The agent's ID is the measured
+       finding that an agent's own tests vouch for its own guesses (66 of 74 failing own tests assert
+       a reading the spec leaves open). #social's ID keeps the score, 21/21, which is escrow-split
+       run 1. The hero has to say what he does to someone who reads nothing else: the line under the
+       headline, and the clipboard at his side (a drawing, its four rows are no count).
      - #before: three parties, two rooms and a wall (REFERENCE.md's opening: a writer model in sessions
-       apart, from the confirmed spec; the hidden suite is never shown, a turned-away run hears only the
-       rule it missed). This run had the ticket alone, no public suite, so only the ticket goes in. The run is
+       apart, from the confirmed spec; the hidden suite is never shown). This run had the ticket
+       alone, no public suite, so only the ticket goes in. The run is
        runs/escrow-split/self-tested-haiku-ticket/1 (RESULTS.md, "The agent's own green run is
        not an acceptance signal"): its own tests 21/21 (21 green dots), the hidden suite 43/46. The
        hidden suite's 46 kept tests are drawn one group a rule, counted per scenario key from
        experiments/specs/escrow-split/calibration.json (9 rules); the run's 3 failures are all in
        boundary-2, a bounty of 0 (its grade.json), so one group is red and eight are green.
-     - #queue: six checks, and what was measured for each, mostly in words. "7 in 10": 75 of 105 (71%).
-       "Nearly every failure": the referee found 71 of the 75 failed only on what the ticket left open.
-       "Every time": gamed, 21 of 21 rejected. "Never": no agent tampered in 2,522 sandboxed runs or
-       262 in a repository. "Half the specs": Red team, Opus 5.5 told to game got in on two of four
-       specs (20 of 20 there). His line beside each is the one bin/voice.mjs says for that check.
-     - #runs: the three arms' rejected runs, 75, 24 and 9 of 105; a row is one ticket, in the order above.
+     - #list: `bouncer id` on that same run: 12 items in 17 s (evidence/id-blind/escrow-split-1.list.json).
+       The item written out is the zero-bounty pick at src/index.ts:41, in the words of the listing
+       the README quoted until 370b8fa, where it was number 7 (number 5 in the id-blind listing). The
+       blind judge matched the run's failing rule, boundary-2, to that pick and found it disagrees
+       (escrow-split-1.judge.json), hence "the one his tests failed". The other rows are drawn, not
+       quoted; the keep and change ticks are the reader's, as in the film.
+     - #queue: six checks, and what was measured for each, mostly in words. "80 of 140": the hero's
+       runs. The rest is the archive's 105 Haiku runs (15 a ticket; ticket = self-tested-haiku-ticket):
+       "Nearly every failure": the referee found 71 of the 75 rejected failed only on what the ticket
+       left open. "Every time": gamed, 21 of 21 rejected. "Never": no agent tampered in 2,522
+       sandboxed runs or 262 in a repository. "Half the specs": Red team, Opus 5.5 told to game got
+       in on two of four specs (20 of 20 there). His line beside each is the one bin/voice.mjs says
+       for that check.
+     - #runs: the 105 Haiku runs' three arms, 75, 24 and 9 rejected; a row is one ticket (csv-export,
+       escrow-split, gherkin-parse, invite-codes, status-normalize, usage-counter, weekly-digest);
+       public = double-blind-haiku-ticket, retry = public with each of its 24 failures replaced by
+       double-blind-haiku-ticket-retry-keyed.
      - #verdict: real `bouncer judge` output on a terminal, 2026-11-19, on the bundled duration-parse
        example: a submission that accepts leading zeros after the first component, then the same
-       submission fixed (judged from a <variant>-retry-keyed folder, as a keyed retry is).
-     - #list: duration-parse's 39 kept hidden tests, counted per scenario key (calibration.json). -->
+       submission fixed (judged from a <variant>-retry-keyed folder, as a keyed retry is). -->
 <html>
 <head>
 <meta charset="utf-8">
@@ -74,14 +85,14 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #hero { height: 640px; display: grid; grid-template-columns: 540px 1fr; column-gap: 20px; padding-top: 48px; }
 #hero .left { display: flex; flex-direction: column; }
 #hero .mid { margin: auto 0; padding-bottom: 50px; }
-#hero h1 { font-size: 66px; }
+#hero h1 { font-size: 60px; }
 /* what the headline's last word means, right under it */
 #hero .def { font-size: 24px; line-height: 1.3; color: #d9d5cc; margin-top: 18px; }
 #hero .def b { color: var(--paper); font-weight: 500; }
-/* the 105 as one strip, the way a status page draws its history: a tick a run, the red ones turned
+/* the 140 as one strip, the way a status page draws its history: a tick a run, the red ones turned
    away; the key under it starts each word where its colour starts */
-.crowd { display: flex; gap: 2px; margin-top: 28px; }
-.crowd i { width: 3px; height: 30px; border-radius: 1.5px; background: rgb(34 197 94 / 0.75); }
+.crowd { display: flex; gap: 1.5px; margin-top: 28px; }
+.crowd i { width: 2.25px; height: 30px; border-radius: 1.5px; background: rgb(34 197 94 / 0.75); }
 .crowd i.out { background: var(--rope); }
 .key { display: grid; font-family: Mono; font-size: 14px; margin-top: 10px; }
 #hero .foot { position: absolute; left: 64px; bottom: 34px; }
@@ -134,7 +145,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #queue td.fig svg { width: 56px; height: 52px; display: block; }
 #queue td.name { width: 400px; white-space: nowrap; }
 #queue td.name b { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.01em; }
-#queue td.name span { font-size: 17px; color: var(--muted); margin-top: 3px; }
+#queue td.name span { font-size: 18px; color: #cfcbc2; margin-top: 3px; }
 #queue td.saw b { font-family: Display; font-weight: 600; font-size: 23px; letter-spacing: -0.01em; }
 #queue td.saw span { font-family: Mono; font-size: 14px; color: var(--muted); margin-top: 4px; }
 #queue td.him { text-align: right; width: 410px; white-space: nowrap; padding-right: 0; }
@@ -174,21 +185,29 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 #how .step p { margin-bottom: 6px; }
 #how .foot { margin-top: 34px; }
 
-/* the list: his clipboard */
-#list { display: grid; grid-template-columns: 1fr 520px; column-gap: 56px; align-items: center; }
+/* the list: every decision the agent made that nobody asked for, as the page he hands over (the
+   film's page: five of its twelve rows, one of them written out, a keep and a change ticked) */
+#list { display: grid; grid-template-columns: 1fr 540px; column-gap: 56px; align-items: center; }
 #list h1 { font-size: 44px; margin: 22px 0 22px; }
-#list .say { font-size: 22px; line-height: 1.5; color: #d9d5cc; max-width: 560px; }
-#list .board { background: #ece7dc; color: #111; border-radius: 20px; padding: 46px 34px 28px; position: relative; transform: rotate(1.5deg); box-shadow: 0 30px 60px rgb(0 0 0 / 0.5); }
+#list .say { font-size: 24px; line-height: 1.45; color: #d9d5cc; max-width: 520px; }
+#list .say b { color: var(--paper); font-weight: 500; }
+#list .board { background: #ece7dc; color: #111; border-radius: 20px; padding: 44px 32px 22px; position: relative; transform: rotate(1.5deg); box-shadow: 0 30px 60px rgb(0 0 0 / 0.5); }
 #list .clip { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 150px; height: 40px; border-radius: 10px; background: linear-gradient(#5a5a5e, #2c2c30); }
-#list .board .head { font-family: Mono; font-size: 14px; letter-spacing: 0.2em; color: #666; margin-bottom: 14px; display: flex; justify-content: space-between; }
-#list .row { display: grid; grid-template-columns: 110px 1fr 30px; align-items: center; gap: 12px; padding: 7px 0; border-top: 1px solid #d3ccbd; font-family: Mono; font-size: 16px; }
-#list .bars { display: flex; gap: 6px; flex-wrap: wrap; }
+#list .head { font-family: Display; font-weight: 600; font-size: 25px; letter-spacing: -0.01em; color: var(--rope); }
+#list .lede { font-family: Mono; font-size: 15px; color: #444; margin: 6px 0 14px; }
+#list .item { display: grid; grid-template-columns: 30px 1fr 92px; column-gap: 8px; align-items: center; padding: 15px 0; border-top: 1px solid #d3ccbd; font-family: Mono; font-size: 16px; }
+#list .item .n { font-weight: 500; align-self: start; }
+#list .bars { display: flex; flex-direction: column; gap: 8px; }
 #list .bars i { display: block; height: 11px; border-radius: 3px; background: #1a1a1a; }
-#list .row .ok { color: #15803d; font-size: 20px; text-align: right; }
-#list .row.out { color: var(--rope); }
-#list .row.out .bars i:last-child { background: var(--rope); }
-#list .row.out .ok { color: var(--rope); }
-#list .foot { grid-column: 1 / -1; margin-top: 30px; }
+#list .bars i + i { height: 9px; background: #8f897c; }
+#list .item.open b { font-family: Sans; font-weight: 500; font-size: 18px; line-height: 1.25; display: block; }
+#list .item.open p { font-size: 15px; line-height: 1.45; margin-top: 8px; }
+#list .item.open small { font-size: 13px; color: #6b665c; display: block; margin-top: 8px; }
+#list .box { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 15px; font-weight: 500; }
+#list .box u { text-decoration: none; width: 22px; height: 22px; border: 2px solid currentColor; border-radius: 5px; display: grid; place-items: center; font-size: 16px; line-height: 1; order: 2; }
+#list .box.keep { color: #15803d; }
+#list .box.change { color: var(--rope); }
+#list .foot { grid-column: 1 / -1; margin-top: 34px; }
 </style>
 </head>
 <body>
@@ -234,10 +253,10 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   <div class="left">
     <div class="top"><img src="../mark-small.png" alt="">bouncer</div>
     <div class="mid">
-      <h1>105 agents said<br>all tests pass.<br><span class="rope">75 weren't<br>on the list.</span></h1>
-      <p class="def"><b>The list:</b> tests your coding agent never saw.</p>
-      <div class="crowd" data-out="75" data-of="105"></div>
-      <div class="key"><span class="rope">turned away</span><span class="in">on the list</span></div>
+      <h1>140 coding agents<br>said the work<br>was done.<br><span class="rope">Only 60 were right.</span></h1>
+      <p class="def"><b>Bouncer checks your agent’s work</b><br>with tests it never saw.</p>
+      <div class="crowd" data-out="80" data-of="140"></div>
+      <div class="key"><span class="rope">80 wrong</span><span class="in">60 right</span></div>
     </div>
   </div>
   <div class="door"><svg viewBox="0 0 520 560">
@@ -286,7 +305,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
   </svg>
     <div class="says">Not tonight.</div>
   </div>
-  <div class="foot">Claude Haiku 5.5 on seven loose tickets</div>
+  <div class="foot">4 models × 7 tickets × 5 runs · every run is public</div>
 </section>
 
 <!-- ================= social: the preview's crop-safe cut =================
@@ -300,7 +319,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 <section class="card" id="social">
   <div class="side l">
     <div class="top"><img src="../mark-small.png" alt="">bouncer</div>
-    <h1>Your agent<br>says it's<br>on the list.<br><span class="rope">He checks.</span></h1>
+    <h1>Your coding<br>agent says<br>it's done.<br><span class="rope">He checks.</span></h1>
   </div>
   <div class="stage">
     <svg viewBox="0 0 520 560">
@@ -346,7 +365,7 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
 <!-- ================= before / after ================= -->
 <section class="card" id="before">
   <div class="top"><img src="../mark-small.png" alt="">bouncer</div>
-  <h1>Two rooms, one wall. <span class="rope">Only the code goes through.</span></h1>
+  <h1>He writes his own tests,<br><span class="rope">in a room your agent never sees.</span></h1>
   <svg class="scene" viewBox="0 0 1152 600">
     <defs>
       <pattern id="brick" width="36" height="24" patternUnits="userSpaceOnUse"><rect width="36" height="24" fill="#2a2a2f"/><path d="M0 0.5 H36 M0 12.5 H36 M18 0 V12 M0 12 V24 M36 12 V24" stroke="#151518" stroke-width="2"/></pattern>
@@ -373,31 +392,32 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
     <text x="636" y="166" font-family="Mono" font-size="14" letter-spacing="3" fill="#d6223f">HIS ROOM</text>
 
     <!-- its own tests, on its own wall: written by itself, from its reading of the ticket -->
-    <rect x="24" y="190" width="246" height="128" rx="12" fill="#1b1b1e"/>
-    <text x="44" y="216" font-family="Mono" font-size="12" letter-spacing="2.5" fill="#8b877f">ITS OWN TESTS</text>
-    <text x="44" y="242" font-family="Display" font-weight="600" font-size="24" fill="#22c55e">21/21 all pass</text>
+    <rect x="24" y="190" width="276" height="134" rx="12" fill="#1b1b1e"/>
+    <text x="44" y="216" font-family="Mono" font-size="13" letter-spacing="2.5" fill="#8b877f">ITS OWN TESTS</text>
+    <text x="44" y="242" font-family="Display" font-weight="600" font-size="24" fill="#22c55e">21 of 21 pass</text>
     <rect x="44.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="54.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="65.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="75.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="86.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="97.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="107.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="118.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="128.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="139.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="150.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="160.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="171.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="181.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="192.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="203.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="213.6" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="224.2" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="234.8" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="245.4" y="250" width="8" height="8" rx="2" fill="#22c55e"/><rect x="256.0" y="250" width="8" height="8" rx="2" fill="#22c55e"/>
-    <text x="44" y="284" font-family="Mono" font-size="12" fill="#8b877f">written by itself, from</text>
-    <text x="44" y="302" font-family="Mono" font-size="12" fill="#8b877f">its reading of the ticket</text>
+    <text x="44" y="286" font-family="Mono" font-size="14" fill="#a8a49b">your agent wrote these</text>
+    <text x="44" y="306" font-family="Mono" font-size="14" fill="#a8a49b">tests itself</text>
+
+    <!-- its claim, said the way he says his -->
+    <g transform="translate(24 372)">
+      <rect width="206" height="50" rx="14" fill="#1b1b1e" stroke="rgb(242 239 232 / 0.3)" stroke-width="2"/>
+      <path d="M205 16 L222 25 L205 34" fill="#1b1b1e" stroke="rgb(242 239 232 / 0.3)" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="201" y="15" width="5" height="20" fill="#1b1b1e"/>
+      <text x="103" y="33" text-anchor="middle" font-family="Display" font-weight="600" font-size="24" letter-spacing="-0.5" fill="#f2efe8">All tests pass.</text>
+    </g>
 
     <!-- what it tries to see: the wall stops it -->
     <path d="M372 404 L522 262" stroke="#8b877f" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
     <circle cx="528" cy="256" r="11" fill="#2a0d13" stroke="#d6223f" stroke-width="2"/>
     <path d="M523 251 L533 261 M533 251 L523 261" stroke="#d6223f" stroke-width="2.4" stroke-linecap="round"/>
-    <text x="508" y="222" text-anchor="end" font-family="Mono" font-size="14" fill="#d6223f">can't see his list</text>
+    <text x="508" y="222" text-anchor="end" font-family="Mono" font-size="15" fill="#d6223f">can’t see his tests</text>
 
     <!-- the code, through the slot -->
     <rect x="540" y="352" width="72" height="56" fill="#050506"/>
     <path d="M458 362 H492 L500 356 H530 V398 H458 Z" fill="#f2efe8"/>
     <rect x="530" y="362" width="82" height="36" fill="#f2efe8"/>
-    <text x="465" y="385" font-family="Mono" font-weight="500" font-size="13" fill="#0b0b0c">the code</text>
-
-    <!-- one word back: the rule it missed, never a test -->
-    <path d="M536 414 C520 446 520 456 506 470" fill="none" stroke="#d6223f" stroke-width="2" marker-end="url(#tip-r)"/>
-    <rect x="388" y="476" width="132" height="44" rx="10" fill="#2a0d13" stroke="rgb(214 34 63 / 0.6)" stroke-width="2"/>
-    <text x="454" y="504" text-anchor="middle" font-family="Mono" font-weight="500" font-size="17" fill="#d6223f">boundary-2</text>
-    <text x="388" y="546" font-family="Mono" font-size="14" fill="#d9d5cc">one word back:</text>
-    <text x="388" y="566" font-family="Mono" font-size="14" fill="#d9d5cc">the rule it missed</text>
+    <text x="465" y="386" font-family="Mono" font-weight="500" font-size="15" fill="#0b0b0c">the code</text>
 
     <!-- the agent: the hero's, with its villain grin, reaching for the slot -->
     <g transform="translate(232 -320) scale(1.6)">
@@ -438,18 +458,16 @@ pre, .term { font-family: Mono; font-size: 19px; line-height: 1.55; white-space:
     <g transform="rotate(2 1024 360)">
       <rect x="912" y="186" width="220" height="372" rx="14" fill="#ece7dc"/>
       <rect x="988" y="176" width="68" height="20" rx="6" fill="#3a3a3e"/>
-      <text x="932" y="224" font-family="Display" font-weight="600" font-size="22" fill="#0b0b0c">THE LIST</text>
-      <text x="932" y="244" font-family="Mono" font-weight="500" font-size="12.5" fill="#d6223f">tests it never saw</text>
+      <text x="932" y="224" font-family="Display" font-weight="600" font-size="22" fill="#0b0b0c">HIS TESTS</text>
+      <text x="932" y="245" font-family="Mono" font-weight="500" font-size="14" fill="#d6223f">it never saw them</text>
       <rect x="936" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="268" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="289" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1001" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1014" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1027" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1040" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1053" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1066" y="310" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="331" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="352" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="373" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="394" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="949" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="962" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="975" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="988" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="1001" y="415" width="10" height="10" rx="2.5" fill="#15803d"/><rect x="936" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="949" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="962" y="436" width="10" height="10" rx="2.5" fill="#d6223f"/><rect x="975" y="436" width="10" height="10" rx="2.5" fill="#15803d"/>
-      <text x="932" y="474" font-family="Display" font-weight="600" font-size="30" fill="#d6223f">3 fail</text>
-      <text x="1030" y="474" font-family="Mono" font-size="14" fill="#555">43/46</text>
-      <text x="932" y="502" font-family="Mono" font-size="12" fill="#555">one row a rule · all</text>
-      <text x="932" y="518" font-family="Mono" font-size="12" fill="#555">three in boundary-2</text>
-      <text x="932" y="542" font-family="Mono" font-size="12" fill="#555">written by him, apart</text>
+      <text x="932" y="478" font-family="Display" font-weight="600" font-size="30" fill="#d6223f">3 of 46 fail</text>
+      <text x="932" y="510" font-family="Mono" font-size="13.5" fill="#444">he wrote these from</text>
+      <text x="932" y="530" font-family="Mono" font-size="13.5" fill="#444">the spec you confirmed</text>
     </g>
     <rect x="612" y="597" width="540" height="3" fill="#2a2a2e"/>
   </svg>
-  <p class="why"><b>No stake in the code, no peek at the list.</b> Its own 21 tests agree with its guess. His 46 check the spec you confirmed, and 3 fail on the rule it guessed: what a $0 bounty does.</p>
+  <p class="why"><b>Same code, two results.</b> Your agent’s 21 tests pass, because they only check its own guesses.<br>3 of his 46 fail. The ticket did not say what a $0 bounty does, so your agent guessed wrong.</p>
 </section>
 
 <!-- ================= verdict ================= -->
@@ -478,14 +496,14 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
   <h1>Everyone in the queue has a story. <span class="rope">He</span> has the list.</h1>
   <table>
     <tr><th></th><th>IN THE QUEUE</th><th>WHAT WE SAW</th><th>HE SAYS</th></tr>
-    <tr><td class="fig"><svg class="rope"><use href="#g-id"/></svg></td><td class="name"><b>“I'm on the list.”</b><span>Says its own tests pass</span></td><td class="saw"><b>7 in 10</b><span>failed tests they never saw</span></td><td class="him"><b>Not tonight.</b></td></tr>
+    <tr><td class="fig"><svg class="rope"><use href="#g-id"/></svg></td><td class="name"><b>“I'm on the list.”</b><span>Says its own tests pass</span></td><td class="saw"><b>80 of 140</b><span>failed tests they never saw</span></td><td class="him"><b>Not tonight.</b></td></tr>
     <tr><td class="fig"><svg class="rope"><use href="#g-guess"/></svg></td><td class="name"><b>“I know the owner.”</b><span>Guesses what the ticket never said</span></td><td class="saw"><b>Nearly every failure</b><span>starts with a guess like this</span></td><td class="him"><b>Not tonight.</b></td></tr>
     <tr><td class="fig"><svg class="rope"><use href="#g-hat"/></svg></td><td class="name"><b>The outfit change</b><span>Hard-codes the visible test cases</span></td><td class="saw"><b>Every time</b><span>he caught it</span></td><td class="him"><b>Not tonight.</b></td></tr>
     <tr class="none"><td class="fig"><svg class="dim"><use href="#g-plus"/></svg></td><td class="name"><b>The plus-twelve</b><span>Changes files outside the task</span></td><td class="saw"><b>Never</b><span>no agent tried it</span></td><td class="him"><b>Just you. Not your twelve friends.</b></td></tr>
     <tr class="none"><td class="fig"><svg class="dim"><use href="#g-pen"/></svg></td><td class="name"><b>Writing on his clipboard</b><span>Edits the tests</span></td><td class="saw"><b>Never</b><span>no agent tried it</span></td><td class="him"><b>You don't write on my clipboard.</b></td></tr>
     <tr class="got"><td class="fig"><svg class="in"><use href="#g-bow"/></svg></td><td class="name"><b>The smooth one</b><span>A strong model, told to game him</span></td><td class="saw"><b>Half the specs</b><span>it got past him</span></td><td class="him"><b>You're in.</b></td></tr>
   </table>
-  <div class="foot">Claude Haiku 5.5 on seven loose tickets · the smooth one is Opus 5.5 · every figure in RESULTS.md</div>
+  <div class="foot">Row one: four models, 140 runs · the rest: Claude Haiku 5.5 · the smooth one is Opus 5.5 · every figure in RESULTS.md</div>
 </section>
 
 <!-- ================= runs ================= -->
@@ -538,15 +556,20 @@ duration-parse: <span class="in">passed</span>. Public 22/22, hidden <span class
 <section class="card" id="list">
   <div>
     <div class="top"><img src="../mark-small.png" alt="">bouncer</div>
-    <h1>He never shows the list.<br><span class="rope">Ask why, you get one word.</span></h1>
-    <p class="say">Your agent hears which rule it missed, <b>unhappy-1</b>. Never a test: not its name, its input or its assertion. So the next try fixes the rule, not the example.</p>
+    <h1>He lists every decision<br>your agent made<br><span class="rope">without asking you.</span></h1>
+    <p class="say">When your ticket did not say what to do,<br>your agent chose for you.<br><b>You keep or change each one.</b></p>
   </div>
   <div class="board">
     <div class="clip"></div>
-    <div class="head"><span>THE LIST</span><span>duration-parse</span></div>
-    <div id="rows"></div>
+    <div class="head">12 things your ticket never said</div>
+    <div class="lede">Your agent picked for you:</div>
+    <div class="item shut"><span class="n">5.</span><span class="bars"><i style="width:250px"></i><i style="width:150px"></i></span></div>
+    <div class="item shut"><span class="n">6.</span><span class="bars"><i style="width:220px"></i><i style="width:170px"></i></span><span class="box keep"><u>✓</u>keep</span></div>
+    <div class="item open"><span class="n">7.</span><div><b>What is the status for a zero bounty?</b><p>picked: reports “pro bono” for every state, and still records zero-amount releases</p><small>src/index.ts:41 · ticket: silent</small></div><span class="box change"><u>✓</u>change</span></div>
+    <div class="item shut"><span class="n">8.</span><span class="bars"><i style="width:200px"></i><i style="width:140px"></i></span></div>
+    <div class="item shut"><span class="n">9.</span><span class="bars"><i style="width:240px"></i><i style="width:120px"></i></span></div>
   </div>
-  <div class="foot">The bundled duration-parse example · one bar is one hidden test</div>
+  <div class="foot">A real list from one run: 12 decisions in 17 seconds · number 7 is the one that failed his tests</div>
 </section>
 
 <script>
@@ -559,10 +582,10 @@ const runs = {
 for (const el of document.querySelectorAll(".dots[data-arm]"))
   el.innerHTML = [...runs[el.dataset.arm].join("")].map((b) => `<u class="${b === "1" ? "" : "f"}"></u>`).join("");
 
-// The hero's strip: one tick a run, the turned away first; a tick and its gap are 5px wide.
+// The hero's strip: one tick a run, the turned away first; a tick and its gap are 3.75px wide.
 for (const el of document.querySelectorAll(".crowd")) {
   el.innerHTML = Array.from({ length: +el.dataset.of }, (_, i) => `<i class="${i < +el.dataset.out ? "out" : ""}"></i>`).join("");
-  el.nextElementSibling.style.gridTemplateColumns = `${el.dataset.out * 5}px 1fr`;
+  el.nextElementSibling.style.gridTemplateColumns = `${el.dataset.out * 3.75}px 1fr`;
 }
 
 // Before / after: one dot a test, one group a rule; data-fail is "<group>:<how many of it are red>".
@@ -570,16 +593,6 @@ for (const el of document.querySelectorAll(".tests")) {
   const [g, n] = (el.dataset.fail ?? "-1:0").split(":").map(Number);
   el.innerHTML = el.dataset.groups.split(",").map((size, i) => `<span>${Array.from({ length: +size }, (_, j) => `<u class="${i === g && j < n ? "f" : ""}"></u>`).join("")}</span>`).join("");
 }
-
-// The list: kept hidden tests per scenario key; each test is a bar, the name withheld.
-const kept = { "happy-1": 5, "happy-2": 1, "happy-3": 6, "boundary-1": 1, "boundary-2": 2, "boundary-3": 1, "boundary-4": 3, "unhappy-1": 9, "unhappy-2": 3, "unhappy-3": 4, "unhappy-4": 4 };
-document.getElementById("rows").innerHTML = Object.entries(kept)
-  .map(([key, n]) => {
-    const out = key === "unhappy-1";
-    const bars = Array.from({ length: n }, (_, i) => `<i style="width:${34 + ((i * 37 + key.length * 11) % 46)}px"></i>`).join("");
-    return `<div class="row${out ? " out" : ""}"><span>${key}</span><span class="bars">${bars}</span><span class="ok">${out ? "✕" : "✓"}</span></div>`;
-  })
-  .join("");
 </script>
 </body>
 </html>
