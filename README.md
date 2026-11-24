@@ -13,7 +13,6 @@
   <a href="https://www.npmjs.com/package/@lunox-work/bouncer"><img src="https://img.shields.io/npm/v/@lunox-work/bouncer?style=flat-square&color=111111&label=npm" alt="npm version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license"></a>
   <a href="skills/bouncer/SKILL.md"><img src="https://img.shields.io/badge/Claude_Code-skill_%2B_plugin-111111?style=flat-square" alt="Claude Code skill and plugin"></a>
-  <a href="https://skills.sh/lunox-work/bouncer"><img src="https://img.shields.io/badge/skills.sh-lunox--work%2Fbouncer-111111?style=flat-square" alt="skills.sh"></a>
 </p>
 
 <p align="center">
