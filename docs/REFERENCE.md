@@ -279,8 +279,12 @@ WSL2 for an enforced sandbox; judging and handouts need none.
 
 ```sh
 npx skills add lunox-work/bouncer -g   # the skill, for Claude Code, Codex, Cursor and 20+ agents
-npm i -g @lunox-work/bouncer           # the CLI the skill runs
 ```
+
+That is the whole install: the skill runs the CLI through `npx -y
+@lunox-work/bouncer@<its version>`, so the two always match. For `bouncer` in
+your own terminal, `npm i -g @lunox-work/bouncer` (the skill uses it only at
+its own version).
 
 In Claude Code, the repository is also a plugin marketplace:
 
@@ -298,7 +302,7 @@ through the CLI, when you sign in.
 
 The skill is the folder [`skills/bouncer/`](../skills/bouncer/), which
 also installs by copying it into an agent's skills folder. It runs the CLI at
-the version it names, and asks before installing it when it is missing. Needs Node ^20.19 or 22+ on macOS,
+the version it names through npx (fetched once, about 1 MB). Needs Node ^20.19 or 22+ on macOS,
 Linux or Windows, and one of: Claude Code signed in, a Codex login, or
 `ANTHROPIC_API_KEY`. The first command that needs the toolchain installs
 `template/`'s dependencies with npm 10.9.2 under `~/.bouncer/`, once.
