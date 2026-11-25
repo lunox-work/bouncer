@@ -5,7 +5,8 @@ description: >-
   doubts it: "check my agent's work", "is this really done", "bounce this",
   "I don't trust its green tests", "did it game the tests". Also for grading a
   contractor's, candidate's or agent's submission against a spec or ticket,
-  and for tests an agent can't see for a ticket. Bouncer turns the ticket into
+  and for tests an agent can't see for a ticket, or to set up its ID comment
+  on every pull request (`bouncer ci init`). Bouncer turns the ticket into
   a spec the person confirms, a public suite for the implementing agent and a
   calibrated hidden suite he keeps, then judges the work: passed, overfit,
   incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust),
@@ -14,7 +15,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.4 CLI from npm, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.5 CLI through npx, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -25,12 +26,15 @@ Bouncer holds the list and never shows it: from a spec the person confirms, he
 writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
-`bouncer <command> --voice` is the CLI, `@lunox-work/bouncer@0.8.4`: end every
-command with `--voice`, so his lines reach you as `Bouncer: <line>` on stderr
-(**His voice**, step 5). If `bouncer
---version` prints another version or nothing, ask before installing it (`npm i
--g @lunox-work/bouncer@0.8.4`), or use `npx @lunox-work/bouncer@0.8.4` (in a
-clone, `node bin/cli.mjs`). `specs/` and `runs/` are in `~/.bouncer/`.
+`bouncer <command> --voice` is the CLI. Run it as `npx -y
+@lunox-work/bouncer@0.8.5 <command> --voice`, the version this skill was
+written for, wherever this skill, the CLI's own hints or the person say
+`bouncer <command>`; nothing to install first. npm fetches it once (about 1 MB)
+and caches it: say so the first time. A `bouncer` on PATH may stand in only
+when `bouncer --version` prints that same version. In a clone of bouncer itself, `node
+bin/cli.mjs` (npx there finds the local package and fails). End every command
+with `--voice`, so his lines reach you as `Bouncer: <line>` on stderr (**His
+voice**, step 5). `specs/` and `runs/` are in `~/.bouncer/`.
 
 **A new module** is built on its own: TypeScript by default; Python, Go, Rust,
 or a command or HTTP service checked at its boundary by
@@ -47,6 +51,19 @@ agent picked, in about 17 seconds for $0.06. Give the person the whole list
 and stop. Only when they want a verdict: `bouncer check`, which keeps that
 ticket and list ([references/check.md](references/check.md); say its cost
 first). This skill is local and needs no sign-in.
+
+**On every pull request** (the person wants the list on each PR, or Bouncer
+in CI or on GitHub): run `bouncer ci init` in their checkout; never write
+the workflow or set the secret by hand. It writes
+`.github/workflows/bouncer-id.yml` and sets the repository secret through
+`gh`, by default `CLAUDE_CODE_OAUTH_TOKEN`, so each push runs one session on
+their Claude subscription. Exit 2 means the secret step is theirs: give them
+the command it printed to run in their own terminal, and never ask for a token
+or key in this chat. No Claude Pro or Max, or they want API billing: `bouncer
+ci init --api-key` (`ANTHROPIC_API_KEY`, about $0.06 a push; `--openai-key`
+for Codex). Commit the workflow file only if they ask; the pull request that
+adds it gets the first comment. After an ID list in a GitHub repository that
+has no `bouncer-id.yml`, offer this once.
 
 **Offer on done.** A Stop hook message that starts `bouncer-verify, offer on
 done` comes from the person's own hook (the plugin's, or `bouncer offer on`):

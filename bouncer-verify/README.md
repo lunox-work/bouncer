@@ -4,7 +4,7 @@ Your agent says it's on the list. He checks. Verify your coding agent's work wit
 
 ## Skills
 
-- **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket. Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
+- **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket, or to set up its ID comment on every pull request (`bouncer ci init`). Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
 
 ## Examples
 
@@ -28,7 +28,7 @@ claude plugin install bouncer-verify@bouncer
 
 ## Requirements
 
-- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.4 CLI from npm, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
+- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.5 CLI through npx, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
 
 ## No sign-in
 
