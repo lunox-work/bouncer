@@ -1,6 +1,6 @@
 {
   "name": "independent-tests",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "Renamed to @lunox-work/bouncer: hidden, calibrated test suites for AI coding agents. This package runs bouncer.",
   "keywords": [
     "bouncer",
@@ -30,7 +30,7 @@
     "bin/"
   ],
   "dependencies": {
-    "@lunox-work/bouncer": "^0.8.4"
+    "@lunox-work/bouncer": "^0.8.5"
   },
   "engines": {
     "node": "^20.19.0 || >=22.0.0"

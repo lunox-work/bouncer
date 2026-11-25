@@ -15,7 +15,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.4 CLI through npx, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.5 CLI through npx, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -27,11 +27,11 @@ writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
 `bouncer <command> --voice` is the CLI. Run it as `npx -y
-@lunox-work/bouncer@0.8.4 <command> --voice`, the version this skill was
+@lunox-work/bouncer@0.8.5 <command> --voice`, the version this skill was
 written for, wherever this skill, the CLI's own hints or the person say
 `bouncer <command>`; nothing to install first. npm fetches it once (about 1 MB)
 and caches it: say so the first time. A `bouncer` on PATH may stand in only
-when `bouncer --version` prints 0.8.4. In a clone of bouncer itself, `node
+when `bouncer --version` prints that same version. In a clone of bouncer itself, `node
 bin/cli.mjs` (npx there finds the local package and fails). End every command
 with `--voice`, so his lines reach you as `Bouncer: <line>` on stderr (**His
 voice**, step 5). `specs/` and `runs/` are in `~/.bouncer/`.
