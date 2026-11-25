@@ -1,0 +1,16 @@
+{
+  "description": "Offer on done: when a session that changed code hands the turn back, the agent asks whether to check the work with Bouncer. Turn off with `bouncer offer off`.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/offer-on-done.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

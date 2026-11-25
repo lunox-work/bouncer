@@ -34,6 +34,12 @@ claude plugin install bouncer-verify@bouncer
 
 The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.
 
+## Offer on done
+
+One Stop hook: when a session that changed code hands the turn back, the agent asks once whether to check the work
+with Bouncer, and again after a large change. It runs nothing itself, reads only the session's transcripts on the
+machine and sends nothing. Off: `bouncer offer off`, or `BOUNCER_OFFER=off`.
+
 ## Links
 
 - [Privacy](https://lunox.work/privacy/platform)
@@ -47,6 +53,10 @@ The plugin bundles no MCP server: installing it asks for no sign-in, and its ski
   its skill runs the CLI on the machine; installing it asks for no sign-in,
   and it reaches Lunox's platform only if the person runs one of the
   platform commands below themselves.
+- **Offer on done (the plugin's one hook):** when a session hands the turn
+  back, it reads that session's transcripts on the machine to count code
+  edits and keeps what it offered in `~/.bouncer/offer/sessions.json`. It
+  runs no model and sends nothing; `bouncer offer off` stops it.
 - **Sent off the machine:** the spec, the ticket it came from and the code
   being judged go to the model backend the person chooses, on their own
   account: a Claude Code session, the Codex CLI, or the Anthropic API with
