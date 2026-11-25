@@ -253,7 +253,10 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     else console.error(`id-comment: ${done.action === "none" ? `nothing posted (${done.why})` : `comment ${done.action}d`}`);
   } catch (error) {
     // A warning, never a red job: this step may not change a check.
-    console.error(process.env.GITHUB_ACTIONS ? `::warning title=bouncer id::${String(error.message).replace(/\r?\n/g, " ")}` : `id-comment: ${error.message}`);
+    const said = process.env.GITHUB_ACTIONS && /^No agent to run sessions on/.test(error.message)
+      ? "No secret to run on. Add CLAUDE_CODE_OAUTH_TOKEN (your Claude subscription, from `claude setup-token`) or ANTHROPIC_API_KEY as a repository secret and pass it to this workflow: `bouncer ci init` does both."
+      : error.message;
+    console.error(process.env.GITHUB_ACTIONS ? `::warning title=bouncer id::${String(said).replace(/\r?\n/g, " ")}` : `id-comment: ${said}`);
     process.exit(options.strict !== undefined ? 1 : 0);
   }
 }

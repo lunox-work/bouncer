@@ -7,7 +7,14 @@
 # It is never a check. The job posts no check run or status and its step
 # cannot fail: with no key, no ticket, or a fork's read-only token it leaves
 # a warning in the log and stays green. One model session a push (a median 17
-# seconds and $0.06 on Claude Sonnet 5.5, evidence/ID.md).
+# seconds on Claude Sonnet 5.5, evidence/ID.md).
+#
+# It runs on the person's Claude subscription by default: with the
+# claude-code-oauth-token secret (from `claude setup-token`) the job installs
+# Claude Code and the session counts against the subscription's usage. An
+# API key is the other way: anthropic-api-key (about $0.06 a push), or
+# openai-api-key for Codex. The token wins when more than one is set.
+# `bouncer ci init` writes this caller and sets the secret.
 #
 #   on:
 #     pull_request:
@@ -17,6 +24,7 @@
 #       permissions: { contents: read, pull-requests: write, issues: read }
 #       uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
 #       secrets:
+#         claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 #         anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 #
 # Secrets do not reach a `pull_request` run from a fork, so a fork's pull
@@ -46,7 +54,14 @@ on:
         description: Its branch, tag or SHA.
         type: string
         default: main
+      claude-code-version:
+        description: The Claude Code npm version installed when claude-code-oauth-token is set.
+        type: string
+        default: "2.1.332"
     secrets:
+      claude-code-oauth-token:
+        description: Token from `claude setup-token`; the session runs on that Claude subscription (the default way).
+        required: false
       anthropic-api-key:
         description: Key for the session on the Messages API.
         required: false
@@ -75,6 +90,21 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ inputs.node-version }}
+      - name: Install Claude Code (subscription)
+        # Only with the subscription token. The token is not in this step's
+        # environment: npm's install scripts never see it. Claude Code's OS
+        # sandbox on Linux needs bubblewrap and socat, and Ubuntu 24.04's
+        # AppArmor blocks bubblewrap's user namespace unless this is lifted.
+        # A failed install leaves the job green, like the step below.
+        continue-on-error: true
+        env:
+          SUBSCRIPTION: ${{ secrets.claude-code-oauth-token != '' && '1' || '' }}
+          CLAUDE_CODE_VERSION: ${{ inputs.claude-code-version }}
+        run: |
+          if [ -z "$SUBSCRIPTION" ]; then echo "no claude-code-oauth-token: the session runs on an API key if one is set"; exit 0; fi
+          npm install -g "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION"
+          sudo apt-get install -y -qq bubblewrap socat >/dev/null
+          sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || true
       - name: Ask for ID
         # The pull request's own code is never checked out or run: the diff
         # comes from the API. continue-on-error is the second lock on "never
@@ -82,6 +112,7 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.claude-code-oauth-token }}
           ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
           OPENAI_API_KEY: ${{ secrets.openai-api-key }}
           BOUNCER_HOME: ${{ runner.temp }}/bouncer

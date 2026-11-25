@@ -455,14 +455,35 @@ from the API, and posts the list as one comment, edited in place, headed
 never ranked, never a failing check: the job cannot go red, and nothing it
 reads is run.
 
+One command sets it up in a checkout:
+
+```sh
+bouncer ci init            # your Claude subscription: CLAUDE_CODE_OAUTH_TOKEN
+bouncer ci init --api-key  # or an Anthropic API key: ANTHROPIC_API_KEY
+```
+
+It writes `.github/workflows/bouncer-id.yml` and sets the secret with `gh`.
+The token comes from `claude setup-token` and the key from your paste. Neither
+passes through argv or the output. In a coding agent's shell it writes the file
+and exits 2 with the command for you to run in your own terminal. It never
+commits. By hand, the caller is:
+
 ```yaml
 jobs:
   id:
-    permissions: { contents: read, pull-requests: write, issues: read }
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
     uses: lunox-work/bouncer/.github/workflows/id-comment.yml@main
     secrets:
+      claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
+
+With the token, the job installs Claude Code (plus bubblewrap and socat for its
+sandbox), and each push is one session on the subscription's usage. With only
+the key it runs on the Messages API. The token wins when both are set.
 
 Measured by replaying the 11 commits as pull requests with two pushes each:
 one comment per pull request, 0 of 671 hidden test names in a comment, no call
@@ -578,6 +599,7 @@ bin/door-rules.mjs  the door's rules over a session's events, pure
 bin/offer.mjs       offer on done: on, off, status; on without the plugin adds the hook to Claude Code's user settings
 bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
 bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place, never a check
+bin/ci-init.mjs     `bouncer ci init`: writes the id-comment caller and sets its secret through gh
 bin/check.mjs       after the fact as one command: door, fit, the ID check, a drafted spec, then prepare and judge
 bin/voice.mjs       his line: above a verdict on a terminal, leading a CI check's title, heading the ID comment, on stderr when asked (--voice); never in --json, piped stdout or a check's body
 bin/regulars.mjs    what he remembers on this machine only: when he last drew his figure, and the tally of verdicts
@@ -623,7 +645,7 @@ specs/duration-parse/  the bundled example, copied to the home on first use
 template/           the Node toolchain every new-module session and judge runs in
 template-python/    pytest toolchain (pinned in requirements.txt), its reporter plugin, the LCB checker
 template-go/, template-rust/  the Go and Rust toolchains: standard library only
-test/               no-model tests, run by npm test: api, voice, id, id-comment, door, check, fit, platform, hosted, smoke
+test/               no-model tests, run by npm test: api, voice, id, id-comment, ci-init, door, check, fit, platform, hosted, smoke
 evidence/           not in this repository: `sh scripts/fetch-evidence.sh` clones lunox-work/bouncer-evidence here,
                     the scripts, runs and data behind docs/RESULTS.md; experiments links to its archive/
 assets/src/         the README images and the social preview: index.html, render.mjs; marks.py (the marks, plugin icon), scene.py (the door)

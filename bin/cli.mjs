@@ -38,7 +38,7 @@ const COMMANDS = {
   grade: "grade blind runs into results.jsonl",
   retry: "one retry of a blind run, told its failing scenarios",
   seal: "one spec's suites in one file, for a judge that has no specs/ (CI)",
-  ci: "judge a commit from a seal and report it as a check; --platform judges it on the hosted platform (OIDC)",
+  ci: "judge a commit from a seal and report it as a check; --platform judges it on the hosted platform (OIDC); `ci init` sets up the ID comment on pull requests",
   push: "a confirmed spec as a bounty in the signed-in platform workspace",
   login: "sign in to the Lunox platform (device code in the browser); --org, --platform, --open",
   whoami: "the account, workspace and token expiry signed in with",
@@ -54,7 +54,9 @@ const EVIDENCE = {
 
 const argv = process.argv.slice(2);
 const voice = argv.includes("--voice");
-const [command, ...rest] = argv.filter((arg) => arg !== "--voice");
+let [command, ...rest] = argv.filter((arg) => arg !== "--voice");
+// `bouncer ci init`: its own script (bin/ci-init.mjs), not an argument of `ci`.
+if (command === "ci" && rest[0] === "init") [command, rest] = ["ci-init", rest.slice(1)];
 const env = { ...process.env, ...(voice ? { BOUNCER_VOICE: "1" } : {}), BOUNCER_STARTED: process.env.BOUNCER_STARTED || String(Date.now()) };
 if (command === "--version" || command === "-v") {
   console.log(JSON.parse(readFileSync(join(BIN, "..", "package.json"), "utf8")).version);
@@ -79,7 +81,7 @@ if (command === "evidence") {
   console.error(["usage: bouncer evidence <name> [args...]", "", ...Object.entries(EVIDENCE).map(([key, what]) => `  ${key.padEnd(width)}  ${what}`)].join("\n"));
   process.exit(name === undefined ? 0 : 1);
 }
-if (!Object.hasOwn(COMMANDS, command ?? "")) {
+if (!Object.hasOwn(COMMANDS, command ?? "") && command !== "ci-init") {
   const width = Math.max(...[...Object.keys(COMMANDS), "where", "evidence"].map((key) => key.length));
   console.error(
     [
@@ -118,5 +120,6 @@ function helpOf(name) {
     if (!line.startsWith("//")) break;
     body.push(line.replace(/^\/\/ ?/, "").replace(/node bin\/([a-z-]+)\.mjs/g, "bouncer $1"));
   }
-  return [`bouncer ${name}: ${COMMANDS[name]}`, "", ...body].join("\n").trimEnd();
+  const title = name === "ci-init" ? "bouncer ci init: the ID comment on pull requests, workflow and secret in one command" : `bouncer ${name}: ${COMMANDS[name]}`;
+  return [title, "", ...body].join("\n").trimEnd();
 }
