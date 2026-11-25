@@ -9,6 +9,7 @@ on:
         ".claude-plugin/**",
         ".mcp.json",
         "LICENSE",
+        "hooks/**",
         "skills/**",
         "scripts/skill.mjs",
       ]

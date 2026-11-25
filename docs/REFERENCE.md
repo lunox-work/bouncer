@@ -44,6 +44,24 @@ guessed.
   against HEAD, or everything since the fork from the default branch when
   the work is committed, which it says. Run on its own it needs no spec and
   no fit, and keeps the ticket and the list for a `check` of the same change.
+- `bouncer offer [on | off | status]`: offer on done, a Claude Code Stop hook
+  (`hooks/offer-on-done.mjs`) that runs no model and nothing of bouncer's. When
+  a session that changed TypeScript, JavaScript, Python, Go or Rust hands the
+  turn back with a claim that it is done, or without a question, it holds the
+  stop once and has the agent ask whether to run `bouncer id` or
+  `bouncer check`. The first time in a session it needs no more than that,
+  so a session that changes code gets at least one offer; after that, only a
+  large change since the last offer (4 new code files or 200 changed lines,
+  `BOUNCER_OFFER_LARGE_FILES`, `BOUNCER_OFFER_LARGE_LINES`). It counts edits
+  in the session's transcript and its subagents', reads the claim with the
+  door's patterns, stands down once Bouncer ran after the last edit and in
+  headless runs (`claude -p`, the Agent SDK) nobody attends, and keeps what it
+  offered in `~/.bouncer/offer/sessions.json` (30 days). The plugin turns it
+  on; installed another way, `on` copies the hook to `~/.bouncer/offer/` and
+  adds a Stop hook to Claude Code's user settings, keeping the rest of the
+  file. `off` writes `~/.bouncer/offer/off`, which both stand down for, and
+  removes the settings hook; `BOUNCER_OFFER=off` turns it off for one shell.
+  How often people say yes is not measured: there is no telemetry.
 - `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>] [--seam <file>[,<file>]] [--slug <slug>] [--new] [--accept-open] [--card <file.svg>] [--no-door]`:
   the whole after-the-fact flow in one command. Door, base and package from
   the change, fit, the ID check, a drafted `spec.md` with each pick as a
@@ -271,7 +289,10 @@ In Claude Code, the repository is also a plugin marketplace:
 /plugin install bouncer-verify@bouncer
 ```
 
-The plugin has no MCP server and asks for no sign-in. Lunox's hosted
+The plugin has no MCP server and asks for no sign-in. It adds one Stop hook,
+offer on done ([above](#before-any-spec-the-door-and-the-id-check)); `bouncer
+offer off` stops it. Installed with the skills CLI, `bouncer offer on` adds the
+same hook. Lunox's hosted
 platform ([below](#sign-in-to-the-lunox-platform-optional)) is reached only
 through the CLI, when you sign in.
 
@@ -541,6 +562,7 @@ run cited diff lines).
 ```
 skills/             bouncer/ (SKILL.md and references/: the steps it runs, after the fact in check.md)
 .claude-plugin/     the Claude Code marketplace and its plugin: bouncer-verify (local, no MCP server)
+hooks/              offer-on-done.mjs, the plugin's Stop hook, and hooks.json, which Claude Code loads from the plugin
 scripts/skill.mjs   check the skill, sync its version pins, pack it as a zip
 AGENTS.md           this README's section for coding agents, verbatim
 docs/RESULTS.md     what the method was measured to do, citing bouncer-evidence
@@ -553,6 +575,7 @@ bin/hash.mjs        the commitment hash of a spec folder or a file map, reading 
 bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`; `evidence <name>`
 bin/door.mjs        what a finished session shows, no model (carveout gate when installed); reports, never blocks
 bin/door-rules.mjs  the door's rules over a session's events, pure
+bin/offer.mjs       offer on done: on, off, status; on without the plugin adds the hook to Claude Code's user settings
 bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
 bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place, never a check
 bin/check.mjs       after the fact as one command: door, fit, the ID check, a drafted spec, then prepare and judge
@@ -613,6 +636,8 @@ assets/src/         the README images and the social preview: index.html, render
   results.jsonl     one line per graded run
   template/<hash>/  template/ with its dependencies, installed on first use
   toolchains/       python-<hash>/ (with .venv), go-<hash>/, rust-<hash>/, built on first use
+  offer/            sessions.json (what offer on done offered, 30 days), off (bouncer offer off),
+                    offer-on-done.mjs (bouncer offer on, without the plugin)
 
 ~/.lunox/credentials  platform tokens after `login`, per platform URL and CLI (shared with carveout; LUNOX_CREDENTIALS)
 ```

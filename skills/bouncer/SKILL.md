@@ -48,6 +48,14 @@ and stop. Only when they want a verdict: `bouncer check`, which keeps that
 ticket and list ([references/check.md](references/check.md); say its cost
 first). This skill is local and needs no sign-in.
 
+**Offer on done.** A Stop hook message that starts `bouncer-verify, offer on
+done` comes from the person's own hook (the plugin's, or `bouncer offer on`):
+ask its one question and run nothing until they answer; a yes to `id` or
+`check` is the flow above. "No more offers": `bouncer offer off`. Installed
+without the plugin (`bouncer offer status` says off: not installed): after
+the person's first `bouncer id` list, ask once whether their agent should
+offer this whenever it hands back code, and on a yes run `bouncer offer on`.
+
 ## Before you start
 
 - **Scope.** One module, or one change to one package, under an hour of work,

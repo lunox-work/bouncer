@@ -37,7 +37,7 @@
 // folder, and on main that folder is the whole repository (CLI source,
 // lockfile, tests, experiments). The directory tracks the claude-plugin
 // branch instead: each plugin in its own folder (what the directory reads:
-// .claude-plugin/plugin.json, LICENSE, skills/, README.md). Each README.md is written
+// .claude-plugin/plugin.json, LICENSE, hooks/, skills/, README.md). Each README.md is written
 // from its plugin.json, its skills' frontmatter and .claude-plugin/data.md
 // (what is sent where, for the directory's data-handling review; the
 // directory requires a README). One commit per change on top of origin's
@@ -217,6 +217,7 @@ function check() {
   }
   problems.push(...checkPlugins(names));
   problems.push(...checkMcp());
+  problems.push(...checkHooks());
   problems.push(...checkBundledPrompts());
   return problems;
 }
@@ -248,6 +249,34 @@ function checkPlugins(names) {
     if (!PLUGINS.some((plugin) => plugin.name === listed.name)) problems.push(`${MARKETPLACE}: ${listed.name} is not one of ${PLUGINS.map((p) => p.name).join(", ")}`);
   }
   for (const name of names) if (!owner.has(name)) problems.push(`skills/${name}: in no plugin (scripts/skill.mjs PLUGINS)`);
+  return problems;
+}
+
+/**
+ * hooks/: the plugin's one hook, offer on done. Claude Code loads
+ * hooks/hooks.json from a plugin by itself, and refuses a manifest that lists
+ * it again; the command runs a script in hooks/ through CLAUDE_PLUGIN_ROOT.
+ * The plugin directory scans these files too (SCANNER_TRAPS).
+ */
+function checkHooks() {
+  const problems = [];
+  const json = readJson("hooks/hooks.json");
+  if (!json) return ["hooks/hooks.json: missing"];
+  const commands = Object.values(json.hooks ?? {}).flatMap((groups) => groups.flatMap((group) => (group.hooks ?? []).map((hook) => hook.command ?? "")));
+  if (commands.length === 0) problems.push("hooks/hooks.json: no hook commands");
+  for (const command of commands) {
+    const script = /\$\{CLAUDE_PLUGIN_ROOT\}\/(hooks\/[\w.-]+\.mjs)/.exec(command)?.[1];
+    if (!script) problems.push(`hooks/hooks.json: ${command} does not run a script in hooks/ through \${CLAUDE_PLUGIN_ROOT}`);
+    else if (!existsSync(join(ROOT, script))) problems.push(`hooks/hooks.json: ${script} does not exist`);
+  }
+  for (const plugin of PLUGINS) {
+    const manifest = readJson(plugin.manifest);
+    if (manifest?.hooks !== undefined) problems.push(`${plugin.manifest}: no "hooks" field; Claude Code loads hooks/hooks.json by itself and refuses it listed twice`);
+  }
+  for (const file of walk(join(ROOT, "hooks"))) {
+    const content = readFileSync(file, "utf8");
+    for (const trap of SCANNER_TRAPS) if (trap.test(content)) problems.push(`${relative(ROOT, file)}: ${trap.why}`);
+  }
   return problems;
 }
 
@@ -330,7 +359,7 @@ function pack(offline) {
 }
 
 /** Files every plugin carries from main, at the same path in its folder. `.mcp.json` only where `mcp`. */
-const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE"];
+const PLUGIN_FILES = [".claude-plugin/icon.png", "LICENSE", "hooks"];
 // plugin.json fields the directory's listing reads. Claude Code accepts them
 // (2.1.329's `claude plugin validate` checks only that each is https:// or
 // mailto:), so the branch's plugin.json keeps them, and its README repeats
@@ -380,6 +409,11 @@ function pluginReadme(plugin, rev) {
     lines.push("same URL as a remote HTTP server.", "");
   } else if (!plugin.mcp) {
     lines.push("## No sign-in", "", "The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.", "");
+  }
+  if (show(rev, "hooks/hooks.json") !== null) {
+    lines.push("## Offer on done", "", "One Stop hook: when a session that changed code hands the turn back, the agent asks once whether to check the work");
+    lines.push("with Bouncer, and again after a large change. It runs nothing itself, reads only the session's transcripts on the");
+    lines.push("machine and sends nothing. Off: `bouncer offer off`, or `BOUNCER_OFFER=off`.", "");
   }
   // Links before Data: the directory takes the first privacy link in the README as the plugin's policy.
   const links = Object.entries(LISTING_LINKS).filter(([key]) => manifest[key]);

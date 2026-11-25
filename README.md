@@ -71,7 +71,9 @@ You need Node, and a Claude Code login, a Codex login or an API key
 ## How to use him
 
 When your agent says it is done, ask it: **_"is this really done?"_**
-You get the list of decisions.
+You get the list of decisions. With the Claude Code plugin you don't have to
+remember: when a session that changed code hands back, your agent offers it,
+once, and again after a large change (`bouncer offer off` stops it).
 
 Want a pass or fail? Ask for a verdict. He runs `bouncer check`, which costs
 $1–4 and takes 10–25 minutes. He writes two sets of tests:
