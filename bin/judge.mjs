@@ -3,13 +3,18 @@
 // blind run (SKILL.md, step 5): the src/ alone, copied onto fresh trees,
 // the public suite on one and the hidden suite on another. Prints the
 // verdict, the counts and the spec scenarios the failing hidden tests are
-// keyed to, which name nothing the spec does not. Writes nothing.
+// keyed to, which name nothing the spec does not. Writes nothing but the
+// card and the tally (below).
 //
-//   node bin/judge.mjs <slug> <src-dir> [--detail] [--card <file.svg> [--claim "<text>"]]
+//   node bin/judge.mjs <slug> <src-dir> [--detail] [--card <file.svg> [--claim "<text>"]] [--no-card]
 //
 // --card writes the verdict as an SVG to post (bin/card.mjs): the agent's
 // claim, Bouncer's answer, the counts, the keys and the hash; no hidden
-// test's name.
+// test's name. When a person is reading (bin/voice.mjs `voiceOn`) and no
+// --card is given, it goes to runs/<slug>/card.svg; --no-card skips it.
+//
+// Each verdict is tallied on this machine (bin/regulars.mjs, `bouncer
+// tally`), except a seal's or a --json one's: the keys, no hidden test's name.
 //
 // --detail adds each failing hidden test's name and message. That is for
 // the person classifying an overfit, never for the agent that wrote the
@@ -63,12 +68,13 @@
 //
 //   node bin/judge.mjs --platform <submission id> [--wait] [--json] [--platform-url <url>]
 
-import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { judgement } from "./rules.mjs";
 import { unseal } from "./seal.mjs";
-import { say } from "./voice.mjs";
+import { tally, summary, tallied, tallyLine } from "./regulars.mjs";
+import { say, voiceOn } from "./voice.mjs";
 import { card, lastClaim } from "./card.mjs";
 
 if (process.argv.includes("--platform")) {
@@ -157,7 +163,7 @@ if (second !== null && second.outcome.failedScenarios.length > 0 && (result === 
 }
 
 // His line, on a terminal only (bin/voice.mjs); a keyed retry's submission sits under <variant>-retry-keyed/.
-say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)), counts: { public: publicCount, hidden: hiddenCount } });
+say(result, { options, sealed: sealed !== null, keys: scenarios, retry: /-retry-keyed(\/|$)/.test(resolve(src)), counts: { public: publicCount, hidden: hiddenCount }, record: tallied_(result, scenarios) });
 console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}${second === null ? "" : `, second hidden ${second.outcome.hidden.passed}/${second.outcome.hidden.total}`}.`);
 console.log(hashLine());
 if (second !== null) console.log(`Second hidden suite by ${second.writer}, sha256 ${second.sha}${second.outcome.failedScenarios.length > 0 ? `; failing ${second.outcome.failedScenarios.join(", ")}` : ""}.`);
@@ -248,7 +254,7 @@ function judgeRepo() {
   }
 
   const where = ref === undefined ? `${found.root} (working tree)` : `${found.root} at ${ref}`;
-  say(result, { options, sealed: sealed !== null, keys: scenarios, aside: result === "passed" && !strict && scope.outsideScope.length > 0 ? "outside-scope" : null, counts: { public: publicCount, hidden: hiddenCount } });
+  say(result, { options, sealed: sealed !== null, keys: scenarios, aside: result === "passed" && !strict && scope.outsideScope.length > 0 ? "outside-scope" : null, counts: { public: publicCount, hidden: hiddenCount }, record: tallied_(result, scenarios) });
   console.log(`${slug}: ${result}. Public ${publicCount.passed}/${publicCount.total}, hidden ${hiddenCount.passed}/${hiddenCount.total}, existing ${judged === null ? "-" : `${outcome.existing.passed}/${baseline.passing.length}`}; ${where}.`);
   console.log(hashLine());
   if (refused.length > 0) console.log(`Refused:\n${pathsOf(refused).map((line) => `- ${line}`).join("\n")}`);
@@ -313,13 +319,27 @@ function judgeRepo() {
 }
 
 /**
+ * Tallies the verdict on this machine (bin/regulars.mjs) and returns the
+ * tally as a line for his banner, or null. A seal's verdict is CI's and a
+ * --json one a script's (red-team-audit.mjs judges archived runs): neither
+ * is tallied.
+ */
+function tallied_(verdict, keys) {
+  if (sealed !== null || options.json !== undefined) return null;
+  tally({ slug, verdict, keys });
+  return tallyLine(summary(tallied()));
+}
+
+/**
  * --card <file.svg>: the verdict as a card to post (bin/card.mjs). The
  * agent's claim is --claim, else the last claim in the implementing
  * session's transcript (repository targets), else left out. Prints the
  * path on stderr, so stdout stays the verdict.
  */
 function writeCard({ verdict, keys, counts, retry, transcript }) {
-  if (typeof options.card !== "string") return;
+  const given = typeof options.card === "string" ? options.card : null;
+  // No --card: a person reading gets one anyway, beside the run.
+  if (given === null && (sealed !== null || options["no-card"] !== undefined || !voiceOn({ options }))) return;
   let claim = typeof options.claim === "string" ? options.claim : null;
   if (claim === null && transcript) {
     try {
@@ -328,7 +348,8 @@ function writeCard({ verdict, keys, counts, retry, transcript }) {
       claim = null;
     }
   }
-  const file = resolve(options.card.endsWith(".svg") ? options.card : `${options.card}.svg`);
+  const file = given === null ? join(RUNS, slug, "card.svg") : resolve(given.endsWith(".svg") ? given : `${given}.svg`);
+  mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, card({ verdict, claim, keys, slug, counts, sha: committed.current, retry }));
   console.error(`Card: ${file}`);
 }

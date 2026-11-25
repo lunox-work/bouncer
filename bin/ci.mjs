@@ -5,7 +5,7 @@
 //
 //   node bin/ci.mjs --seal <file|https-url> [--repo <checkout>] [--ref <rev>]
 //                   [--name <check name>] [--out <payload.json>] [--record <file>]
-//                   [--no-post] [--exit-zero]
+//                   [--no-post] [--exit-zero] [--card <file.svg>]
 //   node bin/ci.mjs --platform [<url>] --version <id> --workspace <id> [--base <rev>]
 //                   judged on the hosted platform instead (hosted.mjs)
 //
@@ -23,6 +23,10 @@
 //    change that were refused or outside the allowed paths. passed →
 //    success, anything else → failure. --out writes the Checks API body;
 //    $GITHUB_STEP_SUMMARY, when set, gets the summary.
+//    --card writes the verdict card (bin/card.mjs) from the same record:
+//    his line, the counts, the keys and the hash, no agent claim and no
+//    hidden test; action.yml uploads it as the run's `bouncer-card`
+//    artifact, and the summary says so.
 // 4. With a token (BOUNCER_GITHUB_TOKEN or GITHUB_TOKEN) and
 //    GITHUB_REPOSITORY, and without --no-post, it POSTs the check run to
 //    $GITHUB_API_URL (default https://api.github.com); the job needs
@@ -37,6 +41,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { IDENTITY } from "./identity.mjs";
+import { card } from "./card.mjs";
 import { lineFor } from "./voice.mjs";
 
 const BIN = dirname(fileURLToPath(import.meta.url));
@@ -140,6 +145,12 @@ if (record === null) {
   parts.push(
     `Hidden suite sha256 \`${record.hiddenSha256}\`, sealed ${record.sealedAt}${record.committedAt ? `, committed ${record.committedAt}` : ""}.${headSha ? ` Commit \`${headSha}\`.` : ""}`,
   );
+  if (typeof options.card === "string") {
+    const file = resolve(options.card.endsWith(".svg") ? options.card : `${options.card}.svg`);
+    writeFileSync(file, card({ verdict: record.verdict, claim: null, keys: record.failedScenarios ?? [], slug: record.slug, counts: { public: record.public, hidden: record.hidden }, sha: record.hiddenSha256 }));
+    console.error(`Card: ${file}`);
+    if (process.env.GITHUB_ACTIONS) parts.push("The verdict card is this run's `bouncer-card` artifact.");
+  }
   summary = parts.join("\n\n");
 }
 const payload = {

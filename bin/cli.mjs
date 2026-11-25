@@ -5,8 +5,14 @@
 // (`bouncer <command>`). Specs, runs and results live under BOUNCER_HOME
 // (default ~/.bouncer/, lib.mjs `HOME`); `where` prints them.
 //
-//   bouncer <command> [args...]
+//   bouncer <command> [args...] [--voice]
 //   bouncer where | help | --version
+//
+// --voice (anywhere; or BOUNCER_VOICE=1) asks for his lines where no
+// terminal is, as `Bouncer: <line>` on stderr for a coding agent to relay
+// (bin/voice.mjs); it is taken out before the script sees its arguments.
+// BOUNCER_STARTED, the time the outermost command started, times the
+// stages of a check.
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -35,6 +41,7 @@ const COMMANDS = {
   push: "a confirmed spec as a bounty in the signed-in platform workspace",
   login: "sign in to the Lunox platform (device code in the browser); --org, --platform, --open",
   whoami: "the account, workspace and token expiry signed in with",
+  tally: "the verdicts judged on this machine: in, turned away, and on what (local only)",
   logout: "delete the saved platform token",
 };
 // The method's own measurement tools: `bouncer evidence <name>`, or `bouncer <name>` as before.
@@ -44,7 +51,10 @@ const EVIDENCE = {
   "import-archive": "a calibrated spec from the experiment archive, marked not held out",
 };
 
-const [command, ...rest] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const voice = argv.includes("--voice");
+const [command, ...rest] = argv.filter((arg) => arg !== "--voice");
+const env = { ...process.env, ...(voice ? { BOUNCER_VOICE: "1" } : {}), BOUNCER_STARTED: process.env.BOUNCER_STARTED || String(Date.now()) };
 if (command === "--version" || command === "-v") {
   console.log(JSON.parse(readFileSync(join(BIN, "..", "package.json"), "utf8")).version);
   process.exit(0);
@@ -59,7 +69,7 @@ if (command === "where") {
 let [name, args] = [command, rest];
 if (command === "evidence") [name, ...args] = rest;
 if (Object.hasOwn(EVIDENCE, name ?? "")) {
-  const child = spawnSync(process.execPath, [join(BIN, `${name}.mjs`), ...args], { stdio: "inherit" });
+  const child = spawnSync(process.execPath, [join(BIN, `${name}.mjs`), ...args], { stdio: "inherit", env });
   if (child.signal) process.kill(process.pid, child.signal);
   process.exit(child.status ?? 1);
 }
@@ -92,7 +102,10 @@ if (rest.includes("--help") || rest.includes("-h")) {
   console.log(helpOf(command));
   process.exit(0);
 }
-const child = spawnSync(process.execPath, [join(BIN, `${command}.mjs`), ...rest], { stdio: "inherit" });
+// The first time he is seen on this machine, before the command's own output (bin/voice.mjs `greet`).
+const { greet } = await import("./voice.mjs");
+greet({ env, options: Object.fromEntries(["json", "plain"].filter((flag) => rest.includes(`--${flag}`) || rest.some((arg) => arg.startsWith(`--${flag}=`))).map((flag) => [flag, true])) });
+const child = spawnSync(process.execPath, [join(BIN, `${command}.mjs`), ...rest], { stdio: "inherit", env });
 if (child.signal) process.kill(process.pid, child.signal);
 process.exit(child.status ?? 1);
 

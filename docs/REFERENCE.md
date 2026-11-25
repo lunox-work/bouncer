@@ -556,8 +556,10 @@ bin/door-rules.mjs  the door's rules over a session's events, pure
 bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
 bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place, never a check
 bin/check.mjs       after the fact as one command: door, fit, the ID check, a drafted spec, then prepare and judge
-bin/voice.mjs       his line: above a verdict on a terminal, leading a CI check's title, heading the ID comment; never in --json, a pipe or a check's body
-bin/card.mjs        the verdict as an SVG to post (judge --card)
+bin/voice.mjs       his line: above a verdict on a terminal, leading a CI check's title, heading the ID comment, on stderr when asked (--voice); never in --json, piped stdout or a check's body
+bin/regulars.mjs    what he remembers on this machine only: when he last drew his figure, and the tally of verdicts
+bin/tally.mjs       bouncer tally: the verdicts judged here, in and turned away, and the scenario kind most turned away on
+bin/card.mjs        the verdict as an SVG to post (judge --card, or runs/<slug>/card.svg when a person is reading; ci --card)
 bin/mark.mjs        the mark as an <image> for the card; the picture is bin/mark-art.mjs, written by assets/src/marks.py
 bin/lines.mjs       a file's lines without holding it whole (long transcripts)
 bin/platform-client.mjs  the hosted platform: its URL, ~/.lunox/credentials, one fetch-based request with the CLI version

@@ -29,6 +29,7 @@
 import { spawnSync } from "node:child_process";
 import { join, posix, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { say } from "./voice.mjs";
 import {
   PACKAGE_MANAGERS,
   RUNNERS,
@@ -612,6 +613,7 @@ if (isMain) {
         if (failed === null) throw error;
         const lines = failed[2].split("\n").map((line) => line.trim()).filter((line) => line !== "" && !/^(npm )?warn|^hint:|^\^|^~/i.test(line));
         const why = lines.findLast((line) => /error|failed|unable|not found|cannot/i.test(line)) ?? lines.at(-1) ?? "";
+        say("wrong-club", { options });
         console.log(`unsupported: the dependencies do not install on a clean copy (${failed[1]}): ${why.slice(0, 300)}`);
         process.exit(2);
       }
@@ -644,6 +646,7 @@ if (isMain) {
     console.error(error.message);
     process.exit(1);
   }
+  if (!found.supported) say("wrong-club", { options });
   console.log(found.supported ? "supported" : `unsupported: ${found.reason}`);
   if (found.suite !== undefined)
     console.log(

@@ -55,6 +55,7 @@ import {
   workdir,
   writeJson,
 } from "./lib.mjs";
+import { announce } from "./voice.mjs";
 
 /**
  * The two suites in the order they are written: `dir` is where a suite is
@@ -101,6 +102,7 @@ async function party({ slug, name, dir, text, check, model, chain }) {
   const transcript = join(RUNS, slug, "generate", `${name}.jsonl`);
   rmSync(transcript, { force: true });
   const before = manifestOf(dir, chain);
+  announce(name);
   log(slug, name, "started");
   const first = await runSession({ cwd: dir, text, transcript, kind: "generate", model, chain });
   let problem = check(before);

@@ -67,6 +67,9 @@ outputs:
   conclusion:
     description: success when passed, otherwise failure.
     value: ${{ steps.judge.outputs.conclusion }}
+  card:
+    description: Path of the verdict card (SVG) on the runner, also uploaded as the bouncer-card artifact. Empty when not judged.
+    value: ${{ steps.judge.outputs.card }}
   title:
     description: The verdict and counts, as the check's title.
     value: ${{ steps.judge.outputs.title }}
@@ -98,8 +101,19 @@ runs:
           exit $?
         fi
         if [ -z "$SEAL" ]; then echo "bouncer: give seal, or version and workspace for platform mode" >&2; exit 1; fi
+        card="$RUNNER_TEMP/bouncer-card.svg"
+        status=0
         node "$GITHUB_ACTION_PATH/bin/cli.mjs" ci --seal "$SEAL" --repo "$REPO" --ref "$REF" \
-          --name "$CHECK_NAME" --out "$RUNNER_TEMP/bouncer-check.json" "${flags[@]}"
+          --name "$CHECK_NAME" --out "$RUNNER_TEMP/bouncer-check.json" --card "$card" "${flags[@]}" || status=$?
+        if [ -f "$card" ]; then echo "card=$card" >> "$GITHUB_OUTPUT"; fi
+        exit $status
+    # The verdict card: his line, counts, keys and the hash; no hidden test.
+    - if: always() && steps.judge.outputs.card != ''
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: bouncer-card
+        path: ${{ steps.judge.outputs.card }}
+        if-no-files-found: ignore
     - if: always()
       shell: bash
       env:

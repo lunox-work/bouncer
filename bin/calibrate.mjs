@@ -51,6 +51,7 @@ import {
   writeJson,
 } from "./lib.mjs";
 import { calibration } from "./rules.mjs";
+import { announce } from "./voice.mjs";
 
 const failing = (result) => [
   ...result.files.filter((file) => file.crashed).map((file) => `${file.file} :: (file crashed)`),
@@ -75,6 +76,7 @@ async function calibrate(slug) {
     if (!existsSync(join(out, part))) throw new Error(`${slug}: no ${part}; run generate first.`);
 
   // The skeleton: every hidden test fails, and fails inside its test (the rule: rules.mjs `calibration`).
+  announce("empty-room");
   const skeletonDir = stage(workdir(`${slug}-calibrate`), slug, {
     skeleton: true,
     publicTests: true,
@@ -111,6 +113,7 @@ async function calibrate(slug) {
     const judged = judge(slug, snapshot, { existing: true });
     return { judged, regressions: regressionsOf(baseline, judged.existing) };
   };
+  announce("reference");
   log(slug, "reference started");
   const sessions = [await runSession({ cwd: dir, text: prompt("reference", chain), transcript, kind: "reference", chain })];
   let { judged, regressions } = judgeReference();

@@ -29,7 +29,7 @@ import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PROMPTS, RUNS, args, log, readJson, session, sha256, specDir, workdir, writeJson, discard } from "./lib.mjs";
-import { say } from "./voice.mjs";
+import { LONG_LIST, say } from "./voice.mjs";
 
 export const ID_MODEL = "claude-sonnet-5-5";
 
@@ -122,7 +122,7 @@ export function fileLine(diff, where) {
 /** What follows the list when the answers go into a spec (a slug, or under `bouncer check`). */
 const INTO_SPEC = "Keep or change each one; the answers go into spec.md as Decided: lines.";
 /** What follows it on its own, with no spec yet. */
-export const ON_ITS_OWN = "Questions, not bugs: a pick you would change is work the agent is not done with.";
+export const ON_ITS_OWN = "Questions, not bugs. Any pick you'd change, your agent isn't done with.";
 
 /** The list as a person reads it; `closing` is the line after it. */
 export function render(items, closing = INTO_SPEC) {
@@ -295,10 +295,12 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   else writeJson(listPath(sha256(diff)), { at, ticket, ticketSha256: sha256(ticket), ...(from ? { from } : {}), diffSha256: sha256(diff), costUsd: result.costUsd, items });
   if (options.json !== undefined) console.log(JSON.stringify(items, null, 2));
   else {
-    say("id", { options });
+    // Beside his line, the list's size: the count is the check behind it.
+    say("id", { options, aside: items.length >= LONG_LIST ? "long-list" : items.length === 0 ? "empty-list" : null });
     // On its own there is no spec yet: say what the list is, and what a verdict would take.
     const alone = !slug && !process.env.BOUNCER_UNDER_CHECK;
     console.log(alone ? render(items, ON_ITS_OWN) : render(items));
+    if (alone && checkout !== null) say("cover-charge", { options });
     if (alone && checkout !== null) console.log("For a verdict from tests it never saw: bouncer check. It keeps this ticket and list; about $1-7 of Opus and 10-25 minutes once you confirm.");
   }
 }

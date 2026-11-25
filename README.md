@@ -79,6 +79,10 @@ $1–4 and takes 10–25 minutes. He writes two sets of tests:
 - **Public tests.** Your agent sees them and works against them.
 - **Hidden tests.** Only he sees them. They decide pass or fail.
 
+Every verdict leaves a card you can post: his answer, the counts and the
+failing rule, never a hidden test. `bouncer tally` keeps score of your agents
+at the door, on your machine only.
+
 ## The results, model by model
 
 Seven tickets, five runs per model. Every run said its own tests pass.

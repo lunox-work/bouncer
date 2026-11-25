@@ -35,7 +35,7 @@ import { join } from "node:path";
 import { recordCommitment } from "./commitment.mjs";
 import { confirmation } from "./confirm.mjs";
 import { ROOT, args, readJson, specDir, writeJson } from "./lib.mjs";
-import { say } from "./voice.mjs";
+import { announce, say } from "./voice.mjs";
 
 if (process.argv.includes("--hosted")) {
   const [{ run }, { IDENTITY }] = await Promise.all([import("./hosted.mjs"), import("./identity.mjs")]);
@@ -110,6 +110,10 @@ if (regressions.length > 0) {
   process.exit(1);
 }
 const committed = recordCommitment(slug);
+// What the suites as they stand cost: the three writers and the reference.
+const generation = readJson(join(dir, "generation.json"), {});
+const spent = ["skeleton", "public", "private"].reduce((sum, name) => sum + (generation[name]?.costUsd ?? 0), calibration.reference?.costUsd ?? 0);
+announce("ready", { extra: spent > 0 ? `the suites cost $${spent.toFixed(2)}` : null });
 console.log(
   `\n${slug}: ready. Public ${calibration.publicIds.length} tests;`,
   `hidden ${calibration.kept.length} kept of ${calibration.hiddenWritten}`,
