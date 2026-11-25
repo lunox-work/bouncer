@@ -23,10 +23,12 @@ ticket never said and what the agent picked, with file and line, in one
 session: about 17 seconds and $0.06. No package has to fit and nothing is
 installed.
 
-Give the person the list as printed, all of it, without his voice. They are
-questions, not bugs: never rank them, drop one, or say which pick is wrong.
-A pick they would change is work the agent is not done with, and that may be
-all they wanted. Then offer the verdict with its cost, and stop.
+Lead with his `Bouncer:` lines word for word (`Let me see some ID.`, and
+anything beside it), then give the person the list as printed, all of it,
+with no voice of his inside it. They are questions, not bugs: never rank
+them, drop one, or say which pick is wrong. they would change is work the agent is not done with, and that may be all
+they wanted. Then offer the verdict with its cost (his `Cover charge`
+line, when printed, says it), and stop.
 
 ## The verdict (minutes): `bouncer check`
 

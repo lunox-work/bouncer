@@ -60,7 +60,7 @@ import { fileURLToPath } from "node:url";
 import { confirmation } from "./confirm.mjs";
 import { baseOf, capDiff, diffOf, render, savedList } from "./id.mjs";
 import { ROOT, RUNS, SPECS, args, discard, log, prompt, readJson, session, sha256, specDir, stage, toolchainOf, workdir, writeJson } from "./lib.mjs";
-import { say } from "./voice.mjs";
+import { announce, say } from "./voice.mjs";
 
 const SOURCE = /\.(?:[cm]?[jt]sx?|py)$/;
 // A test by its name or by a test folder anywhere in the path.
@@ -213,6 +213,7 @@ async function draftSpec(slug, out, diff) {
     writeFileSync(join(dir, "ticket.md"), readFileSync(join(out, "ticket.md"), "utf8"));
     writeFileSync(join(dir, "id.md"), `${render(listed?.items ?? [])}\n`);
     writeFileSync(join(dir, "change.diff"), diff);
+    announce("ticket");
     log(slug, "drafting spec.md from the ticket and the ID check");
     const result = await session({
       cwd: dir,
@@ -256,6 +257,7 @@ function listOnly({ slug, out, ticketPath, root, base, options, givenTicket }) {
       return 2;
     }
   }
+  say("wrong-club", { options });
   console.log("No hidden suite here, so nothing will be prepared or judged. The ID check reads the whole change:");
   const status = step("id.mjs", [slug, "--repo", root, "--base", base]);
   if (status !== 0) return status;
@@ -461,6 +463,7 @@ async function main() {
   // 8. Prepare and judge the working tree.
   const prepared = step("prepare.mjs", [slug, ...(options["accept-open"] !== undefined ? ["--accept-open"] : [])]);
   if (prepared !== 0) return prepared;
+  announce("judge");
   return step("judge.mjs", [slug, "--repo", record.checkout, "--audit", ...(typeof options.card === "string" ? ["--card", resolve(options.card)] : [])]);
 }
 

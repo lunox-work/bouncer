@@ -2,8 +2,15 @@
 // terminal, and the judge's piped output unchanged. Pure: no spec, no
 // toolchain, no network.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { banner, FIGURE, LINES, lineFor, say, voiceOn } from "../bin/voice.mjs";
+import { existsSync, mkdtempSync, readFileSync, utimesSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { FIGURE_EVERY_MS, seen, summary, tallied, tally, tallyLine } from "../bin/regulars.mjs";
+import { announce, banner, clock, FIGURE, greet, LINES, lineFor, MARK, say, voiceMode, voiceOn } from "../bin/voice.mjs";
+
+// What he remembers goes to a scratch home, never the person's.
+const home = mkdtempSync(join(tmpdir(), "bouncer-voice-"));
+process.env.BOUNCER_HOME = home;
 
 const tty = { isTTY: true, out: "", write(text) { this.out += text; } };
 const pipe = { isTTY: false, out: "", write(text) { this.out += text; } };
@@ -19,6 +26,16 @@ assert.equal(voiceOn({ stream: tty, env: { CI: "true" } }), false, "CI");
 assert.equal(voiceOn({ stream: tty, env: { CI: "false" } }), true, "CI=false is not CI");
 assert.equal(voiceOn({ stream: tty, env: { BOUNCER_VOICE: "0" } }), false, "BOUNCER_VOICE=0");
 assert.equal(voiceOn({ stream: tty, env, sealed: true }), false, "a seal's output is for CI");
+// Asked for without a TTY (a coding agent's shell): one line, on stderr.
+assert.equal(voiceMode({ stream: tty, env }), "banner");
+assert.equal(voiceMode({ stream: pipe, env }), null, "unasked, a pipe gets nothing");
+assert.equal(voiceMode({ stream: pipe, env: { BOUNCER_VOICE: "1" } }), "line", "BOUNCER_VOICE=1");
+assert.equal(voiceMode({ stream: pipe, env, options: { voice: true } }), "line", "--voice");
+assert.equal(voiceMode({ stream: pipe, env: { BOUNCER_VOICE: "1", CI: "true" } }), "line", "asked for, CI or not");
+assert.equal(voiceMode({ stream: tty, env: { BOUNCER_VOICE: "1", NO_COLOR: "1" } }), "line", "NO_COLOR when asked: no banner, still the line");
+for (const options of [{ json: "x.json", voice: true }, { plain: true, voice: true }])
+  assert.equal(voiceMode({ stream: pipe, env, options }), null, "--json and --plain win over --voice");
+assert.equal(voiceMode({ stream: pipe, env: { BOUNCER_VOICE: "1" }, sealed: true }), null, "a seal wins over BOUNCER_VOICE=1");
 console.log("ok voiceOn");
 
 // The lines: every verdict judge prints has one; keys only on a first overfit.
@@ -45,8 +62,14 @@ assert.match(banner(lineFor("passed"), { verdict: "passed", counts: { public: { 
 console.log("ok banner");
 
 // say(): writes to a TTY, never to a pipe.
-say("overfit", { stream: pipe, keys: ["boundary-2"] });
+const side = { isTTY: false, out: "", write(text) { this.out += text; } };
+say("overfit", { stream: pipe, side, env, keys: ["boundary-2"] });
 assert.equal(pipe.out, "", "nothing on a pipe");
+assert.equal(side.out, "", "nor on stderr, unasked");
+// Asked for: stdout untouched, his line on stderr, keys and the tally beside it.
+say("overfit", { stream: pipe, side, env: { BOUNCER_VOICE: "1" }, keys: ["boundary-2"], record: "At this door so far: 1 in, 2 turned away." });
+assert.equal(pipe.out, "", "stdout stays the machine's");
+assert.equal(side.out, "Bouncer: Not tonight.  boundary-2\nBouncer: At this door so far: 1 in, 2 turned away.\n");
 const before = process.env.CI;
 const noColor = process.env.NO_COLOR;
 delete process.env.CI;
@@ -55,7 +78,59 @@ say("passed", { stream: tty });
 if (before !== undefined) process.env.CI = before;
 if (noColor !== undefined) process.env.NO_COLOR = noColor;
 assert.match(tty.out, /You're in\./);
+// The figure once per process (and once per 30 minutes): after it, his mark.
+const again = { isTTY: true, out: "", write(text) { this.out += text; } };
+say("passed", { stream: again, env });
+assert.ok(!again.out.includes(FIGURE[0]) && again.out.includes(MARK), "the second time, the mark only");
 console.log("ok say");
+
+// What he remembers: .seen, and the tally (bin/regulars.mjs).
+const fresh = mkdtempSync(join(tmpdir(), "bouncer-seen-"));
+assert.deepEqual(seen({ home: fresh, mark: false }), { due: true, first: true });
+assert.equal(existsSync(join(fresh, ".seen")), false, "mark: false writes nothing");
+assert.deepEqual(seen({ home: fresh }), { due: true, first: true });
+assert.deepEqual(seen({ home: fresh }), { due: false, first: false }, "drawn: not due again");
+const past = (Date.now() - FIGURE_EVERY_MS - 1000) / 1000;
+utimesSync(join(fresh, ".seen"), past, past);
+assert.deepEqual(seen({ home: fresh }), { due: true, first: false }, "due again after 30 minutes");
+assert.deepEqual(tallied({ home: fresh }), []);
+tally({ slug: "a", verdict: "overfit", keys: ["boundary-2", "unhappy-1"] }, { home: fresh });
+tally({ slug: "a", verdict: "passed", keys: [] }, { home: fresh });
+assert.equal(tallyLine(summary(tallied({ home: fresh }))), null, "under three verdicts, no record line");
+tally({ slug: "b", verdict: "overfit", keys: ["boundary-1"] }, { home: fresh });
+tally({ slug: "c", verdict: "incomplete", keys: ["happy-1", "happy-2", "happy-3"] }, { home: fresh });
+const withStub = summary(tallied({ home: fresh }));
+assert.equal(withStub.kind, "boundary", "an incomplete's keys are not what he turned it away on");
+tally({ slug: "c", verdict: "passed", keys: [] }, { home: fresh });
+const counted = summary(tallied({ home: fresh }));
+assert.deepEqual([counted.in, counted.out, counted.total, counted.kind, counted.kindCount], [2, 3, 5, "boundary", 2]);
+assert.equal(tallyLine(counted), "At this door so far: 2 in, 3 turned away; most turned away on boundary.");
+assert.equal(tallied({ home: join(fresh, "nowhere") }).length, 0, "no tally file: none");
+console.log("ok regulars");
+
+// The stages: on stderr, with the clock since the command started.
+assert.equal(clock(65_000), "1:05");
+assert.equal(clock(3_725_000), "1:02:05");
+const err = { isTTY: false, out: "", write(text) { this.out += text; } };
+announce("private", { stream: err, env });
+assert.equal(err.out, "", "unasked, no stage line");
+announce("private", { stream: err, env: { BOUNCER_VOICE: "1", BOUNCER_STARTED: "1000" }, now: 1000 + 125_000 });
+assert.equal(err.out, "Bouncer: Writing the list. Door's closed. (2:05)\n");
+announce("ready", { stream: err, env: { BOUNCER_VOICE: "1" }, extra: "the suites cost $3.10" });
+assert.ok(err.out.endsWith("Bouncer: The list is ready. (the suites cost $3.10)\n"));
+announce("no-such-stage", { stream: err, env: { BOUNCER_VOICE: "1" } });
+assert.ok(!err.out.includes("undefined"));
+for (const name of ["skeleton", "public", "private"]) assert.ok(LINES[`stage-${name}`], `generate's ${name} party has a stage line`);
+
+// The greeting: once, the first time he is seen on this machine.
+const greetHome = mkdtempSync(join(tmpdir(), "bouncer-greet-"));
+const greeted = { isTTY: false, out: "", write(text) { this.out += text; } };
+process.env.BOUNCER_HOME = greetHome;
+greet({ stream: pipe, side: greeted, env: { BOUNCER_VOICE: "1" } });
+greet({ stream: pipe, side: greeted, env: { BOUNCER_VOICE: "1" } });
+process.env.BOUNCER_HOME = home;
+assert.equal(greeted.out, "Bouncer: He's on the door.\n", "once");
+console.log("ok stages");
 
 // The judge prints his line only through say(), before the verdict line it
 // already printed, so the machine output is unchanged after it.

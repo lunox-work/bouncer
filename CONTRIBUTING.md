@@ -41,8 +41,11 @@ session.
   the title of a CI check (and where that title is repeated: the step
   summary's heading, `ci`'s log line when no check is posted) and the heading
   of the ID comment on a pull request (`BOUNCER_VOICE=0` drops that heading).
-  Never into `--json`, a pipe or a check's body, and a CI job's log gets no
-  line of his from `judge` (`test/voice.mjs`).
+  Never into `--json`, stdout through a pipe or a check's body, and a CI job's
+  log gets no line of his from `judge` (`test/voice.mjs`). Without a terminal
+  he speaks only when asked (`--voice`, `BOUNCER_VOICE=1`: what the skill
+  does), as `Bouncer: <line>` on stderr. What he remembers (`.seen`,
+  `tally.jsonl`, bin/regulars.mjs) stays in BOUNCER_HOME.
 - **No hidden test leaves the judge.** A change must not print, log or post a
   hidden test's name, body or compiler output.
 

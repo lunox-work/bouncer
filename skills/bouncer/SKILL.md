@@ -25,7 +25,9 @@ Bouncer holds the list and never shows it: from a spec the person confirms, he
 writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
-`bouncer <command>` is the CLI, `@lunox-work/bouncer@0.8.4`. If `bouncer
+`bouncer <command> --voice` is the CLI, `@lunox-work/bouncer@0.8.4`: end every
+command with `--voice`, so his lines reach you as `Bouncer: <line>` on stderr
+(**His voice**, step 5). If `bouncer
 --version` prints another version or nothing, ask before installing it (`npm i
 -g @lunox-work/bouncer@0.8.4`), or use `npx @lunox-work/bouncer@0.8.4` (in a
 clone, `node bin/cli.mjs`). `specs/` and `runs/` are in `~/.bouncer/`.
@@ -148,11 +150,18 @@ tell the person; never judge around it.
 | `prepare` exit 3, spec not confirmed | No list tonight. Ask the owner.          |
 | exit 1, hidden suite changed         | Someone touched my list. Nobody gets in. |
 
-**His voice.** Machine word first, his line beside it, then plain facts in your
-own voice: `overfit. Not tonight. boundary-2, unhappy-1`, then counts and the
-hidden suite's sha256. Only the lines above, each for the check behind it;
-never invent one, never soften a verdict, never use his voice while asking the
-person to confirm decisions or class a failure. He turns down the claim, never
+**His voice.** With `--voice` every line of his comes as `Bouncer: <line>`;
+relay each word for word, as his. Machine word first, his line beside it,
+then plain facts in your own voice: `overfit. Not tonight. boundary-2,
+unhappy-1`, then counts and the hidden suite's sha256. Only lines the CLI
+printed, each for the check behind it (the table above, the cover charge
+before a paid check, the stage lines with their clock and cost, `Wrong club.`
+when nothing can be judged); never invent one, never soften a verdict, never
+use his voice while asking the person to confirm decisions or class a failure.
+A verdict also prints `Card: <file.svg>` (the shareable card: his line, the
+counts, the keys, the hash, never a hidden test): give the person that path.
+A tally line (`At this door so far: ...`) counts the verdicts judged on this
+machine only; `bouncer tally` lists them. He turns down the claim, never
 the person. Call him "he" or Bouncer, never "it"; the command stays lowercase
 `bouncer`. On `passed`, say what it means: the code clears tests it never saw,
 written from the confirmed spec. It is not proof the spec is met (a second
