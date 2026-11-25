@@ -74,7 +74,7 @@ function changedLines(name, input) {
   return 0;
 }
 const isBouncer = (name, input) =>
-  (name === "Bash" && /(^|[\s;&|/])bouncer(@[\w.-]+)?(\.mjs)?\s/.test(`${input.command ?? ""} `)) ||
+  (name === "Bash" && /(^|[\s;&|/])(bouncer|duediligence)(@[\w.-]+)?(\.mjs)?\s/.test(`${input.command ?? ""} `)) ||
   (name === "Skill" && /(^|:)bouncer$/.test(input.skill ?? ""));
 
 function entries(text) {

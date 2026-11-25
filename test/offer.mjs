@@ -49,6 +49,7 @@ try {
   assert.equal(session.edits, 2);
   assert.equal(session.last, "Done.");
   assert.equal(digest([edit("/w/a.ts"), tool("Bash", { command: "npx -y @lunox-work/bouncer@0.8.4 id --ticket -" })].join("\n")).bouncerAfter, true);
+  assert.equal(digest([edit("/w/a.ts"), tool("Bash", { command: "npx -y duediligence check" })].join("\n")).bouncerAfter, true, "the old name counts");
   assert.equal(digest([tool("Skill", { skill: "bouncer" }), edit("/w/a.ts")].join("\n")).bouncerAfter, false);
   assert.equal(digest([edit("/w/styles.css"), say("Done.")].join("\n")).edits, 0);
   console.log("ok - digest counts code edits, subagents included, and bouncer runs after them");
@@ -128,6 +129,8 @@ try {
   offer("on");
   assert.equal(JSON.parse(readFileSync(settings, "utf8")).hooks.Stop.length, 2, "on twice adds it once");
   assert.match(offer("status").stdout, /^on, through a Stop hook in /);
+  const before = spawnSync(process.execPath, [CLI, "offer", "--settings", settings, "status"], { encoding: "utf8", env: { ...process.env, BOUNCER_HOME: home } });
+  assert.match(before.stdout, /^on, through a Stop hook in /, "--settings before the command");
   const off = offer("off");
   assert.equal(off.status, 0, off.stderr);
   assert.deepEqual(JSON.parse(readFileSync(settings, "utf8")).hooks.Stop, [{ hooks: [{ type: "command", command: "echo mine" }] }]);

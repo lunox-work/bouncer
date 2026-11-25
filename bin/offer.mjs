@@ -5,16 +5,17 @@
 // another way (the skills CLI, a copied skill folder), `on` adds it to Claude
 // Code's user settings.
 //
-//   node bin/offer.mjs status            whether it is on, and through what
-//   node bin/offer.mjs on                on: through the plugin when it is
-//                                        enabled, else a copy of the hook under
-//                                        BOUNCER_HOME/offer/ run from a Stop
-//                                        hook in the user settings
-//   node bin/offer.mjs off               off everywhere: BOUNCER_HOME/offer/off,
-//                                        and the settings hook removed (the
-//                                        plugin's own hook reads the flag)
-//   --settings <file>                    another settings.json (default
-//                                        $CLAUDE_CONFIG_DIR or ~/.claude, settings.json)
+//   node bin/offer.mjs [status | on | off] [--settings <file>]
+//
+//   status             whether it is on, and through what (the default)
+//   on                 through the plugin when it is enabled, else a copy of
+//                      the hook under BOUNCER_HOME/offer/ run from a Stop hook
+//                      in the user settings
+//   off                off everywhere: BOUNCER_HOME/offer/off, and the
+//                      settings hook removed (the plugin's own hook reads the
+//                      flag)
+//   --settings <file>  another settings.json (default: settings.json in
+//                      $CLAUDE_CONFIG_DIR or ~/.claude)
 //
 // Exit 0, or 1 when the settings file is not JSON it can safely rewrite.
 
@@ -30,9 +31,14 @@ const FLAG = join(DIR, "off");
 const COPY = join(DIR, "offer-on-done.mjs");
 const MARK = "offer-on-done.mjs";
 
+const USAGE = "usage: bouncer offer [status | on | off] [--settings <file>]";
 const argv = process.argv.slice(2);
-const command = argv.find((arg) => !arg.startsWith("--")) ?? "status";
 const at = argv.indexOf("--settings");
+if (at >= 0 && !argv[at + 1]) {
+  console.error(USAGE);
+  process.exit(1);
+}
+const command = argv.find((arg, i) => !arg.startsWith("--") && !(at >= 0 && i === at + 1)) ?? "status";
 const SETTINGS = at >= 0 ? argv[at + 1] : join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude"), "settings.json");
 
 function readSettings() {
@@ -95,6 +101,6 @@ if (command === "status") {
   if (settingsHook(settings)) write(withoutOurs(settings));
   console.log(`off${pluginOn(settings) ? " (the bouncer-verify plugin's hook stands down)" : ""}. On again: bouncer offer on`);
 } else {
-  console.error("usage: bouncer offer [status | on | off] [--settings <file>]");
+  console.error(USAGE);
   process.exit(1);
 }
