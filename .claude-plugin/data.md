@@ -2,10 +2,13 @@
   its skill runs the CLI on the machine; installing it asks for no sign-in,
   and it reaches Lunox's platform only if the person runs one of the
   platform commands below themselves.
-- **Offer on done (the plugin's one hook):** when a session hands the turn
+- **Check on done (the plugin's one hook):** when a session hands the turn
   back, it reads that session's transcripts on the machine to count code
-  edits and keeps what it offered in `~/.bouncer/offer/sessions.json`. It
-  runs no model and sends nothing; `bouncer offer off` stops it.
+  edits and keeps what it fired on in `~/.bouncer/offer/sessions.json`. The
+  hook itself runs no model and sends nothing. By default it has the agent
+  run `bouncer id`, which sends the person's request and the change to the
+  model backend on their own account (next item), about $0.06 each time;
+  `bouncer offer ask` has the agent ask first, `bouncer offer off` stops it.
 - **Sent off the machine:** the spec, the ticket it came from and the code
   being judged go to the model backend the person chooses, on their own
   account: a Claude Code session, the Codex CLI, or the Anthropic API with

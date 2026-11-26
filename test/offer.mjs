@@ -1,4 +1,4 @@
-// Offer on done (hooks/offer-on-done.mjs, bin/offer.mjs) on made-up
+// Check on done (hooks/offer-on-done.mjs, bin/offer.mjs) on made-up
 // sessions: no model, no network, a temp BOUNCER_HOME and settings file.
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";

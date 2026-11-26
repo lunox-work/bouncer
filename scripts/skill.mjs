@@ -253,7 +253,7 @@ function checkPlugins(names) {
 }
 
 /**
- * hooks/: the plugin's one hook, offer on done. Claude Code loads
+ * hooks/: the plugin's one hook, check on done. Claude Code loads
  * hooks/hooks.json from a plugin by itself, and refuses a manifest that lists
  * it again; the command runs a script in hooks/ through CLAUDE_PLUGIN_ROOT.
  * The plugin directory scans these files too (SCANNER_TRAPS).
@@ -411,9 +411,10 @@ function pluginReadme(plugin, rev) {
     lines.push("## No sign-in", "", "The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.", "");
   }
   if (show(rev, "hooks/hooks.json") !== null) {
-    lines.push("## Offer on done", "", "One Stop hook: when a session that changed code hands the turn back, the agent asks once whether to check the work");
-    lines.push("with Bouncer, and again after a large change. It runs nothing itself, reads only the session's transcripts on the");
-    lines.push("machine and sends nothing. Off: `bouncer offer off`, or `BOUNCER_OFFER=off`.", "");
+    lines.push("## Check on done", "", "One Stop hook: when a session that changed code hands the turn back, the agent runs Bouncer's ID check, once, and");
+    lines.push("again after a large change: one model session on the person's own account, about $0.06. The hook runs nothing itself,");
+    lines.push("reads only the session's transcripts on the machine and sends nothing. Asked first: `bouncer offer ask`. Off:");
+    lines.push("`bouncer offer off`, or `BOUNCER_OFFER=off`.", "");
   }
   // Links before Data: the directory takes the first privacy link in the README as the plugin's policy.
   const links = Object.entries(LISTING_LINKS).filter(([key]) => manifest[key]);
