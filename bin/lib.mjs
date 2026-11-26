@@ -1443,7 +1443,8 @@ const resultsFile = () => (PRIVATE.some((folder) => inside(RESULTS, folder)) ? [
  * `sandboxed: false` and says so once.
  */
 export function sessionSettings(cwd, chain) {
-  const denied = [...PRIVATE, TRANSCRIPTS, JUDGE_ROOT, ...siblings(cwd)];
+  // /proc: a file tool could read the session's own environment there (Linux), its sign-in included.
+  const denied = [...PRIVATE, TRANSCRIPTS, JUDGE_ROOT, ...siblings(cwd), ...(WINDOWS ? [] : ["/proc"])];
   const fileTools = ["Read", "Edit", "Write", "Glob", "Grep"];
   return {
     sandbox: {
@@ -1682,6 +1683,16 @@ export function textFeed(onText) {
 }
 
 /**
+ * What a session's process is started without: the tokens a CI job holds
+ * for other things (GitHub's, the seal's, another vendor's key, Jira's).
+ * The session's Bash would inherit them, and what a session
+ * reads is other people's text (a ticket, a diff). Claude Code's own sign-in
+ * (CLAUDE_CODE_OAUTH_TOKEN) has to stay; a session that reads outside text
+ * is given no tool that could print it (`tools`, bin/id.mjs `listOf`).
+ */
+const NOT_THE_SESSIONS = /^(GITHUB_TOKEN|GH_TOKEN|GH_ENTERPRISE_TOKEN|BOUNCER_GITHUB_TOKEN|BOUNCER_SEAL_AUTH|ACTIONS_RUNTIME_TOKEN|ACTIONS_ID_TOKEN_REQUEST_TOKEN|ACTIONS_ID_TOKEN_REQUEST_URL|OPENAI_API_KEY|CODEX_API_KEY|JIRA_API_TOKEN)$/;
+
+/**
  * One `claude -p` session in `cwd`, its stream-json transcript written to
  * `transcript`. Resolves with what the final result line says; never
  * rejects on the session's own failure. Sessions bill the signed-in Claude
@@ -1689,8 +1700,9 @@ export function textFeed(onText) {
  * precedence over it, so neither is passed. `onText`, when given, is
  * called with the answer's text as the model writes it (partial messages);
  * those events are left out of the transcript, which keeps its usual shape.
+ * `tools` narrows the built-in tools (default `TOOLS`; `[]` for none).
  */
-export async function claudeCli({ cwd, text, transcript, kind, resume, model, maxTurns, chain, onText }) {
+export async function claudeCli({ cwd, text, transcript, kind, resume, model, maxTurns, chain, onText, tools = TOOLS }) {
   const { minutes, budgetUsd } = limits(kind, chain);
   const argv = [
     "-p",
@@ -1703,7 +1715,7 @@ export async function claudeCli({ cwd, text, transcript, kind, resume, model, ma
     "--no-chrome",
     "--disable-slash-commands",
     "--tools",
-    TOOLS.join(","),
+    tools.join(","),
     "--permission-mode",
     "bypassPermissions",
     "--max-budget-usd",
@@ -1720,7 +1732,8 @@ export async function claudeCli({ cwd, text, transcript, kind, resume, model, ma
   const slot = await takeSlot();
   const started = Date.now();
   return new Promise((resolve) => {
-    const { ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, ...env } = process.env;
+    const { ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, ...rest } = process.env;
+    const env = Object.fromEntries(Object.entries(rest).filter(([key]) => !NOT_THE_SESSIONS.test(key)));
     // Its own process group, killed when it closes (and if this process exits first): a
     // server a session left in the background goes with it (`killStrays` catches the rest).
     if (!OS_SANDBOX) warnUnsandboxed();

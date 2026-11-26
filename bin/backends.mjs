@@ -642,10 +642,12 @@ function fileTools(root, runBash) {
   };
 }
 
-const systemPrompt = (cwd) =>
-  `You are a coding agent working in ${cwd}. It is your working directory and the only folder you can read or write: every tool resolves paths inside it, and Bash runs there without network. Do the task you are given with the tools. When it is done, reply with your final message and no tool call.`;
+const systemPrompt = (cwd, offered = TOOL_DEFS) =>
+  offered.length === 0
+    ? "You have no tools in this session: everything you need is in the message. Reply with your final message."
+    : `You are a coding agent working in ${cwd}. It is your working directory and the only folder you can read or write: every tool resolves paths inside it${offered.some((tool) => tool.name === "Bash") ? ", and Bash runs there without network" : ""}. Do the task you are given with the tools. When it is done, reply with your final message and no tool call.`;
 
-async function anthropicApi({ cwd, text, transcript, kind, resume, model, maxTurns, chain }) {
+async function anthropicApi({ cwd, text, transcript, kind, resume, model, maxTurns, chain, tools: allowed }) {
   const { minutes, budgetUsd } = limits(kind, chain);
   const chosen = model && /^claude/.test(model) ? model : (process.env.BOUNCER_MODEL ?? DEFAULT_MODEL);
   const state = stateOf(transcript, resume);
@@ -673,7 +675,9 @@ async function anthropicApi({ cwd, text, transcript, kind, resume, model, maxTur
       });
     });
   };
-  const tools = fileTools(cwd, runBash);
+  // `tools` (lib.mjs `session`): the names a session may call; all of them when not given.
+  const offered = allowed === undefined ? TOOL_DEFS : TOOL_DEFS.filter((tool) => allowed.includes(tool.name));
+  const tools = Object.fromEntries(Object.entries(fileTools(cwd, runBash)).filter(([name]) => offered.some((tool) => tool.name === name)));
   const base = { sessionId, model: chosen, backend: "anthropic-api" };
   const finish = (fields) => {
     writeFileSync(saved, JSON.stringify(messages));
@@ -697,8 +701,8 @@ async function anthropicApi({ cwd, text, transcript, kind, resume, model, maxTur
       const params = {
         model: chosen,
         max_tokens: 16000,
-        system: systemPrompt(cwd),
-        tools: TOOL_DEFS,
+        system: systemPrompt(cwd, offered),
+        ...(offered.length > 0 ? { tools: offered } : {}),
         messages,
         cache_control: { type: "ephemeral" },
         output_config: { effort: "high" },

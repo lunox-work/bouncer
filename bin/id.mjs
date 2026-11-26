@@ -332,9 +332,17 @@ export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", 
     writeFileSync(join(dir, "ticket.md"), ticket);
     writeFileSync(join(dir, "diff.patch"), diff);
     const transcript = join(RUNS, slug ?? "_id", "id", `${sha256(diff).slice(0, 16)}.jsonl`);
-    const text = promptFor(readFileSync(join(PROMPTS, "id.md"), "utf8"), ticket, diff);
+    const plain = readFileSync(join(PROMPTS, "id.md"), "utf8");
+    const text = promptFor(plain, ticket, diff);
+    // The ticket and the diff are other people's text (an issue anyone can
+    // file, on a pull request), and in CI the session's process holds the
+    // job's sign-in. So it gets no tool that could run or print anything:
+    // none when both files are in the prompt, Read alone when it must open them.
+    // The claude-cli and anthropic-api backends hold it to that; codex-cli
+    // runs its own shell under its own sandbox and does not take `tools`.
+    const tools = text === plain ? ["Read"] : [];
     const onText = onItem === null ? undefined : itemFeed((item, n) => onItem({ ...item, where: fileLine(diff, item.where) }, n));
-    result = await session({ cwd: dir, text, transcript, kind: "generate", model, onText });
+    result = await session({ cwd: dir, text, transcript, kind: "generate", model, onText, tools });
   } finally {
     discard(dir);
   }
