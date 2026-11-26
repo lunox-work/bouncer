@@ -104,8 +104,18 @@ async function party({ slug, name, dir, text, check, model, chain }) {
   const before = manifestOf(dir, chain);
   announce(name);
   log(slug, name, "started");
+  // A session that timed out, hit its budget or errored before its final
+  // answer did not finish, even when what it left builds: a hidden suite cut
+  // off partway was stored, calibrated and called ready, its only trace
+  // `ok: false` in generation.json. By its result, not by `ok`: a claude CLI
+  // that gave its answer (`success`) and then stayed up until the time limit
+  // killed it is `ok: false` too, and it did finish.
+  const ended = (run) =>
+    run.ok === false && run.subtype !== "success"
+      ? `The session ended before it finished (${run.timedOut ? "timed out" : (run.apiError ?? run.subtype ?? "error")}); what it left may be partial.`
+      : null;
   const first = await runSession({ cwd: dir, text, transcript, kind: "generate", model, chain });
-  let problem = check(before);
+  let problem = check(before) ?? ended(first);
   let session = first;
   const sessions = [first];
   if (problem !== null && first.sessionId !== null) {
@@ -120,7 +130,7 @@ async function party({ slug, name, dir, text, check, model, chain }) {
       chain,
     });
     sessions.push(session);
-    problem = check(before);
+    problem = check(before) ?? ended(session);
   }
   const record = {
     sessions: sessions.map(({ finalText, stderr, ...rest }) => rest),
