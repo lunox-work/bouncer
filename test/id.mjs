@@ -1,6 +1,6 @@
 // The ID check's parsing and rendering (bin/id.mjs), with no session.
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -80,7 +80,20 @@ try {
   writeFileSync(join(repo, "new.ts"), "export const a = 1;\n");
   writeFileSync(join(repo, "big.bin"), Buffer.alloc(NEW_FILE_BYTES + 1, 97));
   writeFileSync(join(repo, "blob.dat"), Buffer.from([1, 0, 2]));
+  // What `ls-files --others` names that is not a file: a link to a folder, a
+  // nested clone (`nested/`). Reading them threw EISDIR in 0.8.6.
+  mkdirSync(join(repo, "nested"));
+  spawnSync("git", ["-C", join(repo, "nested"), "init", "-q"]);
+  spawnSync("git", ["-C", join(repo, "nested"), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "n"]);
+  let linked = true;
+  try {
+    symlinkSync("nested", join(repo, "link"), "dir");
+  } catch {
+    linked = false; // Windows without the privilege to make links
+  }
   const { diff, left } = diffOf(repo);
+  if (linked) assert.match(diff, /diff --git a\/link b\/link\nnew file mode 120000\n[^]*?\n\+nested\n/, "a link is shown by its target");
+  assert.ok(!diff.includes("nested/"), "a nested clone is not part of the change");
   assert.match(diff, /\+\+\+ b\/new\.ts/);
   assert.match(diff, /\+export const a = 1;/);
   assert.ok(!diff.includes("a".repeat(1000)), "a large new file is named, not quoted");

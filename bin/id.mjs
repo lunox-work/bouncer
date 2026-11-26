@@ -25,7 +25,7 @@
 // a list (maybe empty), 1 when the session gave no list.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PROMPTS, RUNS, args, log, readJson, session, sha256, specDir, workdir, writeJson, discard } from "./lib.mjs";
@@ -258,9 +258,17 @@ export function diffOf(checkout, base = "HEAD") {
     .stdout.split("\n")
     .filter(Boolean)
     .map((path) => {
-      const file = join(checkout, path);
-      const size = statSync(file, { throwIfNoEntry: false })?.size;
-      if (size === undefined) return "";
+      // `ls-files --others` also names what is not a file: a nested clone or a
+      // git worktree as `dir/`, a symlink by its own path. Reading one as a
+      // file threw EISDIR and ended the check (0.8.6). A link is shown as git
+      // shows one, its target as its content; any other non-file is not part
+      // of the change.
+      const file = join(checkout, path.replace(/\/+$/, ""));
+      const entry = lstatSync(file, { throwIfNoEntry: false });
+      if (entry === undefined) return "";
+      if (entry.isSymbolicLink()) return `diff --git a/${path} b/${path}\nnew file mode 120000\n--- /dev/null\n+++ b/${path}\n@@ -0,0 +1 @@\n+${readlinkSync(file)}\n\\ No newline at end of file\n`;
+      if (!entry.isFile()) return "";
+      const { size } = entry;
       const text = size > NEW_FILE_BYTES ? null : readFileSync(file, "utf8");
       if (text === null || text.includes("\u0000")) {
         left.push(`${path} (new, ${text === null ? "large" : "binary"}: named only)`);
