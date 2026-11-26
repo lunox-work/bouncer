@@ -499,9 +499,27 @@ const PRICES = {
 };
 /** Models that take the server-side refusal fallback (`fallbacks: "default"`). */
 const FALLBACK_MODELS = ["claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"];
+/**
+ * A model the table does not hold is costed as the listed model of its
+ * family (a dated id, `claude-opus-5`), else as the dearest one: at 0 its
+ * session never reached `budgetUsd`, so only the time limit stopped the
+ * spending. Its recorded cost is then an estimate, said once.
+ */
+const DEAREST = Object.values(PRICES).reduce((most, price) => (price.output > most.output ? price : most));
+const priceOf = (model) => {
+  if (PRICES[model] !== undefined) return PRICES[model];
+  const family = /(fable|opus|sonnet|haiku)/.exec(String(model))?.[1];
+  const listed = family === undefined ? undefined : Object.keys(PRICES).find((name) => name.includes(family));
+  return listed === undefined ? DEAREST : PRICES[listed];
+};
+const unpriced = new Set();
 const costOf = (model, usage) => {
-  const price = PRICES[model];
-  if (price === undefined || usage === undefined) return 0;
+  if (usage === undefined) return 0;
+  if (PRICES[model] === undefined && !unpriced.has(model)) {
+    unpriced.add(model);
+    log(`no list price here for ${model}: its cost is estimated from the nearest listed model, so the budget still stops it`);
+  }
+  const price = priceOf(model);
   return (
     ((usage.input_tokens ?? 0) * price.input +
       (usage.cache_creation_input_tokens ?? 0) * price.input * 1.25 +
