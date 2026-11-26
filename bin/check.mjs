@@ -361,7 +361,9 @@ async function main() {
       }
       pkg = found.pkg;
     }
-    const seam = givenSeam ?? seamOf(changed, pkg);
+    // A file the change deleted (a rename's old path) is not the seam: the
+    // suites import the seam's first file, and the stub would write it back.
+    const seam = givenSeam ?? seamOf(changed, pkg).filter((path) => existsSync(join(root, path)));
     if (seam.length === 0) {
       console.error(`No changed source file in ${pkg} outside the tests. Pass --seam <file>[,<file>].`);
       return 2;
@@ -404,7 +406,7 @@ async function main() {
   const specPath = join(out, "spec.md");
   const idPath = join(RUNS, slug, "id.json");
   const changedNow = changedFiles(record.checkout, record.base);
-  const drift = record.seamGiven ? [] : seamDrift(record, changedNow);
+  const drift = record.seamGiven ? [] : seamDrift(record, changedNow).filter((path) => existsSync(join(record.checkout, path)));
   if (drift.length > 0)
     console.log(`Note: changed since this check started and outside its seam: ${drift.join(", ")}. The judge reports them as outside the allowed paths; bouncer check --new starts a check that includes them.`);
   const moved = staleness({
