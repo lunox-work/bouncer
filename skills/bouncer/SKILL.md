@@ -47,7 +47,7 @@ agent's work"): the list first, which takes seconds. `bouncer id --from
 <issue>`, or `bouncer id --ticket -` with the request on stdin in the
 person's words: what they asked the agent for, as they wrote it, never your
 summary of what was built. It prints what the ticket never said and what the
-agent picked, in about 17 seconds for $0.06. Give the person the whole list
+agent picked, in about 12 seconds for $0.06. Give the person the whole list
 and stop. Only when they want a verdict: `bouncer check`, which keeps that
 ticket and list ([references/check.md](references/check.md); say its cost
 first). This skill is local and needs no sign-in.

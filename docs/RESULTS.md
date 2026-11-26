@@ -157,6 +157,22 @@ code, shown to the same judge: a wrong pick named in 55 of 75 runs against
 run (62 and at most 3), so `bouncer id` stays a list
 ([ID.md](https://github.com/lunox-work/bouncer-evidence/blob/main/ID.md#executed-picks-2026-11-20-no-gain)).
 
+Since 2026-11-26 the ticket and the numbered diff go in the prompt, so the
+session answers in one turn instead of three, and a terminal prints each
+item as it is written. On three stored runs (5, 13 and 18 KB diffs), the
+same session both ways:
+
+| measure          | before: files opened, list at the end | now: in the prompt, streamed |
+| ---------------- | ------------------------------------: | ---------------------------: |
+| First item shown |                           13.4–14.7 s |                    2.4–2.6 s |
+| Whole list       |                           13.4–14.7 s |                  11.4–12.6 s |
+| Items            |                            11, 12, 12 |                   11, 12, 12 |
+| Cost             |                         $0.056–$0.075 |                $0.048–$0.077 |
+
+Streaming with the files still opened shows the first item at 8.3–10.1 s.
+Each `where` mapped to the same file line both ways. The lists above were
+made the earlier way.
+
 ## Tests written from the spec carry it to the agent
 
 The same seven specs, 15 runs per cell, graded by the same hidden suites. The

@@ -64,20 +64,79 @@ export function lastJsonBlock(text) {
   return undefined;
 }
 
+/** Twelve items at most, as prompts/id.md asks. */
+export const MAX_ITEMS = 12;
+
+/** One item as the list holds it, or null when it lacks a question or a pick. */
+export function itemOf(item) {
+  if (!item || typeof item.question !== "string" || typeof item.chose !== "string") return null;
+  return {
+    question: item.question.trim(),
+    ticket: typeof item.ticket === "string" && item.ticket.trim() !== "" ? item.ticket.trim() : "silent",
+    chose: item.chose.trim(),
+    where: typeof item.where === "string" ? item.where.trim() : "",
+    instead: typeof item.instead === "string" ? item.instead.trim() : "",
+  };
+}
+
 /** The items of a session's answer: the last ```json block, checked; null when there is none. */
 export function itemsOf(text) {
   const parsed = lastJsonBlock(text);
   if (!Array.isArray(parsed)) return null;
-  return parsed
-    .filter((item) => item && typeof item.question === "string" && typeof item.chose === "string")
-    .slice(0, 12)
-    .map((item) => ({
-      question: item.question.trim(),
-      ticket: typeof item.ticket === "string" && item.ticket.trim() !== "" ? item.ticket.trim() : "silent",
-      chose: item.chose.trim(),
-      where: typeof item.where === "string" ? item.where.trim() : "",
-      instead: typeof item.instead === "string" ? item.instead.trim() : "",
-    }));
+  return parsed.map(itemOf).filter(Boolean).slice(0, MAX_ITEMS);
+}
+
+/**
+ * A feed for the answer's text as the model writes it: `onItem(item, n)` is
+ * called for each item of the ```json array the moment its object closes,
+ * so a person sees the first pick seconds in instead of the whole list at
+ * the end. Only the array after the first ```json fence is read (prose
+ * before it is not); an object that does not parse or lacks a question is
+ * skipped. What `itemsOf` reads from the final text stays the list of
+ * record: the caller compares the two.
+ */
+export function itemFeed(onItem) {
+  let text = "";
+  let at = -1; // where scanning resumes; -1 until the fence is seen
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let start = -1;
+  let done = false;
+  let count = 0;
+  return (chunk) => {
+    if (done) return;
+    text += chunk;
+    if (at === -1) {
+      const fence = text.indexOf("```json");
+      if (fence === -1) return;
+      at = fence + "```json".length;
+    }
+    for (; at < text.length && !done; at++) {
+      const c = text[at];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (c === "\\") escaped = true;
+        else if (c === '"') inString = false;
+        continue;
+      }
+      if (c === '"') inString = depth > 0;
+      else if (c === "[" || c === "{") {
+        if (depth === 1 && c === "{") start = at;
+        depth += 1;
+      } else if (c === "]" || c === "}") {
+        depth -= 1;
+        if (depth === 1 && c === "}" && start !== -1) {
+          let item = null;
+          try {
+            item = itemOf(JSON.parse(text.slice(start, at + 1)));
+          } catch {}
+          start = -1;
+          if (item !== null && count < MAX_ITEMS) onItem(item, ++count);
+        } else if (depth <= 0) done = true;
+      } else if (c === "`" && depth === 0) done = true;
+    }
+  };
 }
 
 /**
@@ -124,16 +183,26 @@ const INTO_SPEC = "Keep or change each one; the answers go into spec.md as Decid
 /** What follows it on its own, with no spec yet. */
 export const ON_ITS_OWN = "Questions, not bugs. Any pick you'd change, your agent isn't done with.";
 
+/** One item of the list as a person reads it, numbered `n`. */
+export function renderItem(item, n) {
+  const said = item.ticket === "silent" ? "ticket: silent" : `ticket: "${item.ticket}"`;
+  return [`${n}. ${item.question}`, `   picked: ${item.chose}${item.where ? ` (${item.where})` : ""}`, `   ${said}`, ...(item.instead ? [`   instead: ${item.instead}`] : [])].join("\n");
+}
+
+const things = (n) => `${n} thing${n === 1 ? "" : "s"}`;
+
 /** The list as a person reads it; `closing` is the line after it. */
 export function render(items, closing = INTO_SPEC) {
   if (items.length === 0) return "Your ticket left nothing open that this change answers.";
-  const head = `${items.length} thing${items.length === 1 ? "" : "s"} your ticket never said. Your agent picked for you:`;
-  const lines = items.map((item, i) => {
-    const said = item.ticket === "silent" ? "ticket: silent" : `ticket: "${item.ticket}"`;
-    return [`${i + 1}. ${item.question}`, `   picked: ${item.chose}${item.where ? ` (${item.where})` : ""}`, `   ${said}`, ...(item.instead ? [`   instead: ${item.instead}`] : [])].join("\n");
-  });
-  return [head, "", ...lines, "", closing].join("\n");
+  const head = `${things(items.length)} your ticket never said. Your agent picked for you:`;
+  return [head, "", ...items.map((item, i) => renderItem(item, i + 1)), "", closing].join("\n");
 }
+
+/** The head of a list printed as it arrives, before its count is known. */
+export const LIVE_HEAD = "What your ticket never said, and what your agent picked for you:";
+/** The line after a list printed as it arrived: its count, then `closing`. */
+export const liveTail = (count, closing = INTO_SPEC) =>
+  count === 0 ? "Your ticket left nothing open that this change answers." : `${things(count)} in all. ${closing}`;
 
 const git = (checkout, ...argv) => spawnSync("git", ["-C", checkout, ...argv], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
 
@@ -212,23 +281,57 @@ export function capDiff(diff) {
 }
 
 /**
+ * The prompt is one command-line argument: past this many bytes the two
+ * files stay on disk for the session to open (Linux caps one argument at
+ * 128 KiB, Windows a whole command line at 32,767 characters).
+ */
+export const INLINE_BYTES = process.platform === "win32" ? 24_000 : 100_000;
+const READ_LINE = "Read both files. Do not run anything and do not change any file.";
+const INLINE_LINE = "Both files are below in full, the diff with its line numbers as `where` takes them: there is nothing to open. Do not run anything and do not change any file.";
+
+/** A diff as Claude Code's Read tool shows it: each line after its number and a tab. */
+export const numbered = (text) =>
+  text
+    .split("\n")
+    .map((line, i) => `${String(i + 1).padStart(6)}\t${line}`)
+    .join("\n");
+
+/**
+ * The ID prompt with the ticket and the diff in it, so the session answers
+ * in one turn instead of first opening the two files (two of an 18 s
+ * session's three turns). The diff is numbered as the Read tool numbers it,
+ * since `where` counts its lines and `fileLine` maps them. Returns the
+ * plain prompt, the files left to be read, when the result would pass
+ * INLINE_BYTES or prompts/id.md no longer says to read them.
+ */
+export function promptFor(prompt, ticket, diff) {
+  if (!prompt.includes(READ_LINE)) return prompt;
+  const text = [prompt.replace(READ_LINE, INLINE_LINE).trimEnd(), "", "## ticket.md", "", ticket.trimEnd(), "", "## diff.patch", "", numbered(diff), ""].join("\n");
+  return Buffer.byteLength(text) > INLINE_BYTES ? prompt : text;
+}
+
+/**
  * One ID session (prompts/id.md) over a ticket and a diff, in a scratch
  * folder that holds nothing else. `items` is null when the session gave no
  * list. `name` labels the scratch folder; the transcript goes under `slug`.
+ * `onItem(item, n)`, when given, gets each item as the session writes it
+ * (`itemFeed`; on the claude CLI only), its `where` already the file's line.
  */
-export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", slug = null }) {
+export async function listOf({ ticket, diff, model = ID_MODEL, name = "ticket", slug = null, onItem = null }) {
   const dir = workdir(`id-${name}`);
   let result;
   try {
     writeFileSync(join(dir, "ticket.md"), ticket);
     writeFileSync(join(dir, "diff.patch"), diff);
     const transcript = join(RUNS, slug ?? "_id", "id", `${sha256(diff).slice(0, 16)}.jsonl`);
-    result = await session({ cwd: dir, text: readFileSync(join(PROMPTS, "id.md"), "utf8"), transcript, kind: "generate", model });
+    const text = promptFor(readFileSync(join(PROMPTS, "id.md"), "utf8"), ticket, diff);
+    const onText = onItem === null ? undefined : itemFeed((item, n) => onItem({ ...item, where: fileLine(diff, item.where) }, n));
+    result = await session({ cwd: dir, text, transcript, kind: "generate", model, onText });
   } finally {
     discard(dir);
   }
   const items = itemsOf(result.finalText)?.map((item) => ({ ...item, where: fileLine(diff, item.where) })) ?? null;
-  return { items, costUsd: result.costUsd ?? null, subtype: result.subtype ?? null, apiError: result.apiError ?? null };
+  return { items, costUsd: result.costUsd ?? null, subtype: result.subtype ?? null, apiError: result.apiError ?? null, durationMs: result.durationMs ?? null };
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -283,7 +386,21 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     process.exit(1);
   }
   log("id: reading the ticket and the diff");
-  const result = await listOf({ ticket, diff, model: typeof options.model === "string" ? options.model : ID_MODEL, name: slug ?? "ticket", slug });
+  // A person at a terminal sees each pick as it is written; a script or an
+  // agent's Bash gets the whole list at the end, in the shape it always had.
+  const alone = !slug && !process.env.BOUNCER_UNDER_CHECK;
+  const closing = alone ? ON_ITS_OWN : INTO_SPEC;
+  const live = options.json === undefined && process.stdout.isTTY === true;
+  const shown = [];
+  if (live) say("id", { options });
+  const onItem = live
+    ? (item, n) => {
+        if (n === 1) console.log(`${LIVE_HEAD}\n`);
+        shown.push(item);
+        console.log(renderItem(item, n));
+      }
+    : null;
+  const result = await listOf({ ticket, diff, model: typeof options.model === "string" ? options.model : ID_MODEL, name: slug ?? "ticket", slug, onItem });
   const { items } = result;
   if (items === null) {
     console.error(`id: the session gave no list (${result.subtype ?? "no result"}${result.apiError ? `, ${result.apiError}` : ""}).`);
@@ -293,13 +410,22 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
   const from = typeof options.from === "string" ? options.from : undefined;
   if (slug) writeJson(join(RUNS, slug, "id.json"), { at, ticket: ticketFile ?? from ?? "stdin", diffSha256: sha256(diff), costUsd: result.costUsd, items });
   else writeJson(listPath(sha256(diff)), { at, ticket, ticketSha256: sha256(ticket), ...(from ? { from } : {}), diffSha256: sha256(diff), costUsd: result.costUsd, items });
+  const aside = items.length >= LONG_LIST ? "long-list" : items.length === 0 ? "empty-list" : null;
   if (options.json !== undefined) console.log(JSON.stringify(items, null, 2));
   else {
-    // Beside his line, the list's size: the count is the check behind it.
-    say("id", { options, aside: items.length >= LONG_LIST ? "long-list" : items.length === 0 ? "empty-list" : null });
-    // On its own there is no spec yet: say what the list is, and what a verdict would take.
-    const alone = !slug && !process.env.BOUNCER_UNDER_CHECK;
-    console.log(alone ? render(items, ON_ITS_OWN) : render(items));
+    if (live) {
+      // Printed as it came; the final answer is the list of record, so a
+      // stream that missed or misread an item is followed by the whole list.
+      if (JSON.stringify(shown) === JSON.stringify(items)) console.log(`\n${liveTail(items.length, closing)}`);
+      else console.log(`${shown.length > 0 ? "\nThe list as it was settled:\n\n" : ""}${render(items, closing)}`);
+      // Beside the list, its size: the count is the check behind it.
+      if (aside !== null) say(aside, { options });
+    } else {
+      // Beside his line, the list's size: the count is the check behind it.
+      say("id", { options, aside });
+      // On its own there is no spec yet: say what the list is, and what a verdict would take.
+      console.log(render(items, closing));
+    }
     if (alone && checkout !== null) say("cover-charge", { options });
     if (alone && checkout !== null) console.log("For a verdict from tests it never saw: bouncer check. It keeps this ticket and list; about $1-7 of Opus and 10-25 minutes once you confirm.");
   }

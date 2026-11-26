@@ -61,7 +61,7 @@ export const LINES = {
 export const LONG_LIST = 10;
 
 const IN = new Set(["passed", "passed-retry", "door-clean"]);
-const ASK = new Set(["id", "cover-charge", "met"]);
+const ASK = new Set(["id", "cover-charge", "met", "long-list", "empty-list"]);
 
 /**
  * How a person is reading `stream`: "banner" at a TTY, "line" where one

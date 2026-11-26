@@ -62,7 +62,7 @@ When the fix passes, he says _One fix. You're in._
   <img src="assets/list.png" width="880" alt="He lists every decision your agent made without asking you. When your ticket did not say what to do, your agent chose for you. You keep or change each one. A page on a clipboard reads: 12 things your ticket never said. Your agent picked for you. Rows 5 to 9 of the twelve; row 6 is ticked keep. Row 7 is written out: What is the status for a zero bounty? Picked: reports pro bono for every state, and still records zero-amount releases, src/index.ts line 41, ticket: silent. It is ticked change. A real list from one run: 12 decisions in 17 seconds, and number 7 is the one that failed his tests.">
 </p>
 
-It takes about 17 seconds and costs about $0.06.
+The first one shows in about 3 seconds, the whole list in about 12. It costs about $0.06.
 
 ## Install
 
@@ -174,8 +174,8 @@ pytest repositories have little evidence (docs/REFERENCE.md "Scope").
 What to tell them, accurately:
 
 - Agent already says done: `bouncer id` first, one session of about $0.06
-  and 17 seconds listing what the ticket never said and what the agent
-  picked, as questions. It needs the ticket and the change, no spec and no
+  and 12 seconds (the first item in about 3) listing what the ticket never
+  said and what the agent picked, as questions. It needs the ticket and the change, no spec and no
   fit. `bouncer check` then goes on to a verdict from the same ticket and
   list; their keep or change per item confirms the spec. `bouncer door` (no
   model) reports only: its rules were rarely right on real sessions.

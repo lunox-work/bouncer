@@ -35,7 +35,7 @@ guessed.
   under the 10% its gate asked for, and a model-judged check upheld 1 of 50
   firings ([DOOR.md](https://github.com/lunox-work/bouncer-evidence/blob/main/DOOR.md)).
 - `bouncer id [<slug>] [--ticket <file>|- | --from <issue>] [--diff <file> | --repo <dir> [--base <ref>]]`:
-  one Sonnet 5.5 session, a median $0.06 and 17 s. What the ticket never said and
+  one Sonnet 5.5 session of one turn, about $0.06 and 12 s, at a terminal the first item in about 3 s. What the ticket never said and
   what the diff picked, each with the ticket sentence, where, and the usual
   alternative. Questions, never ranked: the person's keep or change becomes a
   `Decided:` line. The ticket is a file, stdin (`--ticket -`, the request in

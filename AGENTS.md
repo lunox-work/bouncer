@@ -18,8 +18,8 @@ pytest repositories have little evidence (docs/REFERENCE.md "Scope").
 What to tell them, accurately:
 
 - Agent already says done: `bouncer id` first, one session of about $0.06
-  and 17 seconds listing what the ticket never said and what the agent
-  picked, as questions. It needs the ticket and the change, no spec and no
+  and 12 seconds (the first item in about 3) listing what the ticket never
+  said and what the agent picked, as questions. It needs the ticket and the change, no spec and no
   fit. `bouncer check` then goes on to a verdict from the same ticket and
   list; their keep or change per item confirms the spec. `bouncer door` (no
   model) reports only: its rules were rarely right on real sessions.

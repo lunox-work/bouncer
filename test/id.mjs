@@ -4,7 +4,8 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { NEW_FILE_BYTES, ON_ITS_OWN, diffOf, fileLine, itemsOf, render } from "../bin/id.mjs";
+import { INLINE_BYTES, LIVE_HEAD, NEW_FILE_BYTES, ON_ITS_OWN, diffOf, fileLine, itemFeed, itemsOf, liveTail, numbered, promptFor, render, renderItem } from "../bin/id.mjs";
+import { textFeed } from "../bin/lib.mjs";
 
 const answer = 'Reading both.\n```json\n[{"question":"What does a $0 bounty release?","ticket":"","chose":"Records a release of 0.","where":"src/index.ts:41","instead":"Records nothing."},{"bad":1}]\n```';
 assert.deepEqual(itemsOf(answer), [{ question: "What does a $0 bounty release?", ticket: "silent", chose: "Records a release of 0.", where: "src/index.ts:41", instead: "Records nothing." }]);
@@ -141,4 +142,114 @@ console.log("ok diffOf");
   }
 }
 console.log("ok id on its own: stdin ticket, the branch's change, the list kept for check");
+
+// itemFeed: each item the moment its object closes, however the text is cut.
+{
+  const items = [
+    { question: "What does a $0 bounty release?", ticket: "silent", chose: 'Records "0" {as} [a] release.\\n', where: "src/index.ts:41", instead: "Nothing." },
+    { question: "Second?", ticket: "Pay out once.", chose: "Pays twice } ] ```", where: "", instead: "" },
+  ];
+  const answer = `Prose with [brackets] and {braces} first.\n\`\`\`json\n[${JSON.stringify(items[0])}, {"bad": 1}, ${JSON.stringify(items[1])}]\n\`\`\`\nAfter: {"question":"no","chose":"no"}`;
+  for (const size of [1, 3, 7, answer.length]) {
+    const got = [];
+    const feed = itemFeed((item, n) => got.push([n, item]));
+    for (let i = 0; i < answer.length; i += size) feed(answer.slice(i, i + size));
+    assert.deepEqual(got.map(([n]) => n), [1, 2], `chunks of ${size}`);
+    assert.deepEqual(got.map(([, item]) => item), itemsOf(answer), `chunks of ${size}: the same items as the final parse`);
+  }
+  const many = itemFeed(() => {});
+  let count = 0;
+  const counted = itemFeed(() => count++);
+  counted("```json\n" + JSON.stringify(Array.from({ length: 20 }, (_, i) => ({ question: `q${i}`, chose: "c" }))) + "\n```");
+  assert.equal(count, 12, "twelve at most");
+  many("no fence, no items");
+}
+console.log("ok itemFeed");
+
+// promptFor: the files in the prompt, the diff numbered as Read numbers it.
+{
+  const prompt = readFileSync(join(import.meta.dirname, "..", "prompts", "id.md"), "utf8");
+  const text = promptFor(prompt, "Add b.\n", "diff --git a/b.ts b/b.ts\n+export const b = 1;\n");
+  assert.ok(!text.includes("Read both files."), "nothing to open");
+  assert.match(text, /## ticket\.md\n\nAdd b\.\n\n## diff\.patch\n\n     1\tdiff --git a\/b\.ts b\/b\.ts\n     2\t\+export const b = 1;\n/);
+  assert.ok(text.includes("Answer with one JSON block"), "the instructions stay whole");
+  assert.equal(numbered("a\nb"), "     1\ta\n     2\tb");
+  assert.equal(promptFor(prompt, "t", "+x\n".repeat(INLINE_BYTES)), prompt, "too large: the files stay on disk");
+  assert.equal(promptFor("an edited prompt", "t", "d"), "an edited prompt", "a prompt that no longer says to read them is left alone");
+}
+console.log("ok promptFor");
+
+// textFeed: text deltas as they come; whole blocks only when the CLI sent none.
+{
+  const line = (o) => JSON.stringify(o) + "\n";
+  const delta = (text) => line({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text } } });
+  const got = [];
+  const feed = textFeed((text) => got.push(text));
+  const out = line({ type: "system", subtype: "init" }) + delta("He") + line({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "hm" } } }) + delta("llo") + line({ type: "assistant", message: { content: [{ type: "text", text: "Hello" }] } });
+  for (let i = 0; i < out.length; i += 5) feed(Buffer.from(out.slice(i, i + 5)));
+  assert.deepEqual(got, ["He", "llo"]);
+  const whole = [];
+  textFeed((text) => whole.push(text))(line({ type: "assistant", message: { content: [{ type: "thinking", thinking: "x" }, { type: "text", text: "All at once" }] } }));
+  assert.deepEqual(whole, ["All at once"]);
+}
+console.log("ok textFeed");
+
+assert.equal(renderItem({ question: "Q?", ticket: "silent", chose: "C.", where: "a.ts:1", instead: "" }, 3), "3. Q?\n   picked: C. (a.ts:1)\n   ticket: silent");
+assert.equal(liveTail(2, ON_ITS_OWN), `2 things in all. ${ON_ITS_OWN}`);
+assert.equal(liveTail(0), "Your ticket left nothing open that this change answers.");
+assert.ok(!/bug|wrong|risk/i.test(LIVE_HEAD));
+console.log("ok live head and tail");
+
+// One session on a fake claude CLI: items arrive before it ends, the
+// transcript keeps its usual shape, the prompt carries the files.
+if (process.platform !== "win32") {
+  const home = mkdtempSync(join(tmpdir(), "bouncer-id-live-"));
+  try {
+    const items = [1, 2, 3].map((n) => ({ question: `Q${n}?`, ticket: "silent", chose: `C${n}.`, where: "", instead: "" }));
+    const final = "```json\n" + JSON.stringify(items) + "\n```";
+    const fake = join(home, "claude.mjs");
+    writeFileSync(
+      fake,
+      `import { writeFileSync } from "node:fs";
+writeFileSync(${JSON.stringify(join(home, "argv.json"))}, JSON.stringify(process.argv.slice(2)));
+const final = ${JSON.stringify(final)};
+const out = (o) => process.stdout.write(JSON.stringify(o) + "\\n");
+out({ type: "system", subtype: "init", session_id: "s", model: "m" });
+const parts = final.match(/[\\s\\S]{1,40}/g);
+let i = 0;
+const tick = setInterval(() => {
+  if (i < parts.length) return out({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text: parts[i++] } } });
+  clearInterval(tick);
+  out({ type: "assistant", message: { content: [{ type: "text", text: final }] } });
+  out({ type: "result", subtype: "success", result: final, total_cost_usd: 0.01, num_turns: 1 });
+}, 30);
+`,
+    );
+    const runner = join(home, "run.mjs");
+    writeFileSync(
+      runner,
+      `import { listOf } from ${JSON.stringify(join(import.meta.dirname, "..", "bin", "id.mjs"))};
+const seen = [];
+const started = Date.now();
+const result = await listOf({ ticket: "Add b.\\n", diff: "diff --git a/b.ts b/b.ts\\n+b\\n", onItem: (item, n) => seen.push({ n, q: item.question, ms: Date.now() - started }) });
+console.log(JSON.stringify({ seen, items: result.items, ms: Date.now() - started }));
+`,
+    );
+    const run = spawnSync(process.execPath, [runner], { encoding: "utf8", env: { ...process.env, BOUNCER_HOME: home, CLAUDE_BIN: fake, BOUNCER_BACKEND: "claude-cli", BOUNCER_SPECS: "" }, timeout: 60_000 });
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const got = JSON.parse(run.stdout.trim().split("\n").pop());
+    assert.deepEqual(got.seen.map((s) => s.q), ["Q1?", "Q2?", "Q3?"]);
+    assert.deepEqual(got.items.map((item) => item.question), ["Q1?", "Q2?", "Q3?"]);
+    assert.ok(got.seen[0].ms < got.ms - 100, `the first item came before the session ended (${got.seen[0].ms} of ${got.ms} ms)`);
+    const argv = JSON.parse(readFileSync(join(home, "argv.json"), "utf8"));
+    assert.ok(argv.includes("--include-partial-messages"));
+    assert.match(argv[argv.indexOf("-p") + 1], /## diff\.patch\n\n     1\tdiff --git a\/b\.ts b\/b\.ts/);
+    const [transcript] = readdirSync(join(home, "runs", "_id", "id"));
+    const kept = readFileSync(join(home, "runs", "_id", "id", transcript), "utf8");
+    assert.ok(!kept.includes("stream_event") && kept.includes('"type":"result"'), "the transcript keeps its usual shape");
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+  console.log("ok id streams on the claude CLI");
+}
 console.log("id passed");

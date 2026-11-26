@@ -1652,13 +1652,45 @@ export function warnUnsandboxed() {
 }
 
 /**
+ * A stdout listener for a stream-json session that calls `onText` with the
+ * answer's text as it arrives: each text delta of a partial message, or,
+ * when the CLI sent no deltas, each whole text block. Thinking is skipped.
+ */
+export function textFeed(onText) {
+  let pending = "";
+  let deltas = false;
+  return (chunk) => {
+    pending += chunk.toString("utf8");
+    const lines = pending.split("\n");
+    pending = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("{")) continue;
+      let event;
+      try {
+        event = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const delta = event.type === "stream_event" ? event.event?.delta : null;
+      if (delta?.type === "text_delta" && typeof delta.text === "string") {
+        deltas = true;
+        onText(delta.text);
+      } else if (!deltas && event.type === "assistant" && Array.isArray(event.message?.content))
+        for (const block of event.message.content) if (block.type === "text" && typeof block.text === "string") onText(block.text);
+    }
+  };
+}
+
+/**
  * One `claude -p` session in `cwd`, its stream-json transcript written to
  * `transcript`. Resolves with what the final result line says; never
  * rejects on the session's own failure. Sessions bill the signed-in Claude
  * subscription: an API key or token in the environment would take
- * precedence over it, so neither is passed.
+ * precedence over it, so neither is passed. `onText`, when given, is
+ * called with the answer's text as the model writes it (partial messages);
+ * those events are left out of the transcript, which keeps its usual shape.
  */
-export async function claudeCli({ cwd, text, transcript, kind, resume, model, maxTurns, chain }) {
+export async function claudeCli({ cwd, text, transcript, kind, resume, model, maxTurns, chain, onText }) {
   const { minutes, budgetUsd } = limits(kind, chain);
   const argv = [
     "-p",
@@ -1682,6 +1714,7 @@ export async function claudeCli({ cwd, text, transcript, kind, resume, model, ma
     model ?? process.env.BOUNCER_MODEL ?? DEFAULT_MODEL,
     ...(resume ? ["--resume", resume] : []),
     ...(maxTurns ? ["--max-turns", String(maxTurns)] : []),
+    ...(onText ? ["--include-partial-messages"] : []),
   ];
   mkdirSync(dirname(transcript), { recursive: true });
   const slot = await takeSlot();
@@ -1699,7 +1732,11 @@ export async function claudeCli({ cwd, text, transcript, kind, resume, model, ma
     child.on("exit", reap);
     const chunks = [];
     let stderr = "";
-    child.stdout.on("data", (chunk) => chunks.push(chunk));
+    const live = onText ? textFeed(onText) : null;
+    child.stdout.on("data", (chunk) => {
+      chunks.push(chunk);
+      live?.(chunk);
+    });
     child.stderr.on("data", (chunk) => (stderr += chunk));
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -1712,7 +1749,16 @@ export async function claudeCli({ cwd, text, transcript, kind, resume, model, ma
       reap();
       process.removeListener("exit", reap);
       rmSync(slot, { force: true });
-      const out = Buffer.concat(chunks).toString("utf8");
+      const raw = Buffer.concat(chunks).toString("utf8");
+      const partial = (line) => {
+        if (!line.includes('"stream_event"')) return false;
+        try {
+          return JSON.parse(line).type === "stream_event";
+        } catch {
+          return false;
+        }
+      };
+      const out = onText ? raw.split("\n").filter((line) => !partial(line)).join("\n") : raw;
       writeFileSync(
         transcript,
         resume && existsSync(transcript) ? readFileSync(transcript, "utf8") + out : out,
