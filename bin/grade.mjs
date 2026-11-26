@@ -44,6 +44,7 @@ import {
   scopeOf,
   specDir,
   specSlugs,
+  distinct,
   testsOf,
   toolchainOf,
   verdict,
@@ -112,7 +113,7 @@ for (const slug of specSlugs(rest)) {
         publicCount = count(judged.public, calibration.publicIds);
         hiddenCount = count(judged.hidden, calibration.kept);
         const reported = new Map(testsOf(judged.hidden).map((test) => [test.id, test]));
-        hiddenFailures = calibration.kept
+        hiddenFailures = distinct(calibration.kept)
           .filter((id) => reported.get(id)?.ok !== true)
           .map((id) => ({ id, error: reported.get(id)?.error ?? { message: "did not run" } }));
         writeJson(join(out, "grade.json"), {

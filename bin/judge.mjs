@@ -478,9 +478,13 @@ function redact(text) {
 function guardOutput() {
   const calibration = readJson(join(specDir(sealed.slug), "calibration.json"), {});
   redact.names = [...new Set((calibration.kept ?? []).flatMap((id) => {
-    const name = id.split(" :: ").at(-1);
-    const bare = name.replace(/^\[[a-z]+-\d+\] /, "");
-    return [name, ...(bare.length >= 12 ? [bare] : [])];
+    // The second of two same-named tests is kept as `<name> (2)` (rules.mjs
+    // `distinct`): the name it prints under is the one without the count.
+    const kept = id.split(" :: ").at(-1);
+    return [...new Set([kept, kept.replace(/ \(\d+\)$/, "")])].flatMap((name) => {
+      const bare = name.replace(/^\[[a-z]+-\d+\] /, "");
+      return [name, ...(bare.length >= 12 ? [bare] : [])];
+    });
   }))].sort((a, b) => b.length - a.length);
   for (const stream of ["log", "error"]) {
     const write = console[stream].bind(console);

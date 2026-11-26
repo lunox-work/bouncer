@@ -52,10 +52,10 @@ import {
   which,
 } from "./platform.mjs";
 import { withBins } from "./runners/shared.mjs";
-import { allowedIn, count, regressionsOf, scenarioOf, testsOf, verdict } from "./rules.mjs";
+import { allowedIn, count, distinct, regressionsOf, scenarioOf, testsOf, verdict } from "./rules.mjs";
 
 // The suite-result rules live in bin/rules.mjs (pure, shared with bin/api.mjs).
-export { count, regressionsOf, scenarioOf, testsOf, verdict };
+export { count, distinct, regressionsOf, scenarioOf, testsOf, verdict };
 
 /**
  * The package: bin/, prompts/, template/ and the bundled example spec. It
@@ -1370,6 +1370,8 @@ export function baselineOf(result, stage) {
     stage,
     at: new Date().toISOString(),
     compiled: result.compiled,
+    // Each id is one test (rules.mjs `distinct`); a baseline without this is from before, and is read by name.
+    ids: "distinct",
     passing: tests.filter((test) => test.ok && !test.skipped).map((test) => test.id),
     failing: tests.filter((test) => !test.ok).map((test) => test.id),
     crashed: result.files.filter((file) => file.crashed).map((file) => file.file),

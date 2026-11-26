@@ -7,18 +7,42 @@
 //
 //   { compiled, compileOutput, files: [{ file, crashed, timedOut, tests: [{ name, ok, skipped, error }] }] }
 //
-// and a test's id is `<file> :: <name>`.
+// and a test's id is `<file> :: <name>`. Two tests of one file with the same
+// name (a loop, an `it.each` with a constant title) are told apart by their
+// order: the second is `<file> :: <name> (2)`.
 
-/** Each test of a suite result, named `file :: test`. */
-export const testsOf = (result) =>
-  result.files.flatMap((file) =>
-    file.tests.map((test) => ({ ...test, id: `${file.file} :: ${test.name}` })),
-  );
+/**
+ * `ids` with every repeat made its own: the nth of a name is `<name> (n)`.
+ * Ids were sets before, so of two same-named tests one passing counted for
+ * both: a failing hidden test read as passed, a regression as none (0.8.6).
+ * Lists stored before this (calibration.json `kept`, baseline.json
+ * `passing`) may hold a name twice; read through here they line up with the
+ * tests in the same order.
+ */
+export function distinct(ids) {
+  const used = new Set();
+  return ids.map((id) => {
+    let name = id;
+    for (let n = 2; used.has(name); n += 1) name = `${id} (${n})`;
+    used.add(name);
+    return name;
+  });
+}
+
+/** Each test of a suite result under the name it reported, `file :: test`: same-named tests share it. */
+const reportedOf = (result) => result.files.flatMap((file) => file.tests.map((test) => ({ ...test, id: `${file.file} :: ${test.name}` })));
+
+/** Each test of a suite result, named `file :: test`, no two the same. */
+export function testsOf(result) {
+  const tests = reportedOf(result);
+  const ids = distinct(tests.map((test) => test.id));
+  return tests.map((test, at) => ({ ...test, id: ids[at] }));
+}
 
 /** How many of `ids` passed in a suite result; a test that never reported failed. */
 export function count(result, ids) {
   const ok = new Set(testsOf(result).filter((test) => test.ok && !test.skipped).map((test) => test.id));
-  return { passed: ids.filter((id) => ok.has(id)).length, total: ids.length };
+  return { passed: distinct(ids).filter((id) => ok.has(id)).length, total: ids.length };
 }
 
 /**
@@ -31,7 +55,18 @@ export const scenarioOf = (id) =>
 /** Tests the baseline passed that `result` (the existing suite after a change) does not. */
 export function regressionsOf(baseline, result) {
   const ok = new Set(testsOf(result).filter((test) => test.ok).map((test) => test.id));
-  return baseline.passing.filter((id) => !ok.has(id));
+  const ids = distinct(baseline.passing);
+  // A baseline written with distinct ids (`ids: "distinct"`, lib.mjs `baselineOf`) names each test.
+  if (baseline.ids === "distinct") return ids.filter((id) => !ok.has(id));
+  // One from before holds the passing tests' names only: of a same-named
+  // pair that failed and then passed on base it holds the name once, which
+  // read by order is the failing first one. So there a name is no
+  // regression while as many tests of that name pass as the baseline lists.
+  const passes = new Map();
+  for (const test of reportedOf(result)) if (test.ok) passes.set(test.id, (passes.get(test.id) ?? 0) + 1);
+  const listed = new Map();
+  for (const id of baseline.passing) listed.set(id, (listed.get(id) ?? 0) + 1);
+  return ids.filter((id, at) => !ok.has(id) && (passes.get(baseline.passing[at]) ?? 0) < listed.get(baseline.passing[at]));
 }
 
 /** Whether a repository path is in a folder of `allowedPaths` (ending in `/`) or is one of its files. */
@@ -61,7 +96,7 @@ export function verdict({ refused = [], publicCount, hiddenCount, regressions = 
  *   publicIds, kept  the public test ids and the kept hidden test ids
  *                    (calibration.json)
  *   existing         a repository's existing suite after the change
- *   baseline         the existing suite before it: { passing } as
+ *   baseline         the existing suite before it: { passing, ids } as
  *                    baseline.json keeps it, or a suite result
  *   refused          harness refusals already found, { path, change, reason }
  *                    (lib.mjs `scopeOf`: the hidden or public suite, existing
@@ -98,19 +133,23 @@ export function judgement({
   const hiddenCount = counted(hidden, kept);
   const passing =
     baseline === null ? null : Array.isArray(baseline.passing) ? baseline.passing : testsOf(baseline).filter((test) => test.ok && !test.skipped).map((test) => test.id);
-  const regressions = existing === null || passing === null ? [] : regressionsOf({ passing }, existing);
+  // A baseline given as a suite result is read with distinct ids just above.
+  const ids = baseline === null ? undefined : Array.isArray(baseline.passing) ? baseline.ids : "distinct";
+  const regressions = existing === null || passing === null ? [] : regressionsOf({ passing, ids }, existing);
   const reported = new Map(hidden === null ? [] : testsOf(hidden).map((test) => [test.id, test]));
   const failures =
     hidden === null
       ? []
-      : kept
+      : distinct(kept)
           .filter((id) => reported.get(id)?.ok !== true)
           .map((id) => ({ id, message: reported.get(id)?.error?.message ?? "did not run" }));
   return {
     verdict: verdict({ refused: allRefused, publicCount, hiddenCount, regressions }),
     public: publicCount,
     hidden: hiddenCount,
-    existing: existing === null || passing === null ? null : count(existing, passing),
+    // An older baseline is read by name (`regressionsOf`), so its count is what did not regress.
+    existing:
+      existing === null || passing === null ? null : ids === "distinct" ? count(existing, passing) : { passed: passing.length - regressions.length, total: passing.length },
     regressions,
     refused: allRefused,
     outsideScope,
