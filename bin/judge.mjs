@@ -390,18 +390,21 @@ function hashLine() {
 }
 
 /**
- * Compiler output when a tree did not build. A seal's judge prints the
- * public tree's only: the hidden tree's names hidden files and quotes
- * their lines.
+ * Compiler output when a tree did not build: the public tree's. The hidden
+ * tree's names hidden files and quotes their lines, so it is printed only
+ * under --detail, which a seal's judge refuses. Without it the default
+ * output named them too, to whoever ran the judge: under `bouncer check`
+ * that is the agent being judged (0.8.6).
  */
 function compileReport(judged) {
   if (judged.public.compiled && judged.hidden.compiled) return;
-  if (sealed === null) {
+  if (sealed === null && options.detail === true) {
     console.log(`Did not compile:\n${(judged.hidden.compileOutput || judged.public.compileOutput).slice(0, 4000)}`);
     return;
   }
   if (!judged.public.compiled) console.log(`Did not compile with the public suite:\n${judged.public.compileOutput.slice(0, 4000)}`);
-  if (!judged.hidden.compiled) console.log("Did not compile with the hidden suite (its output is withheld: it names hidden tests).");
+  if (!judged.hidden.compiled)
+    console.log(`Did not compile with the hidden suite (its output is withheld: it names hidden tests${sealed === null ? "; --detail prints it, for the person and not the implementer" : ""}).`);
 }
 
 /** --json <file>: the verdict as a record, with the hash and the seal's time. */
