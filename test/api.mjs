@@ -80,8 +80,13 @@ const WRITES = ["writeFileSync", "appendFileSync", "mkdirSync", "mkdtempSync", "
 const READS = ["readFileSync", "readdirSync", "existsSync", "statSync", "lstatSync", "realpathSync", "accessSync", "readFile", "readdir", "stat", "openSync", "open"];
 // open is a write only with a writing flag (readFileSync opens with "r").
 const writing = (name, argv) => WRITES.includes(name) || (name.startsWith("open") && /[wa+]/.test(String(argv[1] ?? "r")));
+// Put back before the scratch folder is removed: on Node 22 and earlier
+// rmSync is JavaScript that calls fs.rmdirSync and fs.unlinkSync, the
+// trapped ones, so this test's own cleanup threw after "api passed".
+const originals = {};
 for (const name of [...WRITES, ...READS]) {
   const original = fs[name];
+  originals[name] = original;
   const wrapped = function (...argv) {
     const at = argv[0] instanceof URL || String(argv[0]).startsWith("file:") ? fileURLToPath(argv[0]) : String(argv[0]);
     touched.push({ name, path: at });
@@ -334,5 +339,7 @@ try {
   });
   console.log("api passed");
 } finally {
+  Object.assign(fs, originals);
+  syncBuiltinESMExports();
   removeScratch();
 }
