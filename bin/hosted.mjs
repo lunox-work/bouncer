@@ -230,23 +230,40 @@ export async function oidcToken(audience, deps) {
   return body.value;
 }
 
-/** The PR's added and modified files between `base` and HEAD, whole, as the checkout has them. */
+/**
+ * The PR's added and modified files between `base` and HEAD, whole, as the
+ * checkout has them, and the paths it deleted (`deleted`, which the platform
+ * takes no word of). --no-renames: with git's rename detection a file moved
+ * and edited is status R, which the AM filter dropped, so the platform
+ * judged a tree without it (0.8.6); now it is its new path added and its old
+ * one deleted. A path that is not a file here (a submodule) is skipped.
+ */
 export function changedFiles(repo, base, deps) {
-  const names = deps
-    .git(["diff", "--name-only", "--diff-filter=AM", "-z", `${base}...HEAD`], repo)
-    .split("\0")
-    .filter((name) => name !== "");
+  const named = (filter) =>
+    deps
+      .git(["diff", "--name-only", `--diff-filter=${filter}`, "-z", "--no-renames", `${base}...HEAD`], repo)
+      .split("\0")
+      .filter((name) => name !== "");
+  const names = named("AM");
+  const deleted = named("D");
   if (names.length > MAX_FILES) throw new PlatformError(`The change touches ${names.length} files; the platform judges up to ${MAX_FILES}.`);
   const files = [];
   const skipped = [];
   for (const path of names) {
-    const bytes = deps.readFile(resolve(repo, path));
-    if (bytes.length > MAX_FILE_BYTES || bytes.includes(0)) skipped.push(path);
+    let bytes;
+    try {
+      bytes = deps.readFile(resolve(repo, path));
+    } catch (error) {
+      if (error?.code !== "EISDIR") throw error;
+      skipped.push({ path, why: "not a file (a submodule)" });
+      continue;
+    }
+    if (bytes.length > MAX_FILE_BYTES || bytes.includes(0)) skipped.push({ path, why: `binary or over ${MAX_FILE_BYTES / 1024} KiB` });
     else files.push({ path, text: bytes.toString("utf8") });
   }
   const total = files.reduce((sum, file) => sum + Buffer.byteLength(file.text), 0);
   if (total > MAX_BYTES) throw new PlatformError(`The change is ${total} bytes; the platform judges up to ${MAX_BYTES}.`);
-  return { files, skipped };
+  return { files, skipped, deleted };
 }
 
 const EXIT = { passed: 0, overfit: 2 };
@@ -279,11 +296,18 @@ export async function ciPlatform(argv, { client, cli = client, pkg = client, ver
   const base = platformUrl(values.platform === "" ? undefined : values.platform, deps.env);
   const repo = resolve(values.repo ?? ".");
   const from = values.base ?? (deps.env.GITHUB_BASE_REF ? `origin/${deps.env.GITHUB_BASE_REF}` : "HEAD~1");
-  const { files, skipped } = changedFiles(repo, from, deps);
-  for (const path of skipped) deps.err(`skipped ${path}: binary or over ${MAX_FILE_BYTES / 1024} KiB\n`);
+  const { files, skipped, deleted } = changedFiles(repo, from, deps);
+  for (const { path, why } of skipped) deps.err(`skipped ${path}: ${why}\n`);
+  if (deleted.length > 0)
+    deps.err(`not sent: ${deleted.length} deleted file${deleted.length === 1 ? "" : "s"} (${deleted.slice(0, 5).join(", ")}${deleted.length > 5 ? ", ..." : ""}). The platform takes added and changed files, so it judges ${deleted.length === 1 ? "it" : "them"} as still there.\n`);
   if (files.length === 0) {
-    deps.out(`No file changed since ${from}; nothing to judge.\n`);
-    return 0;
+    if (deleted.length === 0 && skipped.length === 0) {
+      deps.out(`No file changed since ${from}; nothing to judge.\n`);
+      return 0;
+    }
+    // A change there is, and none of it could be sent: not judged is not passed.
+    deps.out(`The change since ${from} has no file the platform can take (${deleted.length} deleted, ${skipped.length} skipped): not judged.\n`);
+    return values["exit-zero"] ? 0 : 1;
   }
   const call = async (options) =>
     request({ base, token: await oidcToken(base, deps), client, cli, pkg, version, fetchImpl: deps.fetchImpl, ...options });

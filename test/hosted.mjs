@@ -134,7 +134,7 @@ async function fakePlatform({ verdicts = ["running", "passed"], bounty = "new", 
   return { state, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 
-function deps({ env = {}, files = {}, changed = Object.keys(files) } = {}) {
+function deps({ env = {}, files = {}, changed = Object.keys(files), deleted = [] } = {}) {
   const out = [];
   const err = [];
   let clock = Date.parse("2026-11-12T00:00:00.000Z");
@@ -154,11 +154,15 @@ function deps({ env = {}, files = {}, changed = Object.keys(files) } = {}) {
       now: () => clock,
       fetchImpl: fetch,
       git: (args) => {
-        assert.deepEqual(args.slice(0, 4), ["diff", "--name-only", "--diff-filter=AM", "-z"]);
-        return `${changed.join("\0")}\0`;
+        // --no-renames: a file moved and edited is its new path added, not a rename the AM filter drops.
+        assert.deepEqual([args[0], args[1], args[3], args[4]], ["diff", "--name-only", "-z", "--no-renames"]);
+        assert.match(args[2], /^--diff-filter=(AM|D)$/);
+        return `${(args[2].endsWith("=D") ? deleted : changed).join("\0")}\0`;
       },
       readFile: (path) => {
         const name = Object.keys(files).find((each) => path.endsWith(each));
+        // A submodule's path is a folder in the checkout.
+        if (name === undefined) throw Object.assign(new Error("EISDIR: illegal operation on a directory, read"), { code: "EISDIR" });
         return Buffer.from(files[name]);
       },
     },
@@ -424,6 +428,15 @@ try {
     const quiet = deps({ files: {} });
     assert.equal(await run("ci", ["--platform=", "--version", "sbv_1", "--workspace", "org_acme"], CLIENT, quiet.deps), 0);
     assert.match(quiet.out.join(""), /nothing to judge/);
+    // Only deletions, or only a submodule: a change, none of it sent, so not judged and not green.
+    const gone = deps({ files: {}, deleted: ["src/old.ts"] });
+    assert.equal(await run("ci", ["--platform=", "--version", "sbv_1", "--workspace", "org_acme"], CLIENT, gone.deps), 1);
+    assert.match(gone.out.join(""), /not judged/);
+    assert.match(gone.err.join(""), /not sent: 1 deleted file \(src\/old\.ts\)/);
+    const module = deps({ files: {}, changed: ["vendor/lib"] });
+    assert.equal(await run("ci", ["--platform=", "--version", "sbv_1", "--workspace", "org_acme"], CLIENT, module.deps), 1);
+    assert.match(module.err.join(""), /skipped vendor\/lib: not a file/);
+    assert.equal(await run("ci", ["--platform=", "--version", "sbv_1", "--workspace", "org_acme", "--exit-zero"], CLIENT, deps({ files: {}, deleted: ["src/old.ts"] }).deps), 0);
     const zero = deps({
       env: {},
       files: { "src/a.ts": "a" },
