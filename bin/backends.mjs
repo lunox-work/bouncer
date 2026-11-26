@@ -55,6 +55,7 @@ import { randomUUID } from "node:crypto";
 import {
   appendFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
   realpathSync,
@@ -586,8 +587,26 @@ function fileTools(root, runBash) {
   const confined = (path = ".") => {
     const full = resolve(root, path);
     if (!inside(real(full), realRoot)) throw new Error(`${path} is outside the working directory ${root}`);
+    // A link to nothing has no real path yet, so `real` stops at its folder
+    // and calls it inside: a write through it would create its target,
+    // wherever that is. Refused, on the path and on every folder above it.
+    // Walked to the top, not to `root`: the path may spell the workdir another
+    // way (/var/folders for /private/var/folders) and never pass through it.
+    for (let at = full; dirname(at) !== at; at = dirname(at))
+      if (lstatSync(at, { throwIfNoEntry: false })?.isSymbolicLink() && !existsSync(at)) throw new Error(`${path} goes through a link that points nowhere`);
     return full;
   };
+  // Files under a folder that are inside the working directory in fact:
+  // `listFiles` names a link as a file, and reading one follows it out
+  // (a link to a hidden test, or to the person's credentials).
+  const filesIn = (base) =>
+    listFiles(base).filter((path) => {
+      try {
+        return inside(realpathSync(join(base, path)), realRoot);
+      } catch {
+        return false;
+      }
+    });
   const shown = (full) => slash(relative(root, full)) || ".";
   return {
     Bash: (input) => runBash(String(input.command ?? ""), Math.min(Number(input.timeout ?? 120_000), 600_000)),
@@ -620,7 +639,7 @@ function fileTools(root, runBash) {
     Glob: (input) => {
       const base = confined(input.path);
       const matches = globRegExp(String(input.pattern));
-      const hits = listFiles(base).filter((path) => matches.test(path) || (!String(input.pattern).includes("/") && matches.test(basename(path))));
+      const hits = filesIn(base).filter((path) => matches.test(path) || (!String(input.pattern).includes("/") && matches.test(basename(path))));
       return hits.slice(0, 500).map((path) => posix.join(shown(base) === "." ? "" : shown(base), path)).join("\n") || "no files";
     },
     Grep: (input) => {
@@ -628,7 +647,7 @@ function fileTools(root, runBash) {
       const pattern = new RegExp(String(input.pattern));
       const only = input.glob ? globRegExp(String(input.glob)) : null;
       const out = [];
-      const files = statSync(base).isDirectory() ? listFiles(base).map((path) => join(base, path)) : [base];
+      const files = statSync(base).isDirectory() ? filesIn(base).map((path) => join(base, path)) : [base];
       for (const full of files) {
         if (only !== null && !only.test(slash(relative(base, full))) && !only.test(basename(full))) continue;
         if (statSync(full).size > 1_000_000) continue;
