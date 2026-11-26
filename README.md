@@ -25,6 +25,11 @@
   <sub><a href="docs/RESULTS.md#stronger-implementers">How we tested</a> · <a href="docs/RESULTS.md#judged-by-the-maintainers-own-tests">maintainers' own tests</a> · <a href="docs/REFERENCE.md#outside-evidence">outside studies</a></sub>
 </p>
 
+<p align="center">
+  <code>npx skills add lunox-work/bouncer -g</code><br>
+  <sub>One line, any agent. Claude Code and Codex can also add him as a plugin: <a href="#install">two lines</a>.</sub>
+</p>
+
 ---
 
 ## The problem
@@ -61,12 +66,38 @@ It takes about 17 seconds and costs about $0.06.
 
 ## Install
 
+**Claude Code**, as two separate prompts:
+
+```
+/plugin marketplace add lunox-work/bouncer
+```
+
+```
+/plugin install bouncer-verify@bouncer
+```
+
+**Codex:**
+
+```sh
+codex plugin marketplace add lunox-work/bouncer
+codex plugin add bouncer-verify@bouncer
+```
+
+**Cursor, Gemini CLI, OpenCode and 40+ others:**
+
 ```sh
 npx skills add lunox-work/bouncer -g
 ```
 
-You need Node, and a Claude Code login, a Codex login or an API key
-([install in full](docs/REFERENCE.md#install-in-full)).
+**Or paste this into any agent:**
+
+```text
+Install the Bouncer skill from https://github.com/lunox-work/bouncer. Follow its INSTALL.md.
+```
+
+That's it. You need Node and the login you already use: Claude Code, Codex
+or an API key. To update, remove, or add him to other agents, see
+[INSTALL.md](INSTALL.md).
 
 ## How to use him
 
