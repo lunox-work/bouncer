@@ -237,7 +237,7 @@ function judgeRepo() {
   const snapshot = workdir(`${slug}-snapshot`);
   let judged;
   try {
-    const remove = writeSnapshot(snapshot, scope, found.content);
+    const remove = writeSnapshot(snapshot, scope, found.content, found.executable);
     judged = refused.length > 0 ? null : judge(slug, snapshot, { existing: true, remove });
   } finally {
     discard(snapshot);

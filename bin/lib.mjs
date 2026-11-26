@@ -21,6 +21,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  chmodSync,
   cpSync,
   existsSync,
   lstatSync,
@@ -1930,6 +1931,25 @@ export function checkoutChanges(chain, checkout, ref) {
       return false;
     }
   };
+  // Whether a file may be executed, now and at base; null where that is not
+  // known (Windows keeps no such bit). The judged tree is written from
+  // content, so without it a script the change added or edited lost its
+  // bit there and its tests failed on EACCES (0.8.6).
+  const modeIn = (rev, path) => /^(\d{6}) /.exec(git("-C", root, "ls-tree", rev, "--", path).stdout)?.[1] ?? null;
+  const executable = (path) => {
+    if (WINDOWS) return null;
+    if (ref !== undefined) return modeIn(ref, path) === "100755";
+    try {
+      const entry = lstatSync(join(root, path));
+      return entry.isFile() ? (entry.mode & 0o111) !== 0 : null;
+    } catch {
+      return null;
+    }
+  };
+  // A file made executable and otherwise left as it was is a change too,
+  // where it is task code: a test or a harness file is not judged by its mode.
+  const madeExecutable = (path) =>
+    executable(path) === true && modeIn(chain.base, path) === "100644" && !chain.isTest(path) && !HARNESS_FILES.test(basename(path)) && !publicPaths.has(path);
   const items = [];
   const contents = new Map();
   for (const path of paths) {
@@ -1939,7 +1959,7 @@ export function checkoutChanges(chain, checkout, ref) {
     if (before === null && after === null) continue;
     // A checkout that never had the handout: the judge stages the public suite itself.
     if (after === null && publicPaths.has(path)) continue;
-    if (before !== null && after !== null && before.equals(after)) continue;
+    if (before !== null && after !== null && before.equals(after) && !madeExecutable(path)) continue;
     contents.set(path, after);
     items.push({
       path,
@@ -1947,15 +1967,20 @@ export function checkoutChanges(chain, checkout, ref) {
       ...(symlink(path) ? { symlink: true } : {}),
     });
   }
-  return { root, items, read: (path) => contents.get(path)?.toString("utf8") ?? null, content: (path) => contents.get(path) };
+  return { root, items, read: (path) => contents.get(path)?.toString("utf8") ?? null, content: (path) => contents.get(path), executable };
 }
 
-/** Writes the judged files of a scope (allowed and outside scope, not removed) into `dir`: the snapshot `judge` lays over the tree. */
-export function writeSnapshot(dir, scope, content) {
+/**
+ * Writes the judged files of a scope (allowed and outside scope, not removed) into `dir`: the snapshot `judge` lays over the tree.
+ * `executable(path)` (`checkoutChanges`) says which of them may be executed; the copy over the tree keeps the snapshot's modes.
+ */
+export function writeSnapshot(dir, scope, content, executable = () => null) {
   const judged = [...scope.allowed, ...scope.outsideScope];
   for (const item of judged.filter((item) => item.change !== "removed")) {
     mkdirSync(dirname(join(dir, item.path)), { recursive: true });
     writeFileSync(join(dir, item.path), content(item.path));
+    const runs = executable(item.path);
+    if (runs !== null) chmodSync(join(dir, item.path), runs ? 0o755 : 0o644);
   }
   return judged.filter((item) => item.change === "removed").map((item) => item.path);
 }
