@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { claimsOf as doorClaims } from "../bin/door-rules.mjs";
-import { asks, claimsOf, decide, digest, hook, LARGE_FILES, LARGE_LINES } from "../hooks/offer-on-done.mjs";
+import { asks, claimsOf, decide, digest, hook, LARGE_FILES, LARGE_LINES, modeOf } from "../hooks/offer-on-done.mjs";
 
 const HOOK = fileURLToPath(new URL("../hooks/offer-on-done.mjs", import.meta.url));
 const CLI = fileURLToPath(new URL("../bin/cli.mjs", import.meta.url));
@@ -81,9 +81,14 @@ try {
   const input = { session_id: "s1", transcript_path: transcript };
   const first = hook(input, env);
   assert.equal(first?.decision, "block");
-  assert.match(first.reason, /^bouncer-verify, offer on done: this session changed 1 code file, about 3 changed lines \(parse\.ts\)\./);
-  assert.match(first.reason, /`bouncer id`.*\$0\.06/);
-  assert.match(first.reason, /`bouncer offer off`/);
+  // auto, the default: run the ID check now, unasked.
+  assert.match(first.reason, /^bouncer-verify, check on done: this session changed 1 code file, about 3 changed lines \(parse\.ts\)\./);
+  assert.match(first.reason, /without asking first/);
+  assert.match(first.reason, /`bouncer id --ticket - --voice`.*quoted as they wrote it/);
+  assert.match(first.reason, /\$1–7 and 10–25 minutes/, "the cost the CLI itself prints in a repository");
+  assert.match(first.reason, /`bouncer offer ask`.*`bouncer offer off`/);
+  assert.ok(!/AskUserQuestion/.test(first.reason), "auto asks nothing");
+  assert.match(first.reason, /club's door.*code block/, "his door art goes to the person as printed");
   assert.ok(!/Not tonight|You're in/.test(first.reason), "no voice in what the agent is handed");
   assert.equal(hook({ ...input, stop_hook_active: true }, env), null, "never twice in a turn");
   assert.equal(hook(input, env), null, "once per batch of edits");
@@ -92,7 +97,25 @@ try {
   const again = hook(input, env);
   assert.match(again?.reason ?? "", /a large change/, "again after a large change");
   assert.equal(JSON.parse(readFileSync(join(home, "offer", "sessions.json"), "utf8")).s1.offers, 2);
+  assert.equal(JSON.parse(readFileSync(join(home, "offer", "sessions.json"), "utf8")).s1.mode, "auto");
   assert.equal(hook({ ...input, session_id: "s2" }, { ...env, BOUNCER_OFFER: "off" }), null, "BOUNCER_OFFER=off");
+  // ask: one question first, as before.
+  const asked = hook({ ...input, session_id: "s2a" }, { ...env, BOUNCER_OFFER: "ask" });
+  assert.match(asked.reason, /^bouncer-verify, offer on done: this session changed \d+ code files?, /);
+  assert.match(asked.reason, /`bouncer id`.*\$0\.06/);
+  assert.match(asked.reason, /AskUserQuestion/);
+  assert.match(asked.reason, /`bouncer offer off`/);
+  // The mode: BOUNCER_OFFER, else the saved file, else auto.
+  assert.equal(modeOf({}, join(dir, "nowhere")), "auto");
+  mkdirSync(join(home, "offer"), { recursive: true });
+  writeFileSync(join(home, "offer", "mode"), "ask\n");
+  assert.equal(modeOf({}, home), "ask");
+  assert.equal(modeOf({ BOUNCER_OFFER: "auto" }, home), "auto", "the environment wins");
+  assert.equal(modeOf({ BOUNCER_OFFER: "no" }, home), "off");
+  assert.match(hook({ ...input, session_id: "s2b" }, env).reason, /^bouncer-verify, offer on done/, "the saved mode is used");
+  writeFileSync(join(home, "offer", "mode"), "nonsense\n");
+  assert.equal(modeOf({}, home), "auto", "an unknown saved mode is the default");
+  rmSync(join(home, "offer", "mode"));
   assert.equal(hook({ ...input, session_id: "s3" }, { ...env, CLAUDE_CODE_ENTRYPOINT: "sdk-cli", CLAUDE_CODE_SESSION_ATTENDED: "" }), null, "headless");
   assert.ok(hook({ ...input, session_id: "s4" }, { ...env, CLAUDE_CODE_ENTRYPOINT: "sdk-ts" }), "the SDK attended (the desktop app) still offers");
   mkdirSync(env.CLAUDE_CONFIG_DIR, { recursive: true });
@@ -128,22 +151,29 @@ try {
   assert.ok(existsSync(join(home, "offer", "offer-on-done.mjs")), "the hook copied under BOUNCER_HOME");
   offer("on");
   assert.equal(JSON.parse(readFileSync(settings, "utf8")).hooks.Stop.length, 2, "on twice adds it once");
-  assert.match(offer("status").stdout, /^on, through a Stop hook in /);
+  assert.match(offer("status").stdout, /^on, auto: runs the ID check when your agent hands back code \(about \$0\.06 each\)\. Through a Stop hook in /);
   const before = spawnSync(process.execPath, [CLI, "offer", "--settings", settings, "status"], { encoding: "utf8", env: { ...process.env, BOUNCER_HOME: home } });
-  assert.match(before.stdout, /^on, through a Stop hook in /, "--settings before the command");
+  assert.match(before.stdout, /^on, auto: .*Through a Stop hook in /, "--settings before the command");
+  assert.match(offer("ask").stdout, /^on, ask: your agent asks whether to check/);
+  assert.equal(readFileSync(join(home, "offer", "mode"), "utf8").trim(), "ask");
+  assert.equal(JSON.parse(readFileSync(settings, "utf8")).hooks.Stop.length, 2, "ask keeps one hook");
+  offer("on");
+  assert.match(offer("status").stdout, /^on, ask: /, "on keeps the mode");
+  assert.match(offer("auto").stdout, /^on, auto: /);
+  assert.equal(readFileSync(join(home, "offer", "mode"), "utf8").trim(), "auto");
   const off = offer("off");
   assert.equal(off.status, 0, off.stderr);
   assert.deepEqual(JSON.parse(readFileSync(settings, "utf8")).hooks.Stop, [{ hooks: [{ type: "command", command: "echo mine" }] }]);
   assert.ok(existsSync(join(home, "offer", "off")));
   assert.equal(hook({ ...input, session_id: "s8" }, env), null, "the off flag stops it");
   writeFileSync(settings, JSON.stringify({ enabledPlugins: { "bouncer-verify@bouncer": true } }));
-  assert.match(offer("on").stdout, /^on, through the bouncer-verify plugin/);
+  assert.match(offer("on").stdout, /^on, auto: .*Through the bouncer-verify plugin\./);
   assert.equal(JSON.parse(readFileSync(settings, "utf8")).hooks, undefined, "no copy beside the plugin");
   writeFileSync(settings, "{ broken");
   const refused = offer("on");
   assert.equal(refused.status, 1);
   assert.equal(readFileSync(settings, "utf8"), "{ broken", "a settings file it cannot read is left alone");
-  console.log("ok - bouncer offer on/off/status keep the person's settings");
+  console.log("ok - bouncer offer on/auto/ask/off/status keep the person's settings");
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }

@@ -102,9 +102,11 @@ or an API key. To update, remove, or add him to other agents, see
 ## How to use him
 
 When your agent says it is done, ask it: **_"is this really done?"_**
-You get the list of decisions. With the Claude Code plugin you don't have to
-remember: when a session that changed code hands back, your agent offers it,
-once, and again after a large change (`bouncer offer off` stops it).
+You get the list of decisions. In Claude Code you don't even have to ask:
+once he is installed, when a session that changed code hands back, your agent
+runs the list by itself, once, and again after a large change. Each costs
+about $0.06 (`bouncer offer ask` to be asked first, `bouncer offer off` to
+stop).
 
 Want a pass or fail? Ask for a verdict. He runs `bouncer check`, which costs
 $1–4 and takes 10–25 minutes. He writes two sets of tests:

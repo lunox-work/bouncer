@@ -6,7 +6,8 @@ description: >-
   "I don't trust its green tests", "did it game the tests". Also for grading a
   contractor's, candidate's or agent's submission against a spec or ticket,
   and for tests an agent can't see for a ticket, or to set up its ID comment
-  on every pull request (`bouncer ci init`). Bouncer turns the ticket into
+  on every pull request (`bouncer ci init`), and when a Stop hook message
+  starts `bouncer-verify, check on done`. Bouncer turns the ticket into
   a spec the person confirms, a public suite for the implementing agent and a
   calibrated hidden suite he keeps, then judges the work: passed, overfit,
   incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust),
@@ -65,13 +66,18 @@ for Codex). Commit the workflow file only if they ask; the pull request that
 adds it gets the first comment. After an ID list in a GitHub repository that
 has no `bouncer-id.yml`, offer this once.
 
-**Offer on done.** A Stop hook message that starts `bouncer-verify, offer on
-done` comes from the person's own hook (the plugin's, or `bouncer offer on`):
-ask its one question and run nothing until they answer; a yes to `id` or
-`check` is the flow above. "No more offers": `bouncer offer off`. Installed
-without the plugin (`bouncer offer status` says off: not installed): after
-the person's first `bouncer id` list, ask once whether their agent should
-offer this whenever it hands back code, and on a yes run `bouncer offer on`.
+**Check on done.** A Stop hook message that starts `bouncer-verify, check on
+done` comes from the person's own hook (the plugin's, or `bouncer offer on`),
+which by default runs the ID check whenever you hand back code: run `bouncer
+id` as it says, unasked, show the list, and stop. One that starts
+`bouncer-verify, offer on done` (they chose `bouncer offer ask`): ask its one
+question and run nothing until they answer; a yes to `id` or `check` is the
+flow above. "Ask me first": `bouncer offer ask`; "no more": `bouncer offer
+off`. Installed without the plugin: the first time this skill runs, if
+`bouncer offer status` prints `off: not installed`, run `bouncer offer on`
+and tell them in one line that the ID check now runs whenever their agent
+hands back code (about $0.06 each; `bouncer offer ask` or `off` to change
+that). Never when it prints `off (`: they turned it off.
 
 ## Before you start
 

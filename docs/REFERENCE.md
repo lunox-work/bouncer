@@ -44,13 +44,18 @@ guessed.
   against HEAD, or everything since the fork from the default branch when
   the work is committed, which it says. Run on its own it needs no spec and
   no fit, and keeps the ticket and the list for a `check` of the same change.
-- `bouncer offer [on | off | status]`: offer on done, a Claude Code Stop hook
-  (`hooks/offer-on-done.mjs`) that runs no model and nothing of bouncer's. When
-  a session that changed TypeScript, JavaScript, Python, Go or Rust hands the
-  turn back with a claim that it is done, or without a question, it holds the
-  stop once and has the agent ask whether to run `bouncer id` or
-  `bouncer check`. The first time in a session it needs no more than that,
-  so a session that changes code gets at least one offer; after that, only a
+- `bouncer offer [on | auto | ask | off | status]`: check on done, a Claude
+  Code Stop hook (`hooks/offer-on-done.mjs`) that itself runs no model and
+  nothing of bouncer's. When a session that changed TypeScript, JavaScript,
+  Python, Go or Rust hands the turn back with a claim that it is done, or
+  without a question, it holds the stop once and hands the agent a message.
+  In mode `auto`, the default, the agent runs `bouncer id` then and there,
+  unasked (about $0.06 and 12 s on the person's model account), and shows the
+  list. In mode `ask` it asks whether to run `bouncer id` or `bouncer check`.
+  The mode is `BOUNCER_OFFER` (`auto`, `ask` or `off`), else
+  `~/.bouncer/offer/mode`, which `auto` and `ask` write. The first time in a
+  session it needs no more than that, so a session that changes code gets at
+  least one check; after that, only a
   large change since the last offer (4 new code files or 200 changed lines,
   `BOUNCER_OFFER_LARGE_FILES`, `BOUNCER_OFFER_LARGE_LINES`). It counts edits
   in the session's transcript and its subagents', reads the claim with the
@@ -59,7 +64,8 @@ guessed.
   offered in `~/.bouncer/offer/sessions.json` (30 days). The plugin turns it
   on; installed another way, `on` copies the hook to `~/.bouncer/offer/` and
   adds a Stop hook to Claude Code's user settings, keeping the rest of the
-  file. `off` writes `~/.bouncer/offer/off`, which both stand down for, and
+  file. The skill runs `on` itself the first time it is used, when `status`
+  says the hook is not installed (never after an `off`). `off` writes `~/.bouncer/offer/off`, which both stand down for, and
   removes the settings hook; `BOUNCER_OFFER=off` turns it off for one shell.
   How often people say yes is not measured: there is no telemetry.
 - `bouncer check [--from <issue> | --ticket <file>] [--base <ref>] [--package <dir>] [--seam <file>[,<file>]] [--slug <slug>] [--new] [--accept-open] [--card <file.svg>] [--no-door]`:
@@ -294,9 +300,10 @@ In Claude Code, the repository is also a plugin marketplace:
 ```
 
 The plugin has no MCP server and asks for no sign-in. It adds one Stop hook,
-offer on done ([above](#before-any-spec-the-door-and-the-id-check)); `bouncer
-offer off` stops it. Installed with the skills CLI, `bouncer offer on` adds the
-same hook. Lunox's hosted
+check on done ([above](#before-any-spec-the-door-and-the-id-check)): the ID
+check runs whenever a session that changed code hands back; `bouncer offer
+ask` asks first, `bouncer offer off` stops it. Installed with the skills CLI,
+the skill adds the same hook the first time it runs. Lunox's hosted
 platform ([below](#sign-in-to-the-lunox-platform-optional)) is reached only
 through the CLI, when you sign in.
 
@@ -600,7 +607,7 @@ bin/hash.mjs        the commitment hash of a spec folder or a file map, reading 
 bin/cli.mjs         `bouncer <command>`: runs bin/<command>.mjs; `where`; `evidence <name>`
 bin/door.mjs        what a finished session shows, no model (carveout gate when installed); reports, never blocks
 bin/door-rules.mjs  the door's rules over a session's events, pure
-bin/offer.mjs       offer on done: on, off, status; on without the plugin adds the hook to Claude Code's user settings
+bin/offer.mjs       check on done: on, auto, ask, off, status; on without the plugin adds the hook to Claude Code's user settings
 bin/id.mjs          what the ticket never said and what the diff picked (prompts/id.md, one session)
 bin/id-comment.mjs  the ID check on a pull request: one comment, edited in place, never a check
 bin/ci-init.mjs     `bouncer ci init`: writes the id-comment caller and sets its secret through gh
@@ -662,7 +669,7 @@ assets/src/         the README images and the social preview: index.html, render
   results.jsonl     one line per graded run
   template/<hash>/  template/ with its dependencies, installed on first use
   toolchains/       python-<hash>/ (with .venv), go-<hash>/, rust-<hash>/, built on first use
-  offer/            sessions.json (what offer on done offered, 30 days), off (bouncer offer off),
+  offer/            sessions.json (what check on done fired on, 30 days), mode (auto or ask), off (bouncer offer off),
                     offer-on-done.mjs (bouncer offer on, without the plugin)
 
 ~/.lunox/credentials  platform tokens after `login`, per platform URL and CLI (shared with carveout; LUNOX_CREDENTIALS)

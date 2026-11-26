@@ -1,10 +1,18 @@
 #!/usr/bin/env node
-// Offer on done: a Claude Code Stop hook. When a session that changed code
-// hands the turn back, it holds the stop once and has the agent ask the
-// person whether to check the work with Bouncer. It runs nothing itself, reads
-// only the session's transcripts on this machine and sends nothing anywhere.
+// Check on done: a Claude Code Stop hook. When a session that changed code
+// hands the turn back, it holds the stop once and has the agent check the
+// work with Bouncer. The hook itself runs nothing, reads only the session's
+// transcripts on this machine and sends nothing anywhere; what it hands the
+// agent depends on the mode:
 //
-// When it offers, at most once per turn (`stop_hook_active`):
+// - "auto" (the default): run `bouncer id` now, unasked, and show the person
+//   the list. About $0.06 and 12 seconds of the person's model account.
+// - "ask": ask the person one question first (id, check or not now).
+//
+// The mode is BOUNCER_OFFER (auto, ask or off), else BOUNCER_HOME/offer/mode
+// (`bouncer offer auto|ask`), else auto.
+//
+// When it fires, at most once per turn (`stop_hook_active`):
 // - The first time in a session: code changed and the last message claims
 //   the work is done, or hands the turn back without asking a question. So a
 //   session that changes code gets at least one offer.
@@ -15,8 +23,8 @@
 //
 // The plugin bouncer-verify runs it from hooks/hooks.json. Without the plugin,
 // `bouncer offer on` copies it under BOUNCER_HOME and adds it to Claude Code's
-// user settings. Off: `bouncer offer off` (BOUNCER_HOME/offer/off), or
-// BOUNCER_OFFER=off. Self-contained on purpose: the plugin carries hooks/
+// user settings (the skill does that on its first use). Off: `bouncer offer
+// off` (BOUNCER_HOME/offer/off), or BOUNCER_OFFER=off. Self-contained on purpose: the plugin carries hooks/
 // and skills/, not the CLI. The claim patterns are bin/door-rules.mjs's
 // (test/offer.mjs holds the two to the same answers).
 
@@ -147,16 +155,43 @@ export function decide(session, said, seen) {
   return { offer, large, files: seen === null ? session.files : files, lines };
 }
 
-/** The text the agent is handed: what to ask, and how. Facts only, no voice. */
-export function reasonFor({ large, files, lines }) {
+/** The modes: run the ID check unasked, or ask first. */
+export const MODES = ["auto", "ask"];
+
+/** The mode in force: BOUNCER_OFFER, else BOUNCER_HOME/offer/mode, else auto; "off" when either says so. */
+export function modeOf(env, home) {
+  const given = String(env.BOUNCER_OFFER ?? "").trim().toLowerCase();
+  if (/^(off|0|false|no)$/.test(given)) return "off";
+  if (MODES.includes(given)) return given;
+  let saved = "";
+  try {
+    saved = readFileSync(join(home, "offer", "mode"), "utf8").trim().toLowerCase();
+  } catch {
+    // never set: the default
+  }
+  return MODES.includes(saved) ? saved : "auto";
+}
+
+/** The text the agent is handed: what to run or ask, and how. Facts only, no voice. */
+export function reasonFor({ large, files, lines }, mode = "auto") {
   const names = files.map((file) => file.split(/[\\/]/).pop());
   const shown = names.slice(0, 4).join(", ") + (names.length > 4 ? ` and ${names.length - 4} more` : "");
   const size = `${files.length} code file${files.length === 1 ? "" : "s"}, about ${lines} changed line${lines === 1 ? "" : "s"}`;
+  if (mode === "auto")
+    return [
+      `bouncer-verify, check on done: this session changed ${size} (${shown})${large ? ", a large change" : ""}.`,
+      "Your last message has reached the person. Now run Bouncer's ID check on this change, without asking first: the person turned it on to run whenever you hand back code.",
+      "- Run `bouncer id --ticket - --voice` in the checkout, the way the bouncer skill runs the CLI (else `npx -y @lunox-work/bouncer id --ticket - --voice`), with their request on stdin: what they asked you for, quoted as they wrote it, follow-ups included. Never your summary of what you built.",
+      "- When it prints him at the club's door (a block of text art: his figure in a door frame), show that block unchanged in a code block first. Then his `Bouncer:` lines word for word, then the list as printed, all of it. Questions, not bugs: never rank them or say which pick is wrong.",
+      `- Then stop. Mention once that a verdict from tests you never saw is \`bouncer check\`, about $1–7 and 10–25 minutes, and run it only if they ask.${large ? " Worth it for a change this size." : ""}`,
+      "If the work is outside what Bouncer checks (rendered UI, network calls, a change across packages, a language other than TypeScript, Python, Go or Rust), say so in one line instead of running it.",
+      "To be asked first next time: `bouncer offer ask`. To stop these checks: `bouncer offer off`.",
+    ].join("\n");
   return [
     `bouncer-verify, offer on done: this session changed ${size} (${shown})${large ? ", a large change" : ""}.`,
     "Your last message has reached the person. Now ask them one question, nothing else: whether to check this work with Bouncer, tests you never saw.",
-    "- `bouncer id`: what their request never said and what you picked for them, as questions to keep or change. About $0.06 and 17 seconds.",
-    `- \`bouncer check\`: a verdict (passed, overfit, incomplete...) from a hidden suite written from a spec they confirm. About $1–4 and 10–25 minutes.${large ? " Worth it for a change this size." : ""}`,
+    "- `bouncer id`: what their request never said and what you picked for them, as questions to keep or change. About $0.06 and 12 seconds.",
+    `- \`bouncer check\`: a verdict (passed, overfit, incomplete...) from a hidden suite written from a spec they confirm. About $1–7 and 10–25 minutes.${large ? " Worth it for a change this size." : ""}`,
     "- Not now.",
     "Use AskUserQuestion where you have it. Run nothing until they answer; on a yes, follow the bouncer skill.",
     "If the work is outside what Bouncer checks (rendered UI, network calls, a change across packages, a language other than TypeScript, Python, Go or Rust), say so in the question.",
@@ -199,10 +234,11 @@ function subagentTranscripts(transcript) {
 /** Runs the hook on its stdin: prints `{ decision: "block", reason }` to offer, nothing otherwise. */
 export function hook(input, env = process.env) {
   if (input.stop_hook_active) return null;
-  if (/^(off|0|false|no)$/i.test(env.BOUNCER_OFFER ?? "")) return null;
+  const home = bouncerHome(env);
+  const mode = modeOf(env, home);
+  if (mode === "off") return null;
   if (env.CLAUDE_CODE_SESSION_ATTENDED !== "1" && HEADLESS.test(env.CLAUDE_CODE_ENTRYPOINT ?? "")) return null;
   if (!env.CLAUDE_PLUGIN_ROOT && pluginEnabled(env)) return null;
-  const home = bouncerHome(env);
   if (existsSync(join(home, "offer", "off"))) return null;
   const transcript = input.transcript_path;
   if (typeof transcript !== "string" || !existsSync(transcript)) return null;
@@ -223,14 +259,14 @@ export function hook(input, env = process.env) {
 
   const now = Date.now();
   for (const [id, item] of Object.entries(state)) if (now - (item.at ?? 0) > KEEP_DAYS * 86_400_000) delete state[id];
-  state[key] = { at: now, offers: (seen?.offers ?? 0) + 1, edits: session.edits, lines: session.lines, files: session.files };
+  state[key] = { at: now, offers: (seen?.offers ?? 0) + 1, mode, edits: session.edits, lines: session.lines, files: session.files };
   try {
     mkdirSync(join(home, "offer"), { recursive: true });
     writeFileSync(statePath, JSON.stringify(state));
   } catch {
     return null; // without a record it would offer on every turn
   }
-  return { decision: "block", reason: reasonFor(verdict) };
+  return { decision: "block", reason: reasonFor(verdict, mode) };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

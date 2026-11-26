@@ -25,7 +25,7 @@ const COMMANDS = {
   repo: "point a spec at a package: seam, allowed paths, base tree, baseline",
   check: "the agent says it's done: door, fit, the ID check, a drafted spec for the person to confirm, then prepare and judge the working tree",
   door: "what the agent's session shows before any spec, no model: tests skipped or never run, TODOs; reports, never blocks",
-  offer: "offer on done: when a Claude Code session that changed code hands back, the agent asks whether to check it; on | off | status",
+  offer: "check on done: when a Claude Code session that changed code hands back, the agent runs the ID check (auto, the default) or asks first (ask); on | auto | ask | off | status",
   id: "what the ticket never said and what the agent's diff picked: questions to confirm (one session)",
   "id-comment": "the ID check on a pull request: its linked issue and diff, as one comment edited in place; never a check",
   confirm: "a spec's decisions in context; record a confirmation (--by); --from <issue>, --export",
