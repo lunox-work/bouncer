@@ -5,7 +5,7 @@
 // stand-in for a rule the first writer never tested).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -21,7 +21,7 @@ try {
   const file = readdirSync(join(second, "tests", "private")).find((name) => name.endsWith(".test.ts"));
   const source = readFileSync(join(second, "tests", "private", file), "utf8");
   // Passes the reference: kept. And one the reference cannot satisfy: dropped by calibration.
-  writeFileSync(join(second, "tests", "private", file), `${source}\ntest("[happy-1] the second writer's own case", () => { assert.equal(parseDuration("13m"), 780000); });\ntest("[happy-1] a case the reference fails", () => { assert.equal(parseDuration("1s"), 999); });\n`);
+  writeFileSync(join(second, "tests", "private", file), `${source}\ntest("[happy-1] the second writer's own case", () => { assert.equal(parseDuration("13m"), 780000); });\ntest("the second writer's case with no key", () => { assert.equal(parseDuration("14m"), 840000); });\ntest("[happy-1] a case the reference fails", () => { assert.equal(parseDuration("1s"), 999); });\n`);
 
   // No Codex login and no --backend: refused before any session, not a silent Claude writer.
   // A `codex` on PATH or not makes no difference: the backend installs its own CLI.
@@ -29,6 +29,12 @@ try {
   const noLogin = { ...env, CODEX_HOME: join(home, "no-codex-login") };
   delete noLogin.OPENAI_API_KEY;
   delete noLogin.CODEX_API_KEY;
+  // A folder of that name `second` did not start is a spec of the person's own: not deleted without --force.
+  const foreign = spawnSync(process.execPath, [join(ROOT, "bin", "second.mjs"), "duration-parse"], { cwd: ROOT, env: noLogin, encoding: "utf8" });
+  assert.equal(foreign.status, 1, foreign.stdout + foreign.stderr);
+  assert.match(foreign.stderr, /duration-parse-second exists and is not duration-parse's second suite/);
+  assert.ok(existsSync(join(second, "spec.md")), "left as it was");
+  writeFileSync(join(second, "second.json"), '{ "of": "duration-parse" }\n');
   const noCodex = spawnSync(process.execPath, [join(ROOT, "bin", "second.mjs"), "duration-parse"], { cwd: ROOT, env: noLogin, encoding: "utf8" });
   rmSync(join(first, "imported.json"));
   assert.equal(noCodex.status, 1, noCodex.stdout + noCodex.stderr);
@@ -65,7 +71,12 @@ try {
   assert.equal(strict.status, 2, strict.stdout + strict.stderr);
   assert.match(strict.stdout, /duration-parse: overfit\. Public 22\/22, hidden 39\/39, second hidden \d+\/\d+\./);
   assert.match(strict.stdout, /failing happy-1/);
-  console.log("ok - judge runs the second suite: passed needs both, a second-suite failure is overfit with its key");
+  // The second suite's failing test carries no [kind-n] key: overfit all the same (0.8.6 read it as passed).
+  writeFileSync(index, readFileSync(index, "utf8").replace('if (text === "13m") return 0;', 'if (text === "14m") return 0;'));
+  const unkeyed = run(join(ROOT, "bin", "judge.mjs"), "duration-parse", join(broken, "src"), "--plain");
+  assert.equal(unkeyed.status, 2, unkeyed.stdout + unkeyed.stderr);
+  assert.match(unkeyed.stdout, /duration-parse: overfit\. Public 22\/22, hidden 39\/39, second hidden \d+\/\d+\./);
+  console.log("ok - judge runs the second suite: passed needs both, a second-suite failure is overfit with its key, or with none");
 
   writeFileSync(join(second, "tests", "private", file), `${source}\n// changed\n`);
   const moved = run(join(ROOT, "bin", "judge.mjs"), "duration-parse", join(first, "reference", "src"), "--plain");

@@ -157,7 +157,10 @@ const { public: publicCount, hidden: hiddenCount, failures } = outcome;
 let { verdict: result, failedScenarios: scenarios } = outcome;
 // A second writer's suite (bin/second.mjs): a pass needs both.
 const second = secondSuite(realpathSync(src));
-if (second !== null && second.outcome.failedScenarios.length > 0 && (result === "passed" || result === "overfit")) {
+// By its count, not by its keys: a failing test with no `[kind-n]` key (or one
+// under a describe) has no scenario, and was read as no failure (0.8.6:
+// `passed` beside "second hidden 0/N").
+if (second !== null && second.outcome.hidden.passed < second.outcome.hidden.total && (result === "passed" || result === "overfit")) {
   result = "overfit";
   scenarios = [...new Set([...scenarios, ...second.outcome.failedScenarios])];
 }
@@ -193,7 +196,9 @@ process.exit(result === "passed" ? 0 : result === "overfit" ? 2 : 1);
 function secondSuite(dir) {
   const other = `${slug}-second`;
   const recorded = sealed === null ? readJson(join(specDir(other), "calibration.json"), null) : null;
-  if (recorded?.status !== "ok") return null;
+  // `of`: bin/second.mjs names the spec its suite is the second of. A spec of
+  // the person's own that happens to be called <slug>-second is not one.
+  if (recorded?.status !== "ok" || recorded.of !== slug) return null;
   const held = commitment(other);
   if (!held.ok) {
     console.error(`${other}: hidden suite changed since ${held.at}; not judged.`);

@@ -100,6 +100,13 @@ if (isMain) {
     console.error(`${secondOf(slug)} exists; --force writes it again.`);
     process.exit(1);
   }
+  // The folder is deleted below. One this command did not start (a spec of
+  // the person's own with that name, not prepared yet) is not its to delete.
+  const mine = readJson(join(to, "second.json"), null)?.of === slug || readJson(join(to, "calibration.json"), null)?.of === slug;
+  if (existsSync(to) && !mine && options.force !== true) {
+    console.error(`${secondOf(slug)} exists and is not ${slug}'s second suite; rename it, or --force replaces it.`);
+    process.exit(1);
+  }
   // Another model family, or the person's explicit choice: a Claude-written
   // second suite caught 0 of 13 honest misses Codex's caught all of, and 10
   // of 20 gaming passes against 17 (evidence/passed-second.json,
@@ -122,6 +129,7 @@ if (isMain) {
   rmSync(to, { recursive: true, force: true });
   for (const part of ["spec.md", "ticket.md", "confirmed.json", "toolchain.json", "skeleton", "tests/public", "reference"])
     if (existsSync(join(from, part))) cpSync(join(from, part), join(to, part), { recursive: true });
+  writeJson(join(to, "second.json"), { of: slug });
   log(secondOf(slug), `hidden suite on ${backend}${model ? ` (${model})` : ""}`);
   const env = { ...process.env, BOUNCER_BACKEND: backend, ...(model ? { BOUNCER_HIDDEN_MODEL: model } : {}) };
   const generated = spawnSync(process.execPath, [join(BIN, "generate.mjs"), secondOf(slug)], { stdio: "inherit", env });
