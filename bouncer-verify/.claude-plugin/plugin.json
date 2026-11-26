@@ -1,7 +1,7 @@
 {
   "name": "bouncer-verify",
   "displayName": "bouncer verify",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "description": "Your coding agent says it's done. He checks. Lists every decision your agent made without asking you, then checks the work with tests it never saw. Local only: no MCP server and no sign-in.",
   "author": {
     "name": "Lunox",

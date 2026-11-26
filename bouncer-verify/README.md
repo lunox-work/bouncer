@@ -28,7 +28,7 @@ claude plugin install bouncer-verify@bouncer
 
 ## Requirements
 
-- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.6 CLI through npx, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
+- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.7 CLI through npx, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
 
 ## No sign-in
 
