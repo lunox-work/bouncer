@@ -1,10 +1,10 @@
 # bouncer-verify
 
-Your agent says it's on the list. He checks. Verify your coding agent's work with tests it never saw. A hidden suite written from the spec you confirmed judges the result. Local only: no MCP server and no sign-in.
+Your coding agent says it's done. He checks. Lists every decision your agent made without asking you, then checks the work with tests it never saw. Local only: no MCP server and no sign-in.
 
 ## Skills
 
-- **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket, or to set up its ID comment on every pull request (`bouncer ci init`). Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
+- **bouncer**: Use when an agent says it's done or that the tests pass and the person doubts it: "check my agent's work", "is this really done", "bounce this", "I don't trust its green tests", "did it game the tests". Also for grading a contractor's, candidate's or agent's submission against a spec or ticket, and for tests an agent can't see for a ticket, or to set up its ID comment on every pull request (`bouncer ci init`), and when a Stop hook message starts `bouncer-verify, check on done`. Bouncer turns the ticket into a spec the person confirms, a public suite for the implementing agent and a calibrated hidden suite he keeps, then judges the work: passed, overfit, incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust), a command, an HTTP service or one package of a TypeScript or Python repository. Not for writing ordinary unit tests, raising coverage, fixing a failing test, or a code, style or security review by eye.
 
 ## Examples
 
@@ -28,17 +28,18 @@ claude plugin install bouncer-verify@bouncer
 
 ## Requirements
 
-- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.5 CLI through npx, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
+- **bouncer**: Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.6 CLI through npx, which starts Claude Code, Codex or Anthropic API sessions and installs its test toolchain under ~/.bouncer/ once (network).
 
 ## No sign-in
 
 The plugin bundles no MCP server: installing it asks for no sign-in, and its skill runs on the machine.
 
-## Offer on done
+## Check on done
 
-One Stop hook: when a session that changed code hands the turn back, the agent asks once whether to check the work
-with Bouncer, and again after a large change. It runs nothing itself, reads only the session's transcripts on the
-machine and sends nothing. Off: `bouncer offer off`, or `BOUNCER_OFFER=off`.
+One Stop hook: when a session that changed code hands the turn back, the agent runs Bouncer's ID check, once, and
+again after a large change: one model session on the person's own account, about $0.06. The hook runs nothing itself,
+reads only the session's transcripts on the machine and sends nothing. Asked first: `bouncer offer ask`. Off:
+`bouncer offer off`, or `BOUNCER_OFFER=off`.
 
 ## Links
 
@@ -53,10 +54,13 @@ machine and sends nothing. Off: `bouncer offer off`, or `BOUNCER_OFFER=off`.
   its skill runs the CLI on the machine; installing it asks for no sign-in,
   and it reaches Lunox's platform only if the person runs one of the
   platform commands below themselves.
-- **Offer on done (the plugin's one hook):** when a session hands the turn
+- **Check on done (the plugin's one hook):** when a session hands the turn
   back, it reads that session's transcripts on the machine to count code
-  edits and keeps what it offered in `~/.bouncer/offer/sessions.json`. It
-  runs no model and sends nothing; `bouncer offer off` stops it.
+  edits and keeps what it fired on in `~/.bouncer/offer/sessions.json`. The
+  hook itself runs no model and sends nothing. By default it has the agent
+  run `bouncer id`, which sends the person's request and the change to the
+  model backend on their own account (next item), about $0.06 each time;
+  `bouncer offer ask` has the agent ask first, `bouncer offer off` stops it.
 - **Sent off the machine:** the spec, the ticket it came from and the code
   being judged go to the model backend the person chooses, on their own
   account: a Claude Code session, the Codex CLI, or the Anthropic API with

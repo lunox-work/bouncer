@@ -1,5 +1,5 @@
 {
-  "description": "Offer on done: when a session that changed code hands the turn back, the agent asks whether to check the work with Bouncer. Turn off with `bouncer offer off`.",
+  "description": "Check on done: when a session that changed code hands the turn back, the agent runs Bouncer's ID check (`bouncer offer ask` to be asked first). Turn off with `bouncer offer off`.",
   "hooks": {
     "Stop": [
       {

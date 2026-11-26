@@ -20,7 +20,8 @@ It reads the change `bouncer check` would read: the working tree against
 HEAD, or everything since the fork from the default branch when the work is
 committed (it says which; `--base <ref>` reads less). It lists what the
 ticket never said and what the agent picked, with file and line, in one
-session: about 17 seconds and $0.06. No package has to fit and nothing is
+session: about 12 seconds and $0.06 (at a terminal each item prints as it
+is written, the first in about 3). No package has to fit and nothing is
 installed.
 
 Lead with his `Bouncer:` lines word for word (`Let me see some ID.`, and

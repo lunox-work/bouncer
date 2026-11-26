@@ -6,7 +6,8 @@ description: >-
   "I don't trust its green tests", "did it game the tests". Also for grading a
   contractor's, candidate's or agent's submission against a spec or ticket,
   and for tests an agent can't see for a ticket, or to set up its ID comment
-  on every pull request (`bouncer ci init`). Bouncer turns the ticket into
+  on every pull request (`bouncer ci init`), and when a Stop hook message
+  starts `bouncer-verify, check on done`. Bouncer turns the ticket into
   a spec the person confirms, a public suite for the implementing agent and a
   calibrated hidden suite he keeps, then judges the work: passed, overfit,
   incomplete, regressed or refused. One module (TypeScript, Python, Go, Rust),
@@ -15,7 +16,7 @@ description: >-
   failing test, or a code, style or security review by eye.
 license: MIT
 compatibility: >-
-  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.5 CLI through npx, which starts
+  Node ^20.19 or 22+. Runs the @lunox-work/bouncer@0.8.6 CLI through npx, which starts
   Claude Code, Codex or Anthropic API sessions and installs its test toolchain
   under ~/.bouncer/ once (network).
 ---
@@ -27,7 +28,7 @@ writes a **public** suite for the implementing agent and a **hidden** one that
 judges the result.
 
 `bouncer <command> --voice` is the CLI. Run it as `npx -y
-@lunox-work/bouncer@0.8.5 <command> --voice`, the version this skill was
+@lunox-work/bouncer@0.8.6 <command> --voice`, the version this skill was
 written for, wherever this skill, the CLI's own hints or the person say
 `bouncer <command>`; nothing to install first. npm fetches it once (about 1 MB)
 and caches it: say so the first time. A `bouncer` on PATH may stand in only
@@ -47,7 +48,7 @@ agent's work"): the list first, which takes seconds. `bouncer id --from
 <issue>`, or `bouncer id --ticket -` with the request on stdin in the
 person's words: what they asked the agent for, as they wrote it, never your
 summary of what was built. It prints what the ticket never said and what the
-agent picked, in about 17 seconds for $0.06. Give the person the whole list
+agent picked, in about 12 seconds for $0.06. Give the person the whole list
 and stop. Only when they want a verdict: `bouncer check`, which keeps that
 ticket and list ([references/check.md](references/check.md); say its cost
 first). This skill is local and needs no sign-in.
@@ -65,13 +66,18 @@ for Codex). Commit the workflow file only if they ask; the pull request that
 adds it gets the first comment. After an ID list in a GitHub repository that
 has no `bouncer-id.yml`, offer this once.
 
-**Offer on done.** A Stop hook message that starts `bouncer-verify, offer on
-done` comes from the person's own hook (the plugin's, or `bouncer offer on`):
-ask its one question and run nothing until they answer; a yes to `id` or
-`check` is the flow above. "No more offers": `bouncer offer off`. Installed
-without the plugin (`bouncer offer status` says off: not installed): after
-the person's first `bouncer id` list, ask once whether their agent should
-offer this whenever it hands back code, and on a yes run `bouncer offer on`.
+**Check on done.** A Stop hook message that starts `bouncer-verify, check on
+done` comes from the person's own hook (the plugin's, or `bouncer offer on`),
+which by default runs the ID check whenever you hand back code: run `bouncer
+id` as it says, unasked, show the list, and stop. One that starts
+`bouncer-verify, offer on done` (they chose `bouncer offer ask`): ask its one
+question and run nothing until they answer; a yes to `id` or `check` is the
+flow above. "Ask me first": `bouncer offer ask`; "no more": `bouncer offer
+off`. Installed without the plugin: the first time this skill runs, if
+`bouncer offer status` prints `off: not installed`, run `bouncer offer on`
+and tell them in one line that the ID check now runs whenever their agent
+hands back code (about $0.06 each; `bouncer offer ask` or `off` to change
+that). Never when it prints `off (`: they turned it off.
 
 ## Before you start
 
@@ -176,7 +182,11 @@ tell the person; never judge around it.
 | exit 1, hidden suite changed         | Someone touched my list. Nobody gets in. |
 
 **His voice.** With `--voice` every line of his comes as `Bouncer: <line>`;
-relay each word for word, as his. Machine word first, his line beside it,
+relay each word for word, as his. The first time on a machine, and at most
+every 30 minutes after, he also prints himself at the club's door: a block
+of plain text art (a `+------+` door frame, his figure in it) just
+before his first line. Show it to the person unchanged, in a code block,
+before his lines; never redraw or describe it. Machine word first, his line beside it,
 then plain facts in your own voice: `overfit. Not tonight. boundary-2,
 unhappy-1`, then counts and the hidden suite's sha256. Only lines the CLI
 printed, each for the check behind it (the table above, the cover charge
