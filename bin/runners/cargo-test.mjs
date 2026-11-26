@@ -50,6 +50,23 @@ function parse(stdout) {
   }));
 }
 
+/**
+ * One test's result from its own run (`--exact`): by libtest's summary line,
+ * `test result: ok. 1 passed; 0 failed; 0 ignored; ...`, not by the test's
+ * own line. That line is `test x ... ok` only when nothing else reaches
+ * stdout: code that writes to `std::io::stdout()` itself is not captured and
+ * lands between the name and the outcome, and a `#[should_panic]` test reads
+ * `test x - should panic ... ok`; both were recorded as crashed (0.8.6).
+ * undefined when the run reported no test (killed, or it never started).
+ */
+function resultOf(name, stdout) {
+  const summary = /^test result: \S+ (\d+) passed; (\d+) failed; (\d+) ignored/m.exec(stdout);
+  if (summary === null) return undefined;
+  const [passed, failed, ignored] = summary.slice(1).map(Number);
+  const outcome = failed > 0 ? "FAILED" : ignored > 0 ? "ignored" : passed > 0 ? "ok" : null;
+  return outcome === null ? undefined : parse(`test ${name} ... ${outcome}\n${stdout}`)[0];
+}
+
 const run = (bin, argv, timeout) =>
   spawnSync(bin, argv, { cwd: root, encoding: "utf8", env, timeout, maxBuffer: 64 * 1024 * 1024 });
 
@@ -84,8 +101,7 @@ if (built.compiled)
       .filter(Boolean);
     for (const name of listed) {
       const out = run(binary, ["--exact", name, "--test-threads=1"], testTimeoutMs);
-      const [reported] = parse(out.stdout ?? "");
-      const test = reported ?? {
+      const test = resultOf(name, out.stdout ?? "") ?? {
         ...parse(`test ${name} ... FAILED\n`)[0],
         error: { failureType: out.error?.code === "ETIMEDOUT" ? "timeout" : "crashed", code: null, message: `${out.error ?? ""}${out.stderr ?? ""}`.slice(-OUTPUT_CHARS) },
       };
