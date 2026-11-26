@@ -176,7 +176,11 @@ tell the person; never judge around it.
 | exit 1, hidden suite changed         | Someone touched my list. Nobody gets in. |
 
 **His voice.** With `--voice` every line of his comes as `Bouncer: <line>`;
-relay each word for word, as his. Machine word first, his line beside it,
+relay each word for word, as his. The first time on a machine, and at most
+every 30 minutes after, he also prints himself at the club's door: a block
+of plain text art (a `+------+` door frame, his figure in it) just
+before his first line. Show it to the person unchanged, in a code block,
+before his lines; never redraw or describe it. Machine word first, his line beside it,
 then plain facts in your own voice: `overfit. Not tonight. boundary-2,
 unhappy-1`, then counts and the hidden suite's sha256. Only lines the CLI
 printed, each for the check behind it (the table above, the cover charge

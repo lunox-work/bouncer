@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, readFileSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FIGURE_EVERY_MS, seen, summary, tallied, tally, tallyLine } from "../bin/regulars.mjs";
-import { announce, banner, clock, FIGURE, greet, LINES, lineFor, MARK, say, voiceMode, voiceOn } from "../bin/voice.mjs";
+import { announce, banner, clock, colorDepth, doorArt, DOOR_TEXT, FIGURE, greet, LINES, lineFor, MARK, say, voiceMode, voiceOn } from "../bin/voice.mjs";
 
 // What he remembers goes to a scratch home, never the person's.
 const home = mkdtempSync(join(tmpdir(), "bouncer-voice-"));
@@ -50,14 +50,32 @@ assert.equal(lineFor("no-such-verdict"), null);
 for (const [id, text] of Object.entries(LINES)) assert.ok(text.length <= 70, `${id} is short`);
 console.log("ok lines");
 
-// The banner: the figure, his line under it; with counts, the counts and
-// the verdict word between (the "Bouncer mascot review" CLI mock).
+// The banner: him at the door, his line under it; with counts, the
+// counts and the verdict word between (the "Bouncer mascot review" CLI mock).
 const plain = banner(lineFor("overfit", { keys: ["boundary-2", "unhappy-1"] }), { color: false });
-assert.equal(plain, [...FIGURE, "", "  Not tonight.  boundary-2, unhappy-1", ""].join("\n"));
+assert.equal(plain, [...DOOR_TEXT, "", "  Not tonight.  boundary-2, unhappy-1", ""].join("\n"));
 assert.ok(!plain.includes("\x1b"), "no escape codes without colour");
 const judged = banner(lineFor("overfit", { keys: ["unhappy-1"] }), { color: false, verdict: "overfit", counts: { public: { passed: 22, total: 22 }, hidden: { passed: 38, total: 39 } } });
-assert.equal(judged, [...FIGURE, "", "  public  22/22    hidden  38/39", "  verdict overfit", "", "  Not tonight.  unhappy-1", ""].join("\n"));
+assert.equal(judged, [...DOOR_TEXT, "", "  public  22/22    hidden  38/39", "  verdict overfit", "", "  Not tonight.  unhappy-1", ""].join("\n"));
 assert.ok(FIGURE.every((row) => /^[\x20-\x7e]*$/.test(row) && row.length <= 38), "plain ASCII, 38 columns at most");
+assert.ok(DOOR_TEXT.every((row) => /^[\x20-\x7e]*$/.test(row) && row.length <= 40), "the door in plain ASCII, 40 columns at most");
+assert.match(DOOR_TEXT[0], /^ +\+-+\+$/, "a plain lintel: no word over the door");
+assert.ok(!DOOR_TEXT.join("").includes("DONE"), "no DONE sign");
+assert.ok(FIGURE.slice(0, 6).every((row) => DOOR_TEXT.some((line) => line.includes(row.trim()))), "his head in the doorway");
+// In colour: the README's Bouncer at the door in quadrant cells, 60 columns, in 24-bit or the xterm 256.
+const visible = (line) => line.replace(/\x1b\[[0-9;]*m/g, "");
+const deep = doorArt({ depth: "truecolor" });
+const shallow = doorArt({ depth: "256" });
+assert.ok(!deep.join("").includes("DONE") && !deep.join("").includes("D O N E"), "no sign over the door");
+assert.ok(deep.length >= 20 && deep.every((line) => visible(line).length <= 60), "60 columns at most");
+assert.ok(deep.some((line) => line.includes("38;2;")) && !shallow.some((line) => line.includes(";2;")), "24-bit only when asked");
+const greenish = (n) => n >= 16 && n < 232 && Math.floor((n - 16) / 6) % 6 > Math.max(Math.floor((n - 16) / 36), (n - 16) % 6);
+assert.ok([...shallow.join("").matchAll(/38;5;(\d+)/g)].some((m) => greenish(Number(m[1]))), "the 256 keep the rain's green");
+assert.ok(deep.every((line) => line.endsWith("\x1b[0m")), "every line resets its colour");
+assert.equal(colorDepth({ COLORTERM: "truecolor" }), "truecolor");
+assert.equal(colorDepth({ COLORTERM: "24bit" }), "truecolor");
+assert.equal(colorDepth({ TERM_PROGRAM: "Apple_Terminal" }), "256");
+assert.ok(banner(lineFor("passed"), {}).includes(deep[1]), "the banner draws him in colour");
 assert.match(banner(lineFor("passed"), { verdict: "passed", counts: { public: { passed: 1, total: 1 }, hidden: null } }), /hidden\x1b\[0m  -/);
 console.log("ok banner");
 
@@ -69,7 +87,7 @@ assert.equal(side.out, "", "nor on stderr, unasked");
 // Asked for: stdout untouched, his line on stderr, keys and the tally beside it.
 say("overfit", { stream: pipe, side, env: { BOUNCER_VOICE: "1" }, keys: ["boundary-2"], record: "At this door so far: 1 in, 2 turned away." });
 assert.equal(pipe.out, "", "stdout stays the machine's");
-assert.equal(side.out, "Bouncer: Not tonight.  boundary-2\nBouncer: At this door so far: 1 in, 2 turned away.\n");
+assert.equal(side.out, `${DOOR_TEXT.join("\n")}\nBouncer: Not tonight.  boundary-2\nBouncer: At this door so far: 1 in, 2 turned away.\n`, "his door first, when it is due");
 const before = process.env.CI;
 const noColor = process.env.NO_COLOR;
 delete process.env.CI;
@@ -129,7 +147,7 @@ process.env.BOUNCER_HOME = greetHome;
 greet({ stream: pipe, side: greeted, env: { BOUNCER_VOICE: "1" } });
 greet({ stream: pipe, side: greeted, env: { BOUNCER_VOICE: "1" } });
 process.env.BOUNCER_HOME = home;
-assert.equal(greeted.out, "Bouncer: He's on the door.\n", "once");
+assert.equal(greeted.out, `${DOOR_TEXT.join("\n")}\nBouncer: He's on the door.\n`, "once, at his door");
 console.log("ok stages");
 
 // The judge prints his line only through say(), before the verdict line it
