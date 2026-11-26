@@ -45,9 +45,15 @@ function leaves(lines) {
       pending.push({ ...line, path: [line.name] });
       continue;
     }
+    // A parent that failed by itself (an assertion after its subtests, a
+    // failing `after` hook) and not because a subtest did: its failure is
+    // its subtests', which are the tests that are counted. Dropped, it left
+    // them all passing.
+    const own = line.ok === false && line.error?.failureType !== "subtestsFailed";
     for (const child of children)
       pending.push({
         ...child,
+        ...(own && child.ok ? { ok: false, error: line.error } : {}),
         nesting: line.nesting,
         path: [line.name, ...child.path],
       });

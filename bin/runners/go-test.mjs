@@ -60,14 +60,22 @@ function runTest(binary, name) {
     return [{ name, ok: false, skipped: false, error: { failureType: timedOut ? "timeout" : "panic", code: null, message: (outputs.get(name) ?? out.stdout ?? "").slice(-OUTPUT_CHARS) } }];
   // Leaves: tests no other reported test is nested under.
   const names = [...finished.keys()];
+  // A parent that failed with no failing subtest failed by itself (a t.Error
+  // after its t.Run calls): its failure is its subtests', which are the tests
+  // that are counted.
+  const failedAlone = names.filter((test) => finished.get(test) === "fail" && !names.some((other) => other.startsWith(`${test}/`) && finished.get(other) === "fail"));
+  const under = (test) => failedAlone.find((parent) => test.startsWith(`${parent}/`));
   return names
     .filter((test) => !names.some((other) => other.startsWith(`${test}/`)))
-    .map((test) => ({
-      name: test,
-      ok: finished.get(test) !== "fail",
-      skipped: finished.get(test) === "skip",
-      error: finished.get(test) === "fail" ? { failureType: "testCodeFailure", code: null, message: (outputs.get(test) ?? "").slice(-OUTPUT_CHARS) } : null,
-    }));
+    .map((test) => {
+      const failed = finished.get(test) === "fail" || under(test) !== undefined;
+      return {
+        name: test,
+        ok: !failed,
+        skipped: !failed && finished.get(test) === "skip",
+        error: failed ? { failureType: "testCodeFailure", code: null, message: (outputs.get(test) || outputs.get(under(test)) || "").slice(-OUTPUT_CHARS) } : null,
+      };
+    });
 }
 
 /**
