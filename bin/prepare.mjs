@@ -73,15 +73,29 @@ if (hasSuites && prepared === null && options.force !== true) {
   process.exit(1);
 }
 const preparedFrom = prepared?.confirmedSha256 ?? prepared?.specSha256;
-const stale = hasSuites && (preparedFrom !== confirmed.hash || options.force === true);
+// `regenerating` is what an earlier run left when it stopped partway through
+// rewriting the suites for a changed spec: "generate" before the writers
+// finished, "calibrate" after. Without it the second run found the new hash
+// already recorded, skipped every step and called the old suites ready
+// (0.8.6: a prepare that died in its first step, then `ready`).
+const unfinished = prepared?.regenerating ?? null;
+const changed = hasSuites && (preparedFrom !== confirmed.hash || options.force === true);
+const regenerate = changed || unfinished === "generate";
+const recalibrate = regenerate || unfinished === "calibrate";
 // Written before generating, so a run that fails partway resumes on the
 // same spec instead of being refused as foreign.
-writeJson(preparedPath, {
-  specSha256: confirmed.specHash,
-  ...(confirmed.hash === confirmed.specHash ? {} : { confirmedSha256: confirmed.hash }),
-  at: new Date().toISOString(),
-});
-if (!step("generate.mjs", ...(stale ? ["--force"] : []))) process.exit(1);
+const record = (regenerating) =>
+  writeJson(preparedPath, {
+    specSha256: confirmed.specHash,
+    ...(confirmed.hash === confirmed.specHash ? {} : { confirmedSha256: confirmed.hash }),
+    ...(regenerating === null ? {} : { regenerating }),
+    at: new Date().toISOString(),
+  });
+record(regenerate ? "generate" : recalibrate ? "calibrate" : null);
+if (!step("generate.mjs", ...(regenerate ? ["--force"] : []))) process.exit(1);
+// The suites are the new spec's now; calibration.json is still the old ones'
+// until calibrate has run, also when this run stops on the open questions.
+if (regenerate) record("calibrate");
 
 const open = readJson(join(dir, "generation.json"), {}).private?.open ?? [];
 if (open.length > 0 && options["accept-open"] !== true) {
@@ -94,7 +108,8 @@ if (open.length > 0 && options["accept-open"] !== true) {
   process.exit(4);
 }
 
-if (!step("calibrate.mjs", ...(stale ? ["--force"] : []))) process.exit(1);
+if (!step("calibrate.mjs", ...(recalibrate ? ["--force"] : []))) process.exit(1);
+if (recalibrate) record(null);
 const calibration = readJson(join(dir, "calibration.json"), {});
 if (calibration.status !== "ok") {
   console.log(`\n${slug}: calibration dropped the spec: ${calibration.reason}.`);
