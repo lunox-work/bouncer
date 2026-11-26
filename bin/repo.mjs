@@ -67,8 +67,14 @@ function included(globs, file) {
       `^${glob
         .replace(/^\.\//, "")
         .replace(/[.+^$()|[\]\\]/g, "\\$&")
-        .replace(/\*\*\//g, "(?:.*/)?")
+        // `**/` and `**` are held as marks until the single `*` is done: translated
+        // first, their own `.*` was rewritten to `.[^/]*`, so `**/` spanned one
+        // folder at most and a hidden suite two folders down was refused (0.8.6).
+        .replace(/\*\*\//g, "\u0000")
+        .replace(/\*\*/g, "\u0001")
         .replace(/\*/g, "[^/]*")
+        .replace(/\u0000/g, "(?:.*/)?")
+        .replace(/\u0001/g, ".*")
         .replace(/\{([^}]*)\}/g, (_, alts) => `(?:${alts.split(",").join("|")})`)}$`,
     );
   return globs.some((glob) => toRegex(glob).test(file));
