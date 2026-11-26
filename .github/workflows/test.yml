@@ -1,6 +1,7 @@
 # test/smoke.mjs on every OS and Node line the package supports
 # (package.json engines): judge, handout, npm test, seal, and the
-# per-OS paths of bin/platform.mjs. No model is called.
+# per-OS paths of bin/platform.mjs. The whole `npm test` chain (the other
+# thirteen files) once, on one OS and Node. No model is called.
 name: test
 on:
   push:
@@ -27,3 +28,17 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: node test/smoke.mjs
+
+  # Everything `npm test` runs, which the smoke matrix does not: the rules,
+  # the ID check, confirm, check, fit, the hosted client. One pair is enough
+  # for logic that does not differ by OS.
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: npm test
