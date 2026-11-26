@@ -87,8 +87,13 @@ try {
   writeFileSync(join(spec, "spec.md"), "# Tiny\n\nScenario: one\n\nDecided:\n- Empty input is invalid.\n");
   const cwd = join(scratch, "elsewhere");
   mkdirSync(cwd);
+  // A home with no Claude Code sessions: the person's own ~/.claude/projects is
+  // not read, where a session working on this very test names `confirm` and
+  // `tiny` and was taken for the confirming one.
+  const noSessions = join(scratch, "no-sessions");
+  mkdirSync(noSessions);
   const confirm = (...argv) =>
-    spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "confirm.mjs"), "tiny", ...argv], { cwd, encoding: "utf8", env: { ...process.env, BOUNCER_HOME: home, BOUNCER_SPECS: "" }, stdio: ["pipe", "pipe", "pipe"] });
+    spawnSync(process.execPath, [join(import.meta.dirname, "..", "bin", "confirm.mjs"), "tiny", ...argv], { cwd, encoding: "utf8", env: { ...process.env, HOME: noSessions, USERPROFILE: noSessions, BOUNCER_HOME: home, BOUNCER_SPECS: "" }, stdio: ["pipe", "pipe", "pipe"] });
   const recorded = () => JSON.parse(readFileSync(join(spec, "confirmed.json"), "utf8"));
 
   assert.equal(confirm().status, 3, "the listing starts the clock");
@@ -154,7 +159,20 @@ try {
   assert.equal(unchecked.status, 0, unchecked.stderr);
   assert.equal(recorded().answered.how, "unchecked");
   assert.match(unchecked.stderr, /recorded as unchecked/);
-  ok("confirm --by: refused with no answer, recorded with an answer, --answered-elsewhere, a session written late, or unchecked with no session");
+  rmSync(join(spec, "confirmed.json"));
+
+  // Never listed (no open clock): the session's turns are not answers to
+  // decisions nobody was shown. 0.8.6 recorded this as answered in session.
+  rmSync(join(spec, "confirming.json"));
+  const unlisted = write("unlisted.jsonl", [user(later(5), "check my agent's work"), assistant(later(10), [bash("a", "bouncer confirm tiny --by someone")])]);
+  const skipped = confirm("--by", "someone", "--transcript", unlisted);
+  assert.equal(skipped.status, 3, skipped.stdout + skipped.stderr);
+  assert.match(skipped.stderr, /not recorded\. The decisions were not listed before --by/);
+  assert.throws(() => recorded(), /ENOENT/, "nothing recorded");
+  const reviewed = confirm("--by", "someone", "--transcript", unlisted, "--answered-elsewhere", "PR #12");
+  assert.equal(reviewed.status, 0, reviewed.stderr);
+  assert.equal(recorded().answered.how, "elsewhere");
+  ok("confirm --by: refused with no answer or no listing, recorded with an answer, --answered-elsewhere, a session written late, or unchecked with no session");
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }

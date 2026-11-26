@@ -74,12 +74,30 @@ function answerCheck(slug, started, at, options) {
   }
   if (transcript === null)
     return { record: { how: elsewhere ? "elsewhere" : "unchecked", ...(elsewhere ? { elsewhere } : {}) }, note: elsewhere ? null : `${slug}: no Claude Code session here listed these decisions, so nobody's answer could be checked; recorded as unchecked.` };
+  // Nothing was listed (no open clock, no --started): every turn of the
+  // session, its opening prompt included, would count as an answer, and a
+  // --by with no listing was recorded as answered in session (0.8.6). An
+  // answer is one given after the listing, so there is none here.
+  if (since === null) {
+    if (elsewhere) return { record: { how: "elsewhere", transcript, elsewhere } };
+    return {
+      refuse: true,
+      record: { how: "none", transcript },
+      message:
+        `${slug}: not recorded. The decisions were not listed before --by, so nothing said in this session is an answer to them. ` +
+        // A spec confirmed as it stands has no clock for a listing to start: the time is given by hand.
+        (confirmation(slug).ok
+          ? `It is already confirmed as it stands, so a listing starts no clock: to record it again, list the decisions (bouncer confirm ${slug}), put them to the person, and pass --started "<the time you listed them, ISO 8601>" with --by. `
+          : `Run bouncer confirm ${slug} (it lists them and starts the clock), put them to the person, and record --by after they say yes. `) +
+        'Only if they reviewed the decisions outside this session (a pull request, a call), say where: --answered-elsewhere "<where>".',
+    };
+  }
   const seen = personAnswers(transcript, since, at.toISOString());
   const answers = seen.personTurns + seen.questionsAnswered;
   // An answer given in this session after the decisions were first shown and
   // before the listing is not "elsewhere" (the 2026-11-20 gate's second run
   // recorded one that way): show the listing and ask again.
-  const shown = since === null ? null : firstShown(transcript, slug);
+  const shown = firstShown(transcript, slug);
   const early = shown !== null && shown < since ? personAnswers(transcript, shown, since) : null;
   if (answers === 0 && elsewhere && early !== null && early.personTurns + early.questionsAnswered > 0)
     return {
