@@ -522,7 +522,7 @@ async function anthropicSdk() {
 const TOOL_DEFS = [
   {
     name: "Bash",
-    description: "Run a shell command in the working directory (bash -c, no network). Returns its output and exit code.",
+    description: "Run a shell command in the working directory (bash -c, no network). Returns its output and exit code. Anything it leaves running in the background is stopped when the command returns.",
     input_schema: { type: "object", properties: { command: { type: "string" }, timeout: { type: "number", description: "milliseconds, at most 600000" } }, required: ["command"] },
   },
   {
@@ -682,14 +682,21 @@ async function anthropicApi({ cwd, text, transcript, kind, resume, model, maxTur
     const [bin, argv] = placement(shellBin("bash"), ["-c", command], { cwd, state, network: false });
     return new Promise((done) => {
       let output = "";
-      const child = spawn(bin, argv, { cwd, env: childEnv(state), stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
-
+      // A group leader: the timeout and the shell's own exit take the whole
+      // group down. Killing the shell alone left what it started holding the
+      // pipes, so `close` never came and the call outlived the session's
+      // limits (a hung test's child, a server put in the background).
+      const child = spawn(bin, argv, { cwd, env: childEnv(state), stdio: ["ignore", "pipe", "pipe"], ...GROUP });
+      const reap = () => killGroup(child.pid);
+      process.once("exit", reap);
+      child.on("exit", reap);
       const take = (chunk) => (output = (output + chunk).slice(-30_000));
       child.stdout.on("data", take);
       child.stderr.on("data", take);
-      const timer = setTimeout(() => child.kill("SIGKILL"), Math.max(1000, Math.min(timeout, deadline - Date.now())));
+      const timer = setTimeout(reap, Math.max(1000, Math.min(timeout, deadline - Date.now())));
       child.on("close", (code) => {
         clearTimeout(timer);
+        process.removeListener("exit", reap);
         done(`${output}${output.endsWith("\n") || output === "" ? "" : "\n"}(exit ${code ?? "killed"})`);
       });
     });
