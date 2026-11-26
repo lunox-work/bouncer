@@ -20,7 +20,7 @@ branding:
   color: gray-dark
 inputs:
   seal:
-    description: Path of the seal file on the runner, or an https URL. Not used in platform mode.
+    description: Path of the seal file on the runner, or an https URL. A file inside the workspace or the runner's temp folder is deleted after judging. Not used in platform mode.
     required: false
     default: ""
   version:
@@ -114,8 +114,19 @@ runs:
         name: bouncer-card
         path: ${{ steps.judge.outputs.card }}
         if-no-files-found: ignore
+    # The seal holds the hidden suite: one fetched into the workspace or the
+    # runner's temp folder is removed before a later step can read it. A
+    # seal kept anywhere else (a self-hosted runner's own copy) is the
+    # runner's, and is left where it is.
     - if: always()
       shell: bash
       env:
         SEAL: ${{ inputs.seal }}
-      run: case "$SEAL" in https://* | "") ;; *) rm -f "$SEAL" ;; esac
+      run: |
+        case "$SEAL" in https://* | "") exit 0 ;; esac
+        real=$(cd "$(dirname "$SEAL")" 2>/dev/null && pwd -P)/$(basename "$SEAL")
+        for root in "$GITHUB_WORKSPACE" "$RUNNER_TEMP"; do
+          [ -n "$root" ] || continue
+          root=$(cd "$root" 2>/dev/null && pwd -P) || continue
+          case "$real" in "$root"/*) rm -f "$SEAL" ;; esac
+        done
